@@ -1,0 +1,25 @@
+{
+  "$schema": "./.dt-app/app.config.schema.json",
+  "environmentUrl": "https://hit3747h.sprint.apps.dynatracelabs.com/",
+  "app": {
+    "name": "Custom Diagram Creator",
+    "version": "0.1.0",
+    "description": "Design custom architecture diagrams with live status from Grail",
+    "id": "my.custom.diagram.creator",
+    "scopes": [
+      { "name": "storage:entities:read", "comment": "Query classic entities (dt.entity.*)" },
+      { "name": "storage:smartscape:read", "comment": "Query Smartscape entities (smartscapeNodes)" },
+      { "name": "storage:events:read", "comment": "Query Davis problems (dt.davis.problems)" },
+      { "name": "storage:metrics:read", "comment": "Metric-based KPIs" },
+      { "name": "storage:logs:read", "comment": "Log-based KPIs" },
+      { "name": "storage:spans:read", "comment": "Span-based KPIs" },
+      { "name": "storage:bizevents:read", "comment": "Business-event-based KPIs" },
+      { "name": "storage:buckets:read", "comment": "Required by Grail queries" },
+      { "name": "storage:files:read", "comment": "Read the diagrams lookup table" },
+      { "name": "storage:files:write", "comment": "Create/update the diagrams lookup table" },
+      { "name": "storage:files:delete", "comment": "Delete the diagrams lookup table (administration)" },
+      { "name": "slo:slos:read", "comment": "List and evaluate SLOs" },
+      { "name": "slo:objective-templates:read", "comment": "SLO objective templates (optional)" }
+    ]
+  }
+}

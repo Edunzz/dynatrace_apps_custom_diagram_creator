@@ -1,0 +1,453 @@
+{
+  "$id": "https://my.custom.diagram.creator/diagram.schema.json",
+  "title": "Custom Diagram Creator – Diagram",
+  "description": "Generated from ui/app/model/schema.ts (zod). Do not edit by hand: npm run export:schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "default": "dots",
+          "type": "string",
+          "enum": [
+            "dots",
+            "grid",
+            "blank"
+          ]
+        },
+        "defaultTimeframe": {
+          "default": {
+            "from": "now()-2h",
+            "to": "now()"
+          },
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "from",
+            "to"
+          ]
+        },
+        "refreshInterval": {
+          "default": "off",
+          "type": "string",
+          "enum": [
+            "off",
+            "30s",
+            "1m",
+            "5m",
+            "15m",
+            "30m"
+          ]
+        },
+        "viewport": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "zoom": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "zoom"
+          ]
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "entityNode",
+              "customNode"
+            ]
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ]
+          },
+          "size": {
+            "type": "object",
+            "properties": {
+              "w": {
+                "type": "number"
+              },
+              "h": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "w",
+              "h"
+            ]
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "entity"
+                  },
+                  "componentType": {
+                    "type": "string",
+                    "enum": [
+                      "mobile",
+                      "frontend",
+                      "service",
+                      "process",
+                      "host",
+                      "workload"
+                    ]
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "entityDql": {
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string"
+                  },
+                  "failPoint": {
+                    "type": "object",
+                    "properties": {
+                      "problemMatch": {
+                        "type": "string"
+                      },
+                      "warningMin": {
+                        "default": 1,
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "failingMin": {
+                        "default": 1,
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    }
+                  },
+                  "kpi": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "title": {
+                        "default": "KPIs",
+                        "type": "string"
+                      },
+                      "dql": {
+                        "type": "string"
+                      },
+                      "maxRows": {
+                        "default": 5,
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "dql"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "componentType",
+                  "name",
+                  "entityDql",
+                  "icon",
+                  "failPoint"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "custom"
+                  },
+                  "icon": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "entities",
+                      "slos"
+                    ]
+                  },
+                  "entities": {
+                    "type": "object",
+                    "properties": {
+                      "dql": {
+                        "type": "string"
+                      },
+                      "subNameField": {
+                        "default": "name",
+                        "type": "string"
+                      },
+                      "criterion": {
+                        "default": "anyProblem",
+                        "type": "string",
+                        "enum": [
+                          "anyProblem",
+                          "match"
+                        ]
+                      },
+                      "problemMatch": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "dql"
+                    ]
+                  },
+                  "slos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    }
+                  },
+                  "maxVisibleRows": {
+                    "default": 8,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "kpi": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "title": {
+                        "default": "KPIs",
+                        "type": "string"
+                      },
+                      "dql": {
+                        "type": "string"
+                      },
+                      "maxRows": {
+                        "default": 5,
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "dql"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "icon",
+                  "name",
+                  "mode"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "position",
+          "data"
+        ]
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "sourceHandle": {
+            "type": "string"
+          },
+          "targetHandle": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "kpi"
+            ]
+          },
+          "direction": {
+            "default": "forward",
+            "type": "string",
+            "enum": [
+              "forward",
+              "backward",
+              "none"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "kpi": {
+            "type": "object",
+            "properties": {
+              "dql": {
+                "type": "string"
+              },
+              "valueField": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "decimals": {
+                "default": 2,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "threshold": {
+                "type": "object",
+                "properties": {
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "above",
+                      "below"
+                    ]
+                  },
+                  "warning": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "failing": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "direction",
+                  "warning",
+                  "failing"
+                ]
+              },
+              "animated": {
+                "default": true,
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "dql",
+              "threshold"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "target",
+          "type"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "createdAt",
+    "updatedAt",
+    "settings",
+    "nodes",
+    "edges"
+  ]
+}

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User guide · Custom Diagram Creator</title>
+<meta name="description" content="How to build and read live architecture diagrams with Custom Diagram Creator.">
+<meta property="og:title" content="User guide · Custom Diagram Creator">
+<meta property="og:description" content="How to build and read live architecture diagrams with Custom Diagram Creator.">
+<meta name="author" content="Jose Eduardo Romero Jimenez">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><img class="brand-mark" src="assets/favicon.svg" alt="">Custom Diagram Creator</a>
+  <nav class="topnav" aria-label="Main"><a href="getting-started.html">Get started</a><a href="user-guide.html" aria-current="page">User guide</a><a href="architecture.html">Architecture</a><a href="data-model.html">Data model</a><a href="agent-skill.html">Agent skill</a><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a></nav>
+  <button class="icon-btn menu-btn" type="button" data-menu-toggle aria-expanded="false" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="icon-btn" href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator" aria-label="Source code on GitHub"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></a>
+  <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+<div class="docs">
+<aside class="sidebar" aria-label="Documentation"><h4>Start</h4><a href="getting-started.html">Getting started</a><h4>Guides</h4><a href="user-guide.html" aria-current="page">User guide</a><div class="toc"><a href="#list">The diagram list</a><a href="#toolbar">The editor toolbar</a><a href="#components">Adding components</a><a href="#containers">Custom components (containers)</a><a href="#kpis">KPI blocks</a><a href="#connections">Connections</a><a href="#editing">Editing like a dashboard</a><a href="#details">View mode and details</a><a href="#saving">Saving, sharing and versions</a><a href="#shortcuts">Keyboard shortcuts</a></div><h4>Reference</h4><a href="architecture.html">Architecture</a><a href="data-model.html">Data model</a><a href="agent-skill.html">Agent skill</a></aside>
+<main id="main" class="content">
+<article class="prose">
+<h1>User guide</h1>
+<p class="subtitle">Everything you can do on the diagram list and in the editor.</p>
+<h2 id="list">The diagram list</h2>
+<p>The start page lists every diagram with its owner and dates. Click anywhere on a row to open it. The row actions duplicate, download (JSON) or delete a diagram; select several rows to download or delete them together.</p>
+<ul>
+<li><strong>New diagram</strong> opens an empty canvas in edit mode.</li>
+<li><strong>Upload</strong> imports one or more <code>.json</code> files. They are validated against the schema; if a diagram with the same id exists, the upload gets a new id.</li>
+<li><strong>ⓘ About</strong> shows the version, the author and links to the source code and these docs.</li>
+<li><strong>⚙ Storage administration</strong> lists the app's lookup files and can delete one.</li>
+</ul>
+<h2 id="toolbar">The editor toolbar</h2>
+<div class="table-wrap"><table><thead><tr><th>Control</th><th>What it does</th></tr></thead><tbody><tr><td>Diagram name</td><td>Rename the diagram (saved with <strong>Save</strong>).</td></tr><tr><td>Edit / View</td><td>Edit mode shows the palette, the floating toolbar and the resize grips. View mode locks the layout; a click opens the details.</td></tr><tr><td>Save · Save as · Export JSON</td><td>Save to the lookup, save a copy with a new name, or download the JSON.</td></tr><tr><td>Timeframe</td><td>Applies to every query on the page: entities, problems, KPI blocks and KPI connections.</td></tr><tr><td>Auto-refresh · ⟳</td><td>Off by default; 30 s to 30 min. Pauses while the browser tab is hidden. ⟳ refreshes now.</td></tr><tr><td>Dots · Grid · Blank</td><td>Canvas background. Dots and grid also snap nodes to a 16 px grid.</td></tr><tr><td>Zoom out · % · Zoom in · Fit view</td><td>Zoom controls (the mouse wheel and pinch also zoom).</td></tr><tr><td>Undo · Redo · Auto-arrange</td><td>History of canvas changes, and a left-to-right layout with dagre.</td></tr></tbody></table></div>
+<h2 id="components">Adding components</h2>
+<p>In edit mode, drag a component from the palette onto the canvas (or click it to drop it in the middle). Its editor opens docked on the right.</p>
+<p><strong>Entity components</strong> — mobile, frontend, service, process, host and workload — run a DQL query that returns one or more entities. Each type starts from a Smartscape template you can edit:</p><div class="code"><span class="label">dql</span><pre><code>smartscapeNodes &quot;SERVICE&quot;
+| filter contains(name, &quot;&lt;text&gt;&quot;, caseSensitive: false)
+| fields id, name</code></pre></div><p>The query must return an <code>id</code> column (and preferably <code>name</code>). Use <strong>Run</strong> to preview the result: Run also applies the query to the diagram and refreshes the component.</p>
+<p>On the <strong>Status</strong> tab you set when the component changes color:</p>
+<ul>
+<li><strong>Warning threshold</strong> — number of active problems to turn orange.</li>
+<li><strong>Failing threshold</strong> — number of active problems to turn red (red wins when both are equal).</li>
+<li><strong>Match</strong> — an optional DQL fragment appended as <code>| filter …</code> to the problem query, e.g. <code>event.category == "ERROR"</code>.</li>
+</ul>
+<h2 id="containers">Custom components (containers)</h2>
+<p>A custom component is a large container with one row per child, each with its own status light.</p>
+<ul>
+<li><strong>Entities mode</strong> — a DQL query that returns <code>id</code> and <code>name</code>. Choose which column names each child and whether any active problem turns a child red, or only the problems that match a filter.</li>
+<li><strong>SLOs mode</strong> — pick SLOs; each row shows the current value and error budget. SLOs are evaluated with the timeframe defined in each SLO.</li>
+</ul>
+<p>The container itself is <strong>red</strong> when every child is red, <strong>orange</strong> when some child is red or orange, and <strong>green</strong> when all are green. A container with a single entity shows it as one big block.</p>
+<h2 id="kpis">KPI blocks</h2>
+<p>Any node can show a compact table under it. On the <strong>KPIs</strong> tab, turn on <strong>Show KPIs under the node</strong> and write a query that returns a table:</p><div class="code"><span class="label">dql</span><pre><code>timeseries rt = avg(dt.service.request.response_time, scalar: true), by: {dt.smartscape.service}
+| fieldsAdd service = getNodeName(dt.smartscape.service), avg_ms = rt / 1000
+| fields service, avg_ms
+| sort avg_ms desc
+| limit 5</code></pre></div>
+<h2 id="connections">Connections</h2>
+<p>Drag from the dots on the side of a node to another node. The connection editor opens so you can choose:</p>
+<ul>
+<li><strong>Normal</strong> — a plain line with an optional label.</li>
+<li><strong>KPI relation</strong> — a query that returns a single value (first row; the chosen column or the first numeric one), a unit, decimals and a threshold. <em>above</em> means high values are bad, <em>below</em> means low values are bad.</li>
+</ul>
+<p>Every connection has a direction — source to target, target to source, or no arrow. KPI connections show a pill with the value, color the line by status and animate dots in the arrow's direction (off when the system asks for reduced motion).</p><div class="code"><span class="label">dql</span><pre><code>timeseries r = avg(dt.service.request.response_time, scalar: true)
+| fieldsAdd v = r / 1000
+| fields v</code></pre></div>
+<h2 id="editing">Editing like a dashboard</h2>
+<ul>
+<li><strong>Select</strong> a node to get the floating toolbar: its size, <strong>Duplicate</strong>, <strong>Edit</strong> and a ⋮ menu with <strong>View details</strong> and <strong>Delete</strong>. Selected connections get <strong>Edit</strong> and <strong>Delete</strong>.</li>
+<li><strong>Resize</strong> any node from the grips in its bottom corners.</li>
+<li><strong>Edit</strong> in the panel docked to the right. There is no Apply button: names, icons and labels change on the canvas as you type, <strong>Run</strong> applies a query, and threshold or filter changes refresh the status after a short pause.</li>
+<li>While the editor is open, <strong>click another element</strong> to switch to it.</li>
+<li>Each editing session is one undo step.</li>
+</ul>
+<h2 id="details">View mode and details</h2>
+<p>In view mode, click a node or a KPI connection to open its details on the right:</p>
+<ul>
+<li>the applied timeframe, in your time zone;</li>
+<li>the entity query and the full problem query, with the timeframe and ids already filled in — copy them or open them in Notebooks;</li>
+<li>the problems in the timeframe, each linking to the Problems app;</li>
+<li>the breakdown per child or per SLO, and for KPI connections the raw value and how the threshold was evaluated.</li>
+</ul>
+<h2 id="saving">Saving, sharing and versions</h2>
+<p><strong>Save</strong> writes the diagram to the lookup table. If someone else saved it after you opened it, the app asks whether to <strong>Overwrite</strong> their version or <strong>Reload</strong> theirs. <strong>Export JSON</strong> downloads a file you can upload again without losing anything — use it to move diagrams between environments or to keep them in Git.</p>
+<h2 id="shortcuts">Keyboard shortcuts</h2>
+<div class="table-wrap"><table><thead><tr><th>Keys</th><th>Action</th></tr></thead><tbody><tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>Y</kbd> or <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></td><td>Redo</td></tr><tr><td><kbd>Delete</kbd> / <kbd>Backspace</kbd></td><td>Delete the selected nodes and connections (edit mode)</td></tr><tr><td>Double-click</td><td>Open the editor of a node or connection (edit mode) or its details (view mode)</td></tr></tbody></table></div>
+
+</article>
+<nav class="pager" aria-label="Pages"><a class="prev" href="getting-started.html"><small>Previous</small>Getting started</a><a class="next" href="architecture.html"><small>Next</small>Architecture</a></nav>
+</main>
+</div>
+<footer class="site-footer">
+  <div class="inner">
+    <span>Custom Diagram Creator · Built by Jose Eduardo Romero Jimenez</span>
+    <span><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a> · <a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/issues">Issues</a></span>
+  </div>
+</footer>
+</body>
+</html>

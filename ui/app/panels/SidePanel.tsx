@@ -48,13 +48,13 @@ export function SidePanel({ title, subtitle, actions, onClose, children }: SideP
           {subtitle && <div style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued }}>{subtitle}</div>}
         </div>
         {actions}
-        <Tooltip text={wide ? "Panel estrecho" : "Panel ancho"}>
-          <Button aria-label={wide ? "Panel estrecho" : "Panel ancho"} size="condensed" onClick={() => setWide((w) => !w)}>
+        <Tooltip text={wide ? "Narrow panel" : "Wide panel"}>
+          <Button aria-label={wide ? "Narrow panel" : "Wide panel"} size="condensed" onClick={() => setWide((w) => !w)}>
             <Button.Prefix>{wide ? <MinimizeIcon /> : <MaximizeIcon />}</Button.Prefix>
           </Button>
         </Tooltip>
-        <Tooltip text="Cerrar">
-          <Button aria-label="Cerrar" size="condensed" onClick={onClose}>
+        <Tooltip text="Close">
+          <Button aria-label="Close" size="condensed" onClick={onClose}>
             <Button.Prefix>
               <XmarkIcon />
             </Button.Prefix>

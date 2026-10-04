@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0",
   "id": "91946d79-2688-4eb4-9b31-fa290d7892f9",
-  "name": "Demo – Sprint tenant (datos reales)",
-  "description": "Diagrama de verificación con datos que existen en hit3747h: frontend, synthetic locations, Davis events y system events",
+  "name": "Demo – Sprint tenant (real data)",
+  "description": "Verification diagram with data that exists in hit3747h: frontend, synthetic locations, Davis events and system events",
   "owner": "system",
   "createdAt": "2026-10-04T12:49:25.601Z",
   "updatedAt": "2026-10-04T12:49:25.601Z",
@@ -34,9 +34,9 @@
         },
         "kpi": {
           "enabled": true,
-          "title": "Eventos por tipo (timeframe)",
+          "title": "Events by kind (timeframe)",
           "maxRows": 5,
-          "dql": "fetch events\n| summarize eventos = count(), by: {event.kind}\n| sort eventos desc\n| limit 5"
+          "dql": "fetch events\n| summarize events = count(), by: {event.kind}\n| sort events desc\n| limit 5"
         }
       }
     },
@@ -78,7 +78,7 @@
       "data": {
         "kind": "custom",
         "icon": "ApplicationsIcon",
-        "name": "Frontend (contenedor de 1 entidad)",
+        "name": "Frontend (single-entity container)",
         "mode": "entities",
         "entities": {
           "dql": "smartscapeNodes \"FRONTEND\"\n| fields id, id_classic, name",
@@ -101,7 +101,7 @@
       "label": "Davis events",
       "kpi": {
         "dql": "fetch events\n| summarize v = count()",
-        "unit": "eventos",
+        "unit": "events",
         "decimals": 0,
         "animated": true,
         "threshold": {
@@ -122,7 +122,7 @@
       "label": "System events",
       "kpi": {
         "dql": "fetch dt.system.events\n| summarize v = count()",
-        "unit": "eventos",
+        "unit": "events",
         "decimals": 0,
         "animated": true,
         "threshold": {
@@ -140,10 +140,10 @@
       "targetHandle": "t",
       "type": "kpi",
       "direction": "none",
-      "label": "Davis events (umbral bajo)",
+      "label": "Davis events (low threshold)",
       "kpi": {
         "dql": "fetch events\n| summarize v = count()",
-        "unit": "eventos",
+        "unit": "events",
         "decimals": 0,
         "animated": true,
         "threshold": {

@@ -156,7 +156,7 @@ export async function computeEntityNode(data: EntityNodeData, ctx: StatusCycleCo
     if (colErr) {
       base = { status: "unknown", error: colErr };
     } else if (entities.records.length === 0) {
-      base = { status: "unknown", error: "Sin datos: la DQL de entidad no devolvió filas.", entityIds: [] };
+      base = { status: "unknown", error: "No data: the entity query returned no rows.", entityIds: [] };
     } else {
       const ids = entities.records.flatMap(entityKeys);
       const { dql, problems } = await fetchProblems(ids, data.failPoint.problemMatch, ctx);
@@ -196,7 +196,7 @@ export async function computeCustomNode(data: CustomNodeData, ctx: StatusCycleCo
 async function computeEntityChildren(data: CustomNodeData, ctx: StatusCycleContext): Promise<NodeStatus> {
   const cfg = data.entities;
   if (!cfg || !cfg.dql.trim()) {
-    return { status: "unknown", error: "Configura la DQL de entidades.", children: [] };
+    return { status: "unknown", error: "Configure the entities query.", children: [] };
   }
   const entities = await ctx.query(cfg.dql);
   const colErr = assertColumns(entities, ["id", "name"]);
@@ -204,7 +204,7 @@ async function computeEntityChildren(data: CustomNodeData, ctx: StatusCycleConte
     return { status: "unknown", error: colErr, children: [] };
   }
   if (entities.records.length === 0) {
-    return { status: "unknown", error: "Sin datos: la DQL no devolvió entidades.", children: [] };
+    return { status: "unknown", error: "No data: the query returned no entities.", children: [] };
   }
   const nameField = cfg.subNameField || "name";
   const ids = entities.records.flatMap(entityKeys);
@@ -233,7 +233,7 @@ async function computeEntityChildren(data: CustomNodeData, ctx: StatusCycleConte
 async function computeSloChildren(data: CustomNodeData, ctx: StatusCycleContext): Promise<NodeStatus> {
   const slos = data.slos ?? [];
   if (slos.length === 0) {
-    return { status: "unknown", error: "Selecciona al menos un SLO.", children: [] };
+    return { status: "unknown", error: "Select at least one SLO.", children: [] };
   }
   const children = await Promise.all(
     slos.map(async (slo): Promise<SubStatus> => {
@@ -256,7 +256,7 @@ export async function computeKpiEdge(edge: DiagramEdge, ctx: StatusCycleContext)
     return { status: "unknown" };
   }
   if (!edge.kpi.dql.trim()) {
-    return { status: "unknown", error: "Configura la DQL del KPI." };
+    return { status: "unknown", error: "Configure the KPI query." };
   }
   try {
     const result = await ctx.query(edge.kpi.dql);

@@ -12,10 +12,10 @@ export function EdgeChrome({ id, selected, x, y }: { id: string; selected: boole
   }
   return (
     <EdgeToolbar edgeId={id} x={x} y={y - 22} isVisible={selected} alignY="bottom" className="cdc-floating-toolbar nodrag nopan">
-      <ToolbarButton label="Editar" onClick={() => openConfig("edge", id)}>
+      <ToolbarButton label="Edit" onClick={() => openConfig("edge", id)}>
         <EditIcon />
       </ToolbarButton>
-      <ToolbarButton label="Eliminar" onClick={() => deleteElement("edge", id)}>
+      <ToolbarButton label="Delete" onClick={() => deleteElement("edge", id)}>
         <DeleteIcon />
       </ToolbarButton>
     </EdgeToolbar>

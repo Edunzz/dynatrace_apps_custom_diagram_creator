@@ -116,7 +116,7 @@ function CustomNodeComponent({ id, data, selected }: NodeProps<CustomFlowNode>) 
         </div>
       ) : (
         <div style={{ flex: 1, fontSize: 12, color: Colors.Text.Neutral.Subdued, whiteSpace: "normal" }}>
-          {s === "loading" ? "Cargando…" : nodeStatus?.error ?? "Sin elementos"}
+          {s === "loading" ? "Loading…" : nodeStatus?.error ?? "No items"}
         </div>
       )}
 

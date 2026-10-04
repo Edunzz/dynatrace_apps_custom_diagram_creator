@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Custom Diagram Creator · Live architecture diagrams for Dynatrace</title>
+<meta name="description" content="Draw architecture diagrams by hand and light them up with live status from Grail: Davis problems, SLOs and DQL KPIs.">
+<meta property="og:title" content="Custom Diagram Creator · Live architecture diagrams for Dynatrace">
+<meta property="og:description" content="Draw architecture diagrams by hand and light them up with live status from Grail: Davis problems, SLOs and DQL KPIs.">
+<meta name="author" content="Jose Eduardo Romero Jimenez">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><img class="brand-mark" src="assets/favicon.svg" alt="">Custom Diagram Creator</a>
+  <nav class="topnav" aria-label="Main"><a href="getting-started.html">Get started</a><a href="user-guide.html">User guide</a><a href="architecture.html">Architecture</a><a href="data-model.html">Data model</a><a href="agent-skill.html">Agent skill</a><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a></nav>
+  <button class="icon-btn menu-btn" type="button" data-menu-toggle aria-expanded="false" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="icon-btn" href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator" aria-label="Source code on GitHub"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></a>
+  <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+<main id="main">
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="eyebrow reveal"><span class="dot"></span>Dynatrace AppEngine app · open source</span>
+      <h1 class="reveal d1">Architecture diagrams that show <span class="accent">what's broken, live.</span></h1>
+      <p class="lead reveal d2">Custom Diagram Creator lets you draw your architecture by hand and lights it up with live status from Grail: Davis problems, SLO evaluations and DQL KPIs, all on one canvas.</p>
+      <div class="hero-actions reveal d3">
+        <a class="btn btn-primary" href="getting-started.html">Get started</a>
+        <a class="btn" href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg> View on GitHub</a>
+      </div>
+      <p class="hero-meta reveal d3">Built by Jose Eduardo Romero Jimenez</p>
+    </div>
+    <div class="canvas-card reveal d2">
+      <div class="canvas-chrome"><span class="pill">Last 2 hours</span><span class="pill">Auto-refresh: 1 m</span><span class="spacer"></span><span>Sample – Online Banking</span></div>
+      <svg viewBox="0 0 640 330" role="img" aria-labelledby="hero-title hero-desc" style="display:block;width:100%;height:auto">
+  <title id="hero-title">Example diagram</title>
+  <desc id="hero-desc">A frontend calls two services that use a set of databases. One database is failing, so its container turns orange and the KPI connection from the payments service is red, while the other connection is green.</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10z" class="dg-arrow"/></marker>
+    <marker id="arr-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10z" class="dg-dot ok"/></marker>
+    <marker id="arr-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10z" class="dg-dot bad"/></marker>
+  </defs>
+
+  <path class="dg-edge" d="M170 165 H203 V82 H232" marker-end="url(#arr)"/>
+  <path class="dg-edge" d="M170 165 H203 V251 H232" marker-end="url(#arr)"/>
+  <path id="kpi-ok" class="dg-edge ok" d="M404 82 H436 V130 H462" marker-end="url(#arr-ok)"/>
+  <path id="kpi-bad" class="dg-edge bad" d="M404 251 H436 V210 H462" marker-end="url(#arr-bad)"/>
+
+  <g class="flow">
+    <circle r="3.6" class="dg-dot ok"><animateMotion dur="2s" repeatCount="indefinite" begin="0s" path="M404 82 H436 V130 H462"/></circle>
+    <circle r="3.6" class="dg-dot ok"><animateMotion dur="2s" repeatCount="indefinite" begin="0.66s" path="M404 82 H436 V130 H462"/></circle>
+    <circle r="3.6" class="dg-dot ok"><animateMotion dur="2s" repeatCount="indefinite" begin="1.33s" path="M404 82 H436 V130 H462"/></circle>
+    <circle r="3.6" class="dg-dot bad"><animateMotion dur="2s" repeatCount="indefinite" begin="0s" path="M404 251 H436 V210 H462"/></circle>
+    <circle r="3.6" class="dg-dot bad"><animateMotion dur="2s" repeatCount="indefinite" begin="0.66s" path="M404 251 H436 V210 H462"/></circle>
+    <circle r="3.6" class="dg-dot bad"><animateMotion dur="2s" repeatCount="indefinite" begin="1.33s" path="M404 251 H436 V210 H462"/></circle>
+  </g>
+
+  <!-- Web Banking -->
+  <rect class="dg-node ok" x="20" y="136" width="150" height="58" rx="9"/>
+  <rect class="dg-bar ok" x="20" y="136" width="5" height="58" rx="2"/>
+  <text class="dg-title" x="36" y="160">Web Banking</text>
+  <text class="dg-sub" x="36" y="177">Frontend · 2 entities</text>
+  <text class="dg-sub" x="146" y="165" text-anchor="end">0 ✓</text>
+
+  <!-- Accounts API -->
+  <rect class="dg-node ok" x="236" y="30" width="168" height="104" rx="9"/>
+  <rect class="dg-bar ok" x="236" y="30" width="5" height="104" rx="2"/>
+  <text class="dg-title" x="252" y="54">Accounts API</text>
+  <text class="dg-sub" x="252" y="70">Service · 3 entities</text>
+  <line x1="252" y1="82" x2="392" y2="82" stroke="currentColor" opacity="0.12"/>
+  <text class="dg-mono" x="252" y="102">p95</text><text class="dg-mono" x="392" y="102" text-anchor="end">184 ms</text>
+  <text class="dg-mono" x="252" y="120">errors</text><text class="dg-mono" x="392" y="120" text-anchor="end">0.2 %</text>
+
+  <!-- Payments API -->
+  <rect class="dg-node warn" x="236" y="222" width="168" height="58" rx="9"/>
+  <rect class="dg-bar warn" x="236" y="222" width="5" height="58" rx="2"/>
+  <text class="dg-title" x="252" y="246">Payments API</text>
+  <text class="dg-sub" x="252" y="263">Service · 1 active problem</text>
+  <text class="dg-sub" x="392" y="251" text-anchor="end">1 !</text>
+
+  <!-- Databases container -->
+  <rect class="dg-node warn" x="468" y="70" width="152" height="196" rx="11"/>
+  <rect class="dg-bar warn" x="468" y="70" width="6" height="196" rx="2"/>
+  <text class="dg-title" x="486" y="96">Databases</text>
+  <circle class="dg-dot ok" cx="492" cy="126" r="4.5"/><text class="dg-mono" x="504" y="130">orders-db</text>
+  <circle class="dg-dot ok" cx="492" cy="152" r="4.5"/><text class="dg-mono" x="504" y="156">ledger-db</text>
+  <circle class="dg-dot bad" cx="492" cy="178" r="4.5"/><text class="dg-mono" x="504" y="182">cache-redis</text>
+  <text class="dg-sub" x="486" y="248">1 of 3 failing</text>
+
+  <!-- KPI pills -->
+  <rect class="dg-pill ok" x="402" y="95" width="68" height="22" rx="11"/>
+  <text class="dg-pill-text" x="436" y="110" text-anchor="middle">184 ms</text>
+  <rect class="dg-pill bad" x="400" y="219" width="72" height="22" rx="11"/>
+  <text class="dg-pill-text" x="436" y="234" text-anchor="middle">1.24 s</text>
+</svg>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Everything a status diagram needs</h2>
+    <p>Dashboards answer "how much"; diagrams answer "where". Custom Diagram Creator puts your own picture of the system on top of the data Dynatrace already has.</p>
+  </div>
+  <div class="grid"><div class="card"><span class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/><path d="M10 7h3v10h1"/></svg></span><h3>Draw it by hand</h3><p>Drag components onto a canvas, connect them from any side and arrange them yourself — or auto-arrange left to right.</p></div><div class="card"><span class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><h3>Live status from problems</h3><p>Each component runs a DQL query for its entities and turns green, orange or red from the active Davis problems affecting them.</p></div><div class="card"><span class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 9h10M7 13h10M7 17h6"/></svg></span><h3>Containers for entities and SLOs</h3><p>One row per entity or per SLO, each with its own status. The container sums them up: all red, some red, all green.</p></div><div class="card"><span class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="14" cy="12" r="1.6" fill="currentColor"/><path d="M17 8l4 4-4 4"/></svg></span><h3>KPIs on the wires</h3><p>A KPI connection shows a single value with its unit, colors itself against a threshold and animates dots in the arrow's direction.</p></div><div class="card"><span class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="11" height="18" rx="2"/><path d="M17 3h4v18h-4"/></svg></span><h3>Edit like a dashboard</h3><p>Floating toolbar on the selected element, resize grips in the corners and an editor docked to the right that applies changes live.</p></div><div class="card"><span class="card-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span><h3>Stored in Grail</h3><p>Diagrams are JSON documents in a Grail lookup table. List, duplicate, upload, download and delete them like dashboards.</p></div></div>
+</section>
+
+<section class="band">
+  <div class="section">
+    <div class="section-head">
+      <h2>Four colors, one rule each</h2>
+      <p>Every element is evaluated against the page timeframe. Color is never the only signal: each status also has an icon and a tooltip.</p>
+    </div>
+    <div class="status-row">
+      <div class="status-card ok"><strong>✓ Pass</strong><p>No active problems, all children green, or the KPI is within its threshold.</p></div>
+      <div class="status-card warn"><strong>! Warning</strong><p>Problems reached the warning count, some children are red or orange, or the KPI crossed its warning value.</p></div>
+      <div class="status-card bad"><strong>✕ Failing</strong><p>Problems reached the failing count, every child is red, or the KPI crossed its failing value.</p></div>
+      <div class="status-card unknown"><strong>? No data</strong><p>The query failed or returned nothing. Hover the icon or open the details to see why.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Up and running in three steps</h2>
+    <p>You need Node.js and a Dynatrace environment where you can install apps.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><h3>Clone and install</h3><p>Get the code and its dependencies.</p><div class="code"><span class="label">bash</span><pre><code>git clone https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator.git
+cd dynatrace_apps_custom_diagram_creator
+npm install</code></pre></div></div>
+    <div class="step"><h3>Point it to your environment</h3><p>Set <code>environmentUrl</code> in <code>app.config.json</code>.</p><div class="code"><span class="label">json</span><pre><code>&quot;environmentUrl&quot;: &quot;https://&lt;your-environment-id&gt;.apps.dynatrace.com/&quot;</code></pre></div></div>
+    <div class="step"><h3>Deploy and open it</h3><p>The first open creates the storage with a sample diagram.</p><div class="code"><span class="label">bash</span><pre><code>npm run deploy</code></pre></div></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="section split">
+    <div class="section-head" style="margin:0">
+      <h2>Let an AI agent draw it for you</h2>
+      <p>The repository ships a skill for agents that use <code>dtctl</code>: it discovers real entities, writes a diagram that matches the JSON Schema, validates every query and registers the result in the same lookup the app reads.</p>
+      <p style="margin-top:16px"><a class="btn" href="agent-skill.html">Read about the agent skill</a></p>
+    </div>
+    <div class="code"><span class="label">bash</span><pre><code>dtctl query &#x27;smartscapeNodes &quot;SERVICE&quot;
+  | filter contains(name, &quot;payment&quot;, caseSensitive: false)
+  | fields id, name&#x27;</code></pre></div>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="inner">
+    <span>Custom Diagram Creator · Built by Jose Eduardo Romero Jimenez</span>
+    <span><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a> · <a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/issues">Issues</a></span>
+  </div>
+</footer>
+</body>
+</html>

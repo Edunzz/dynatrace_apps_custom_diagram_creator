@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started · Custom Diagram Creator</title>
+<meta name="description" content="Install Custom Diagram Creator in a Dynatrace environment and open your first live diagram.">
+<meta property="og:title" content="Getting started · Custom Diagram Creator">
+<meta property="og:description" content="Install Custom Diagram Creator in a Dynatrace environment and open your first live diagram.">
+<meta name="author" content="Jose Eduardo Romero Jimenez">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><img class="brand-mark" src="assets/favicon.svg" alt="">Custom Diagram Creator</a>
+  <nav class="topnav" aria-label="Main"><a href="getting-started.html" aria-current="page">Get started</a><a href="user-guide.html">User guide</a><a href="architecture.html">Architecture</a><a href="data-model.html">Data model</a><a href="agent-skill.html">Agent skill</a><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a></nav>
+  <button class="icon-btn menu-btn" type="button" data-menu-toggle aria-expanded="false" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="icon-btn" href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator" aria-label="Source code on GitHub"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></a>
+  <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+<div class="docs">
+<aside class="sidebar" aria-label="Documentation"><h4>Start</h4><a href="getting-started.html" aria-current="page">Getting started</a><div class="toc"><a href="#requirements">Requirements</a><a href="#install">1. Clone and install</a><a href="#configure">2. Point it to your environment</a><a href="#run-locally">3. Run it locally (optional)</a><a href="#deploy">4. Deploy</a><a href="#first-diagram">5. Open your first diagram</a><a href="#permissions">App scopes</a><a href="#troubleshooting">Troubleshooting</a></div><h4>Guides</h4><a href="user-guide.html">User guide</a><h4>Reference</h4><a href="architecture.html">Architecture</a><a href="data-model.html">Data model</a><a href="agent-skill.html">Agent skill</a></aside>
+<main id="main" class="content">
+<article class="prose">
+<h1>Getting started</h1>
+<p class="subtitle">Install the app in your Dynatrace environment and open your first live diagram.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li><strong>Node.js 20.19 or later</strong> and npm.</li>
+<li>A <strong>Dynatrace SaaS environment</strong> on the platform with AppEngine, where you are allowed to install custom apps.</li>
+<li>For the people who use the app: permissions for the scopes listed below (DQL access to entities, events and the data your KPIs query).</li>
+</ul>
+<h2 id="install">1. Clone and install</h2>
+<div class="code"><span class="label">bash</span><pre><code>git clone https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator.git
+cd dynatrace_apps_custom_diagram_creator
+npm install</code></pre></div>
+<h2 id="configure">2. Point it to your environment</h2>
+<p>Open <code>app.config.json</code> and set your environment URL. The app id <code>my.custom.diagram.creator</code> can stay as it is; change it only if you want to install two copies side by side.</p><div class="code"><span class="label">json</span><pre><code>{
+  &quot;environmentUrl&quot;: &quot;https://&lt;your-environment-id&gt;.apps.dynatrace.com/&quot;,
+  &quot;app&quot;: {
+    &quot;id&quot;: &quot;my.custom.diagram.creator&quot;,
+    &quot;version&quot;: &quot;0.2.0&quot;
+  }
+}</code></pre></div>
+<h2 id="run-locally">3. Run it locally (optional)</h2>
+<p>The development server opens your browser, asks you to sign in with SSO and proxies every platform call with your permissions.</p><div class="code"><span class="label">bash</span><pre><code>npm run start</code></pre></div>
+<h2 id="deploy">4. Deploy</h2>
+<p>Build and install the app in the environment from <code>app.config.json</code>:</p><div class="code"><span class="label">bash</span><pre><code>npm run deploy</code></pre></div><div class="callout warn"><p>Every redeploy needs a new version number: bump <code>version</code> in <code>app.config.json</code> (and in <code>package.json</code>) before running <code>npm run deploy</code> again.</p></div>
+<h2 id="first-diagram">5. Open your first diagram</h2>
+<p>Open <code>https://&lt;your-environment-id&gt;.apps.dynatrace.com/ui/apps/my.custom.diagram.creator</code>. The first time the app opens it creates the lookup table <code>/lookups/custom-diagram-creator/diagrams</code> with a sample diagram, <strong>Sample – Online Banking</strong>, and shows a "Diagram storage created" notification.</p>
+<p>Open the sample, switch to <strong>Edit</strong> and click any component to see the floating toolbar, or double-click it to open its editor. The <a href="user-guide.html">user guide</a> walks through every feature.</p>
+<h2 id="permissions">App scopes</h2>
+<p>The app asks for these scopes when it is installed. Users still need the matching permissions to see the data.</p><div class="table-wrap"><table><thead><tr><th>Scope</th><th>Why</th></tr></thead><tbody><tr><td><code>storage:entities:read</code>, <code>storage:smartscape:read</code></td><td>Entity queries (classic and Smartscape)</td></tr><tr><td><code>storage:events:read</code></td><td>Davis problems (<code>dt.davis.problems</code>)</td></tr><tr><td><code>storage:metrics:read</code>, <code>storage:logs:read</code>, <code>storage:spans:read</code>, <code>storage:bizevents:read</code></td><td>KPI queries</td></tr><tr><td><code>storage:buckets:read</code></td><td>Required by Grail queries</td></tr><tr><td><code>storage:files:read</code>, <code>storage:files:write</code>, <code>storage:files:delete</code></td><td>Read, write and delete the diagrams lookup</td></tr><tr><td><code>slo:slos:read</code>, <code>slo:objective-templates:read</code></td><td>List and evaluate SLOs</td></tr></tbody></table></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-wrap"><table><thead><tr><th>Symptom</th><th>What to check</th></tr></thead><tbody><tr><td>A component is gray</td><td>Its query failed or returned no rows. Hover the status icon or open <strong>View details</strong> to see the Grail message.</td></tr><tr><td>Errors mention missing scopes or permissions</td><td>The user (or the app) lacks a scope from the table above for that data object.</td></tr><tr><td>Deploy fails right after a previous deploy</td><td>The version in <code>app.config.json</code> wasn't bumped.</td></tr><tr><td>The list is empty after deleting the lookup</td><td>Reload the page: the app creates the table again with the sample diagram.</td></tr><tr><td>Entity queries return <code>UNKNOWN_DATA_OBJECT</code></td><td>Newer environments don't have <code>dt.entity.*</code> tables. Use <code>smartscapeNodes</code> (the default templates already do).</td></tr></tbody></table></div>
+
+</article>
+<nav class="pager" aria-label="Pages"><a class="next" href="user-guide.html"><small>Next</small>User guide</a></nav>
+</main>
+</div>
+<footer class="site-footer">
+  <div class="inner">
+    <span>Custom Diagram Creator · Built by Jose Eduardo Romero Jimenez</span>
+    <span><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a> · <a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/issues">Issues</a></span>
+  </div>
+</footer>
+</body>
+</html>

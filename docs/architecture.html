@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture · Custom Diagram Creator</title>
+<meta name="description" content="Architecture of Custom Diagram Creator: DQL execution, problem queries, status engine and Grail lookup persistence.">
+<meta property="og:title" content="Architecture · Custom Diagram Creator">
+<meta property="og:description" content="Architecture of Custom Diagram Creator: DQL execution, problem queries, status engine and Grail lookup persistence.">
+<meta name="author" content="Jose Eduardo Romero Jimenez">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><img class="brand-mark" src="assets/favicon.svg" alt="">Custom Diagram Creator</a>
+  <nav class="topnav" aria-label="Main"><a href="getting-started.html">Get started</a><a href="user-guide.html">User guide</a><a href="architecture.html" aria-current="page">Architecture</a><a href="data-model.html">Data model</a><a href="agent-skill.html">Agent skill</a><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a></nav>
+  <button class="icon-btn menu-btn" type="button" data-menu-toggle aria-expanded="false" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="icon-btn" href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator" aria-label="Source code on GitHub"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></a>
+  <button class="icon-btn" type="button" data-theme-toggle aria-label="Toggle dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+<div class="docs">
+<aside class="sidebar" aria-label="Documentation"><h4>Start</h4><a href="getting-started.html">Getting started</a><h4>Guides</h4><a href="user-guide.html">User guide</a><h4>Reference</h4><a href="architecture.html" aria-current="page">Architecture</a><div class="toc"><a href="#overview">Overview</a><a href="#dql">Running DQL</a><a href="#problems">Problem queries</a><a href="#status-engine">Status engine</a><a href="#persistence">Persistence</a><a href="#editing-model">Editing model</a><a href="#decisions">Decisions verified against a live environment</a></div><a href="data-model.html">Data model</a><a href="agent-skill.html">Agent skill</a></aside>
+<main id="main" class="content">
+<article class="prose">
+<h1>Architecture</h1>
+<p class="subtitle">How a diagram definition becomes live status, and how diagrams are stored.</p>
+<h2 id="overview">Overview</h2>
+<figure class="figure"><svg viewBox="0 0 760 430" role="img" aria-labelledby="arch-title arch-desc" style="display:block;width:100%;height:auto">
+  <title id="arch-title">Architecture overview</title>
+  <desc id="arch-desc">The app runs in the browser. Its status engine queries Grail with DQL and the SLO API; its lookup store reads diagrams with DQL and writes them to the Resource Store. An AI agent with dtctl can register diagrams in the same lookup.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10z" class="dg-arrow"/></marker>
+  </defs>
+  <rect class="dg-box accent" x="16" y="16" width="320" height="398" rx="16"/>
+  <text class="dg-title" x="36" y="46">Custom Diagram Creator</text>
+  <text class="dg-sub" x="36" y="64">React · Strato · React Flow (in the browser)</text>
+
+  <rect class="dg-box" x="36" y="84" width="280" height="56" rx="10"/>
+  <text class="dg-title" x="52" y="108">Diagram list</text>
+  <text class="dg-sub" x="52" y="126">open · duplicate · upload · download · delete</text>
+
+  <rect class="dg-box" x="36" y="156" width="280" height="56" rx="10"/>
+  <text class="dg-title" x="52" y="180">Editor</text>
+  <text class="dg-sub" x="52" y="198">canvas · floating toolbar · docked panels</text>
+
+  <rect class="dg-box" x="36" y="228" width="280" height="64" rx="10"/>
+  <text class="dg-title" x="52" y="252">Status engine</text>
+  <text class="dg-sub" x="52" y="270">per-cycle cache · 4 queries in flight</text>
+  <text class="dg-sub" x="52" y="284">abort on new cycle · auto-refresh</text>
+
+  <rect class="dg-box" x="36" y="308" width="280" height="86" rx="10"/>
+  <text class="dg-title" x="52" y="332">Lookup store</text>
+  <text class="dg-sub" x="52" y="350">rows of base64 JSON · whole-table upload</text>
+  <text class="dg-sub" x="52" y="366">optimistic concurrency on updatedAt</text>
+
+  <rect class="dg-box" x="470" y="40" width="274" height="74" rx="12"/>
+  <text class="dg-title" x="488" y="66">Grail Query API</text>
+  <text class="dg-sub" x="488" y="84">DQL: entities · problems · KPIs</text>
+  <text class="dg-sub" x="488" y="100">load "/lookups/…/diagrams"</text>
+
+  <rect class="dg-box" x="470" y="150" width="274" height="60" rx="12"/>
+  <text class="dg-title" x="488" y="176">SLO API</text>
+  <text class="dg-sub" x="488" y="194">start / poll evaluations</text>
+
+  <rect class="dg-box" x="470" y="246" width="274" height="72" rx="12"/>
+  <text class="dg-title" x="488" y="272">Grail Resource Store</text>
+  <text class="dg-sub" x="488" y="290">lookup:upload (overwrite)</text>
+  <text class="dg-sub" x="488" y="306">/lookups/custom-diagram-creator/diagrams</text>
+
+  <rect class="dg-box" x="470" y="350" width="274" height="60" rx="12" stroke-dasharray="5 4"/>
+  <text class="dg-title" x="488" y="376">AI agent + dtctl</text>
+  <text class="dg-sub" x="488" y="394">skill/SKILL.md · same lookup format</text>
+
+  <path class="dg-edge" d="M316 252 C 400 252, 400 80, 462 80" marker-end="url(#a)"/>
+  <path class="dg-edge" d="M316 266 C 400 266, 400 180, 462 180" marker-end="url(#a)"/>
+  <path class="dg-edge" d="M316 340 C 400 340, 410 282, 462 282" marker-end="url(#a)"/>
+  <path class="dg-edge" d="M316 326 C 420 326, 420 104, 462 104" marker-end="url(#a)" stroke-dasharray="5 4"/>
+  <path class="dg-edge" d="M607 350 V326" marker-end="url(#a)" stroke-dasharray="5 4"/>
+  <text class="dg-label" x="382" y="160">DQL</text>
+  <text class="dg-label" x="392" y="222">SLO</text>
+  <text class="dg-label" x="384" y="306">save</text>
+  <text class="dg-label" x="430" y="132">read</text>
+</svg><figcaption>The app runs entirely in the browser and talks to platform APIs with the user's permissions.</figcaption></figure><div class="table-wrap"><table><thead><tr><th>Layer</th><th>Files</th><th>Responsibility</th></tr></thead><tbody><tr><td>Model</td><td><code>ui/app/model/</code></td><td>zod schema (single source of truth), runtime status types, factories and the sample diagram</td></tr><tr><td>Services</td><td><code>ui/app/services/</code></td><td>DQL execution and validators, problem query builder, status engine, SLO client, lookup store, icons, time expressions</td></tr><tr><td>Hooks</td><td><code>ui/app/hooks/</code></td><td>Live status cycle, auto-refresh, undo/redo</td></tr><tr><td>Canvas</td><td><code>ui/app/canvas/</code></td><td>React Flow wrapper, nodes, edges, floating toolbars, status colors</td></tr><tr><td>Panels and pages</td><td><code>ui/app/panels/</code>, <code>pages/</code>, <code>toolbar/</code></td><td>Docked editors, details, editor toolbar, palette, list and editor pages</td></tr></tbody></table></div><p>Nodes and edges read their status from a React context instead of their data, so a refresh never rewrites the diagram itself.</p>
+<h2 id="dql">Running DQL</h2>
+<p><code>services/dql.ts</code> wraps <code>@dynatrace-sdk/client-query</code>: <code>queryExecute</code> with an ISO timeframe and the user's time zone, then <code>queryPoll</code> until the query succeeds or fails. Results are normalized to records, columns and Grail types — <code>long</code> values arrive as strings, so numeric detection uses the types.</p><div class="table-wrap"><table><thead><tr><th>Validator</th><th>Used for</th><th>Rule</th></tr></thead><tbody><tr><td><code>assertColumns(["id"])</code></td><td>Entity component</td><td>must return <code>id</code>; a missing <code>name</code> is a warning</td></tr><tr><td><code>assertColumns(["id", "name"])</code></td><td>Container (entities)</td><td>both columns are mandatory</td></tr><tr><td><code>assertSingleValue()</code></td><td>KPI connection</td><td>first row; chosen column or first numeric; arrays use the last value</td></tr><tr><td><code>assertTable()</code></td><td>KPI block</td><td>at least one column</td></tr></tbody></table></div><p>The timeframe selector keeps expressions such as <code>now()-2h</code>; the query API needs ISO timestamps, so they are resolved at the start of every refresh cycle and relative timeframes move forward with auto-refresh.</p>
+<h2 id="problems">Problem queries</h2>
+<p>One query per component (or per container), with the timeframe and ids inlined so the details panel can show exactly what ran:</p><div class="code"><span class="label">dql</span><pre><code>fetch dt.davis.problems, from: &quot;&lt;from&gt;&quot;, to: &quot;&lt;to&gt;&quot;
+| filter not(dt.davis.is_duplicate)
+| dedup event.id, sort: {timestamp desc}
+| filter event.status == &quot;ACTIVE&quot;          // status only; the details query omits it
+| filter iAny(in(affected_entity_ids[], array(&lt;ids&gt;)))
+      or iAny(in(toString(smartscape.affected_entity.ids[]), array(&lt;ids&gt;)))
+| filter &lt;match&gt;                           // optional
+| fields event.id, event.kind, display_id, event.name, event.status, event.category,
+         event.start, event.end, affected_entity_ids, smartscape.affected_entity.ids,
+         root_cause_entity_id, root_cause_entity_name
+| sort event.start desc
+| limit 1000</code></pre></div><ul>
+<li><code>dedup</code> keeps the latest record of each problem in the timeframe, so a problem that closed before the end isn't counted as active.</li>
+<li>Matching both id arrays makes classic ids (<code>SERVICE-…</code>) and Smartscape ids work; <code>id_classic</code> is matched too when the entity query returns it.</li>
+<li>Containers run a single problem query for all their ids and group the problems per child in memory.</li>
+</ul>
+<h2 id="status-engine">Status engine</h2>
+<ul>
+<li><strong>Triggers:</strong> load, timeframe change, manual refresh, auto-refresh, and changes made in the editor panel (for that element only).</li>
+<li><strong>Cache:</strong> during a cycle, results are cached by timeframe + query, so identical queries run once.</li>
+<li><strong>Concurrency:</strong> at most four queries in flight.</li>
+<li><strong>Cancellation:</strong> a full refresh aborts the previous cycle with an <code>AbortController</code>.</li>
+<li><strong>Progressive rendering:</strong> each element is painted as soon as its queries finish and keeps its previous color while refreshing.</li>
+</ul><div class="code"><span class="label">ts</span><pre><code>function evalThreshold(v: number, t: Threshold): &quot;pass&quot; | &quot;warning&quot; | &quot;failing&quot; {
+  const bad = (lim: number | null) =&gt; lim !== null &amp;&amp; (t.direction === &quot;above&quot; ? v &gt; lim : v &lt; lim);
+  if (bad(t.failing)) return &quot;failing&quot;;
+  if (bad(t.warning)) return &quot;warning&quot;;
+  return &quot;pass&quot;;
+}</code></pre></div><p>SLO containers start and poll SLO evaluations and map <code>SUCCESS</code> / <code>WARNING</code> / <code>FAILURE</code> / <code>ERROR</code> to pass, warning, failing and no data.</p>
+<h2 id="persistence">Persistence</h2>
+<p>Diagrams live in the Grail lookup <code>/lookups/custom-diagram-creator/diagrams</code>, written through <code>lookupDataClient</code> from <code>@dynatrace-sdk/client-resource-store</code>.</p>
+<ul>
+<li><strong>Read</strong> with <code>load "…"</code> queries; the list never loads the payload column.</li>
+<li><strong>Write</strong> replaces the whole table: load all rows, upsert one, upload JSONL with <code>overwrite: true</code>.</li>
+<li><strong>Typed parse pattern:</strong> with a plain <code>JSON:json</code> pattern Grail turns ISO dates into timestamps (with nanoseconds) and would alter any name that looks like a date, so every column is typed explicitly.</li>
+<li><strong>Concurrency:</strong> the editor keeps the <code>updatedAt</code> it loaded; a different value on save opens the Overwrite / Reload dialog.</li>
+<li><strong>Bootstrap:</strong> <code>UNKNOWN_TABULAR_FILE</code> on first load creates the table with the sample diagram.</li>
+<li><strong>Limits:</strong> 100 MB per lookup file; the app warns above 5 MB per diagram.</li>
+</ul><div class="code"><span class="label">dpl</span><pre><code>JSON{STRING:id, STRING:name, STRING:description, STRING:owner, STRING:createdAt, STRING:updatedAt, BOOLEAN:deleted, STRING:payload}:row</code></pre></div>
+<h2 id="editing-model">Editing model</h2>
+<ul>
+<li><strong>Chrome:</strong> React Flow <code>NodeToolbar</code> and <code>EdgeToolbar</code> for the floating toolbars and two <code>NodeResizeControl</code> grips per node.</li>
+<li><strong>Docked panels:</strong> editors and details sit next to the canvas; editors use Strato <code>Tabs</code> and <code>Accordion</code>.</li>
+<li><strong>Live apply:</strong> each change is validated with zod and pushed to the canvas with a commit mode — canvas only, status refresh after 900 ms (thresholds, filters) or immediately (Run). Pending refreshes run when the panel closes or switches.</li>
+<li><strong>Undo:</strong> the first change of a panel session records one snapshot; undo and redo remount the open panel with the restored data.</li>
+</ul>
+<h2 id="decisions">Decisions verified against a live environment</h2>
+<div class="table-wrap"><table><thead><tr><th>Topic</th><th>Decision</th></tr></thead><tbody><tr><td>Entities</td><td>Smartscape templates; <code>fetch dt.entity.service</code> returned <code>UNKNOWN_DATA_OBJECT</code> in a new environment</td></tr><tr><td>SLO SDK</td><td><code>@dynatrace-sdk/client-service-level-objectives</code> (there is no <code>client-slo</code> package)</td></tr><tr><td>Icons</td><td>Only real exports of <code>@dynatrace/strato-icons</code>, e.g. <code>ApplicationsIcon</code> and <code>HostsIcon</code></td></tr><tr><td>Problem links</td><td><code>view-problem</code> intent of <code>dynatrace.davis.problems</code> with <code>event.id</code> and <code>event.kind</code></td></tr><tr><td>JSON Schema</td><td>zod 4's built-in <code>z.toJSONSchema</code></td></tr></tbody></table></div>
+
+</article>
+<nav class="pager" aria-label="Pages"><a class="prev" href="user-guide.html"><small>Previous</small>User guide</a><a class="next" href="data-model.html"><small>Next</small>Data model</a></nav>
+</main>
+</div>
+<footer class="site-footer">
+  <div class="inner">
+    <span>Custom Diagram Creator · Built by Jose Eduardo Romero Jimenez</span>
+    <span><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a> · <a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/issues">Issues</a></span>
+  </div>
+</footer>
+</body>
+</html>

@@ -62,7 +62,7 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) 
                   color: problems > 0 ? STATUS_COLOR[s] : Colors.Text.Neutral.Subdued,
                   fontVariantNumeric: "tabular-nums",
                 }}
-                aria-label={`${problems} problems activos`}
+                aria-label={`${problems} active problems`}
               >
                 {problems}
               </span>

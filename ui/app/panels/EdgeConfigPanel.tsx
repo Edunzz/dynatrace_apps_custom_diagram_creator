@@ -72,22 +72,22 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
 
   const visualFields = (
     <Flex flexDirection="column" gap={12} paddingTop={12}>
-      <Field label="Dirección">
+      <Field label="Direction">
         <ToggleButtonGroup
           value={draft.direction}
           onChange={(v) => update({ ...draft, direction: v === "backward" ? "backward" : v === "none" ? "none" : "forward" })}
         >
-          <ToggleButtonGroup.Item value="forward">→ origen a destino</ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value="backward">← destino a origen</ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value="none">— sin flecha</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="forward">→ source to target</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="backward">← target to source</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="none">— no arrow</ToggleButtonGroup.Item>
         </ToggleButtonGroup>
       </Field>
-      <Field label="Etiqueta (opcional)">
+      <Field label="Label (optional)">
         <TextInput value={draft.label ?? ""} onChange={(v) => update({ ...draft, label: v || undefined })} />
       </Field>
       {draft.type === "kpi" && (
         <Switch value={kpi.animated} onChange={(checked) => setKpi({ ...kpi, animated: checked })}>
-          Animar (bolitas en el sentido de la flecha)
+          Animate (dots flow in the arrow's direction)
         </Switch>
       )}
     </Flex>
@@ -95,13 +95,13 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
 
   return (
     <SidePanel
-      title={draft.label || (draft.type === "kpi" ? "Conexión KPI" : "Conexión")}
+      title={draft.label || (draft.type === "kpi" ? "KPI connection" : "Connection")}
       subtitle={draft.type === "kpi" ? "KPI relation" : "Normal"}
       onClose={onClose}
       actions={
         <Menu>
           <Menu.Trigger>
-            <Button aria-label="Más acciones" size="condensed">
+            <Button aria-label="More actions" size="condensed">
               <Button.Prefix>
                 <DotMenuIcon />
               </Button.Prefix>
@@ -112,7 +112,7 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
               <Menu.Prefix>
                 <DeleteIcon />
               </Menu.Prefix>
-              Eliminar conexión
+              Delete connection
             </Menu.Item>
           </Menu.Content>
         </Menu>
@@ -120,7 +120,7 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
     >
       <Flex flexDirection="column" gap={8}>
         {error && <InlineMessage kind="error">{error}</InlineMessage>}
-        <Field label="Tipo de conexión">
+        <Field label="Connection type">
           <ToggleButtonGroup
             value={draft.type}
             onChange={(v) => update({ ...draft, type: v === "kpi" ? "kpi" : "normal", kpi: v === "kpi" ? kpi : draft.kpi }, "now")}
@@ -132,14 +132,14 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
 
         {draft.type === "kpi" ? (
           <Tabs key="kpi">
-            <Tab title="Datos">
+            <Tab title="Data">
               <Accordion multiple defaultExpanded={["dql", "value"]}>
                 <Accordion.Section id="dql">
                   <Accordion.SectionLabel>DQL</Accordion.SectionLabel>
                   <Accordion.SectionContent>
                     <DqlField
-                      label="DQL (debe devolver un único valor)"
-                      hint="Se toma la primera fila y la columna elegida (o la primera numérica). Run aplica la consulta al diagrama."
+                      label="DQL (must return a single value)"
+                      hint="Uses the first row and the selected column (or the first numeric one). Run applies the query to the diagram."
                       value={kpi.dql}
                       onChange={(v) => setKpi({ ...kpi, dql: v })}
                       onRun={() => setKpi(kpi, "now")}
@@ -153,16 +153,16 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
                   </Accordion.SectionContent>
                 </Accordion.Section>
                 <Accordion.Section id="value">
-                  <Accordion.SectionLabel>Valor</Accordion.SectionLabel>
+                  <Accordion.SectionLabel>Value</Accordion.SectionLabel>
                   <Accordion.SectionContent>
                     <Flex flexDirection="column" gap={12}>
-                      <Field label="Columna del valor">
+                      <Field label="Value column">
                         <Select
                           value={kpi.valueField ?? FIRST_NUMERIC}
                           onChange={(v) => setKpi({ ...kpi, valueField: !v || v === FIRST_NUMERIC ? undefined : v }, "debounced")}
                         >
                           <Select.Content>
-                            <Select.Option value={FIRST_NUMERIC}>Primera columna numérica</Select.Option>
+                            <Select.Option value={FIRST_NUMERIC}>First numeric column</Select.Option>
                             {fieldOptions.map((c) => (
                               <Select.Option key={c} value={c}>
                                 {c}
@@ -172,10 +172,10 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
                         </Select>
                       </Field>
                       <Flex gap={12}>
-                        <Field label="Unidad">
+                        <Field label="Unit">
                           <TextInput value={kpi.unit ?? ""} onChange={(v) => setKpi({ ...kpi, unit: v || undefined })} placeholder="ms, %, req/s…" />
                         </Field>
-                        <Field label="Decimales">
+                        <Field label="Decimals">
                           <NumberInputV2
                             value={kpi.decimals}
                             min={0}
@@ -189,13 +189,13 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
                 </Accordion.Section>
               </Accordion>
             </Tab>
-            <Tab title="Umbral">
+            <Tab title="Threshold">
               <Flex flexDirection="column" gap={12} paddingTop={12}>
-                <Field label="Dirección del umbral">
+                <Field label="Threshold direction">
                   <Select value={t.direction} onChange={(v) => v && setKpi({ ...kpi, threshold: { ...t, direction: v } }, "debounced")}>
                     <Select.Content>
-                      <Select.Option value="above">above: malo si el valor está por encima</Select.Option>
-                      <Select.Option value="below">below: malo si el valor está por debajo</Select.Option>
+                      <Select.Option value="above">above: bad when the value is higher</Select.Option>
+                      <Select.Option value="below">below: bad when the value is lower</Select.Option>
                     </Select.Content>
                   </Select>
                 </Field>

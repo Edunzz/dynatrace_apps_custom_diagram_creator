@@ -9,7 +9,7 @@ import { ICON_GROUPS, ICON_NAMES, RELEVANT_GROUPS, iconsForGroup, resolveIcon } 
 export interface IconPickerProps {
   value: string;
   onChange: (icon: string) => void;
-  /** Component type: drives the «Relevantes» filter. "custom" = no filter. */
+  /** Component type: drives the "Relevant" filter. "custom" = no filter. */
   componentType: ComponentType | "custom";
 }
 
@@ -41,12 +41,12 @@ export function IconPicker({ value, onChange, componentType }: IconPickerProps) 
         </Button.Prefix>
         {value}
       </Button>
-      <Modal title="Elegir icono" show={open} onDismiss={() => setOpen(false)} size="large">
+      <Modal title="Choose icon" show={open} onDismiss={() => setOpen(false)} size="large">
         <Flex flexDirection="column" gap={12}>
-          <TextInput value={search} onChange={(v) => setSearch(v)} placeholder="Buscar icono…" />
+          <TextInput value={search} onChange={(v) => setSearch(v)} placeholder="Search icons…" />
           <ToggleButtonGroup value={group} onChange={(v) => setGroup(v)}>
-            {relevantGroups.length > 0 && <ToggleButtonGroup.Item value="relevant">Relevantes</ToggleButtonGroup.Item>}
-            <ToggleButtonGroup.Item value="all">Todos ({ICON_NAMES.length})</ToggleButtonGroup.Item>
+            {relevantGroups.length > 0 && <ToggleButtonGroup.Item value="relevant">Relevant</ToggleButtonGroup.Item>}
+            <ToggleButtonGroup.Item value="all">All ({ICON_NAMES.length})</ToggleButtonGroup.Item>
             {ICON_GROUPS.map((g) => (
               <ToggleButtonGroup.Item key={g.id} value={g.id}>
                 {g.label}
@@ -72,7 +72,7 @@ export function IconPicker({ value, onChange, componentType }: IconPickerProps) 
                 </button>
               );
             })}
-            {names.length === 0 && <span>Sin resultados</span>}
+            {names.length === 0 && <span>No results</span>}
           </div>
         </Flex>
       </Modal>

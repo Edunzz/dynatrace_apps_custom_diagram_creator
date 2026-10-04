@@ -141,7 +141,7 @@ export function parseDiagram(input: unknown): { ok: true; diagram: Diagram } | {
   }
   const error = result.error.issues
     .slice(0, 5)
-    .map((issue) => `${issue.path.join(".") || "(raíz)"}: ${issue.message}`)
+    .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
     .join("; ");
   return { ok: false, error };
 }

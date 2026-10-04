@@ -7,7 +7,7 @@ function sizeOf(node: FlowNode): { w: number; h: number } {
   return { w, h };
 }
 
-/** "Auto-arrange" («Ordenar automáticamente»): left-to-right layers with dagre. */
+/** "Auto-arrange": left-to-right layers with dagre. */
 export function autoLayout(nodes: FlowNode[], edges: FlowEdge[]): FlowNode[] {
   const g = new graphlib.Graph();
   g.setGraph({ rankdir: "LR", nodesep: 60, ranksep: 140, marginx: 20, marginy: 20 });

@@ -21,7 +21,7 @@ export function KpiBlock({ config, state }: { config: KpiBlockConfig; state?: Kp
         {config.title}
       </div>
       {!state || state.status === "loading" ? (
-        <ProgressCircle size="small" aria-label="Cargando KPIs" />
+        <ProgressCircle size="small" aria-label="Loading KPIs" />
       ) : state.status === "error" ? (
         <div style={{ fontSize: 11, color: Colors.Text.Critical.Default, whiteSpace: "normal" }}>{state.error}</div>
       ) : state.result ? (

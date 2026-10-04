@@ -27,7 +27,7 @@ export function Palette({ onAdd }: { onAdd: (item: PaletteItem) => void }) {
         overflowY: "auto",
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: Colors.Text.Neutral.Subdued, marginBottom: 4 }}>Componentes</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: Colors.Text.Neutral.Subdued, marginBottom: 4 }}>Components</div>
       {items.map((item) => {
         const Icon = resolveIcon(DEFAULT_ICONS[item.id]);
         return (
@@ -37,7 +37,7 @@ export function Palette({ onAdd }: { onAdd: (item: PaletteItem) => void }) {
             draggable
             role="button"
             tabIndex={0}
-            title="Arrastra al lienzo o pulsa para añadir"
+            title="Drag onto the canvas or click to add"
             onDragStart={(e) => {
               e.dataTransfer.setData(PALETTE_MIME, item.id);
               e.dataTransfer.effectAllowed = "move";
@@ -56,8 +56,8 @@ export function Palette({ onAdd }: { onAdd: (item: PaletteItem) => void }) {
         );
       })}
       <div style={{ fontSize: 11, color: Colors.Text.Neutral.Subdued, marginTop: 8, lineHeight: 1.4 }}>
-        Doble clic en un nodo o conexión para configurarlo. Arrastra desde los puntos de un nodo para conectarlo.
-        Supr/Retroceso elimina la selección.
+        Double-click a node or connection to configure it. Drag from the dots on a node to connect it.
+        Delete/Backspace removes the selection.
       </div>
     </div>
   );

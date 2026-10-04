@@ -26,7 +26,7 @@ describe("resolveTimeExpression", () => {
 
   it("ISO 8601 and invalid expressions", () => {
     expect(resolveTimeExpression("2026-10-04T06:00:00Z", now)?.toISOString()).toBe("2026-10-04T06:00:00.000Z");
-    expect(resolveTimeExpression("ayer", now)).toBeNull();
+    expect(resolveTimeExpression("yesterday", now)).toBeNull();
   });
 });
 

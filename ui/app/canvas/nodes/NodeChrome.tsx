@@ -40,18 +40,18 @@ export function NodeChrome({ id, selected, minWidth, minHeight }: { id: string; 
   return (
     <>
       <NodeToolbar isVisible={selected} position={Position.Top} align="start" offset={8} className="cdc-floating-toolbar nodrag nopan">
-        <span className="cdc-size-badge" aria-label="Tamaño">
+        <span className="cdc-size-badge" aria-label="Size">
           {w} × {h}
         </span>
-        <ToolbarButton label="Duplicar" onClick={() => duplicateNode(id)}>
+        <ToolbarButton label="Duplicate" onClick={() => duplicateNode(id)}>
           <DuplicateIcon />
         </ToolbarButton>
-        <ToolbarButton label="Editar" onClick={() => openConfig("node", id)}>
+        <ToolbarButton label="Edit" onClick={() => openConfig("node", id)}>
           <EditIcon />
         </ToolbarButton>
         <Menu>
           <Menu.Trigger>
-            <Button aria-label="Más acciones" size="condensed">
+            <Button aria-label="More actions" size="condensed">
               <Button.Prefix>
                 <DotMenuIcon />
               </Button.Prefix>
@@ -62,13 +62,13 @@ export function NodeChrome({ id, selected, minWidth, minHeight }: { id: string; 
               <Menu.Prefix>
                 <InformationIcon />
               </Menu.Prefix>
-              Ver detalle
+              View details
             </Menu.Item>
             <Menu.Item onSelect={() => deleteElement("node", id)}>
               <Menu.Prefix>
                 <DeleteIcon />
               </Menu.Prefix>
-              Eliminar
+              Delete
             </Menu.Item>
           </Menu.Content>
         </Menu>

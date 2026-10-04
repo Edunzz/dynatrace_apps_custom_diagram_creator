@@ -24,18 +24,18 @@ export function KpiBlockEditor({
   return (
     <Flex flexDirection="column" gap={12} paddingTop={12}>
       <Switch value={enabled} onChange={(checked) => onChange({ ...kpi, enabled: checked }, "now")}>
-        Añadir KPIs bajo el nodo
+        Show KPIs under the node
       </Switch>
       {enabled && (
         <>
-          <Field label="Título">
+          <Field label="Title">
             <TextInput value={kpi.title} onChange={(v) => onChange({ ...kpi, title: v })} />
           </Field>
-          <Field label="Máximo de filas">
+          <Field label="Max rows">
             <NumberInputV2 value={kpi.maxRows} min={1} max={50} onChange={(v) => onChange({ ...kpi, maxRows: Math.max(1, v ?? 5) })} />
           </Field>
           <DqlField
-            label="DQL (debe devolver una tabla)"
+            label="DQL (must return a table)"
             value={kpi.dql}
             onChange={(v) => onChange({ ...kpi, dql: v })}
             onRun={() => onChange(kpi, "now")}

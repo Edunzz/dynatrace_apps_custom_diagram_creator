@@ -58,12 +58,12 @@ export async function runQuery(
     return normalizeResult(start.result);
   }
   if (!start.requestToken) {
-    throw new Error(`La consulta terminó en estado ${start.state} sin resultado.`);
+    throw new Error(`The query ended in state ${start.state} without a result.`);
   }
 
   for (let i = 0; i < MAX_POLLS; i++) {
     if (signal?.aborted) {
-      throw new DOMException("Consulta cancelada", "AbortError");
+      throw new DOMException("Query cancelled", "AbortError");
     }
     const poll = await queryExecutionClient.queryPoll({
       requestToken: start.requestToken,
@@ -74,10 +74,10 @@ export async function runQuery(
       return normalizeResult(poll.result);
     }
     if (poll.state === "FAILED" || poll.state === "CANCELLED" || poll.state === "RESULT_GONE") {
-      throw new Error(`La consulta terminó en estado ${poll.state}.`);
+      throw new Error(`The query ended in state ${poll.state}.`);
     }
   }
-  throw new Error("La consulta excedió el tiempo máximo de espera.");
+  throw new Error("The query exceeded the maximum wait time.");
 }
 
 interface ErrorBodyShape {
@@ -98,10 +98,10 @@ export function errorMessage(err: unknown): string {
     const base = details?.errorMessage ?? e.body?.error?.message ?? e.message;
     const extra: string[] = [];
     if (details?.missingScopes?.length) {
-      extra.push(`scopes faltantes: ${details.missingScopes.join(", ")}`);
+      extra.push(`missing scopes: ${details.missingScopes.join(", ")}`);
     }
     if (details?.missingPermissions?.length) {
-      extra.push(`permisos faltantes: ${details.missingPermissions.join(", ")}`);
+      extra.push(`missing permissions: ${details.missingPermissions.join(", ")}`);
     }
     if (base) {
       return extra.length ? `${base} (${extra.join("; ")})` : base;
@@ -154,8 +154,8 @@ export function numericColumns(result: DqlResult): string[] {
 export function assertColumns(result: DqlResult, required: string[]): string | null {
   const missing = required.filter((c) => !result.columns.includes(c));
   if (missing.length) {
-    return `La DQL debe devolver la(s) columna(s): ${missing.join(", ")}. Columnas devueltas: ${
-      result.columns.join(", ") || "(ninguna)"
+    return `The query must return the column(s): ${missing.join(", ")}. Returned columns: ${
+      result.columns.join(", ") || "(none)"
     }`;
   }
   return null;
@@ -167,20 +167,20 @@ export function assertSingleValue(
   valueField?: string,
 ): { ok: true; value: number; raw: unknown; field: string } | { ok: false; error: string } {
   if (result.records.length === 0) {
-    return { ok: false, error: "La DQL no devolvió filas." };
+    return { ok: false, error: "The query returned no rows." };
   }
   const first = result.records[0];
   const field = valueField && valueField.trim() !== "" ? valueField : numericColumns(result)[0];
   if (!field) {
-    return { ok: false, error: "La DQL no devuelve ninguna columna numérica." };
+    return { ok: false, error: "The query doesn't return any numeric column." };
   }
   if (!(field in first)) {
-    return { ok: false, error: `La columna "${field}" no existe en el resultado.` };
+    return { ok: false, error: `Column "${field}" doesn't exist in the result.` };
   }
   const raw = first[field];
   const value = Array.isArray(raw) ? lastNumber(raw) : toNumber(raw);
   if (value === null) {
-    return { ok: false, error: `El valor de "${field}" no es numérico.` };
+    return { ok: false, error: `The value of "${field}" isn't numeric.` };
   }
   return { ok: true, value, raw, field };
 }
@@ -188,7 +188,7 @@ export function assertSingleValue(
 /** Validator for KPI blocks: must return a table (at least one column). */
 export function assertTable(result: DqlResult): string | null {
   if (result.columns.length === 0) {
-    return "La DQL no devolvió columnas.";
+    return "The query returned no columns.";
   }
   return null;
 }
@@ -211,7 +211,7 @@ export function formatCell(value: unknown, type?: string): string {
   if (Array.isArray(value)) {
     const n = lastNumber(value);
     if (n !== null) {
-      return `${formatNumber(n)} (últ.)`;
+      return `${formatNumber(n)} (last)`;
     }
     return value.map((v) => formatCell(v)).join(", ");
   }

@@ -86,7 +86,7 @@ export function newDiagram(id: string, name: string, owner: string): Diagram {
 export const SAMPLE_DIAGRAM_ID = "00000000-0000-4000-8000-000000000001";
 
 /**
- * «Sample – Online Banking»: one frontend, two services, a database (entity container),
+ * "Sample – Online Banking": one frontend, two services, a database (entity container),
  * a KPI connection and a custom node with SLOs (filled with real tenant SLOs if any exist).
  */
 export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name: string }>): Diagram {
@@ -95,7 +95,7 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
     schemaVersion: "1.0",
     id: SAMPLE_DIAGRAM_ID,
     name: "Sample – Online Banking",
-    description: "Diagrama de ejemplo creado automáticamente",
+    description: "Sample diagram created automatically",
     owner,
     createdAt: now,
     updatedAt: now,
@@ -125,7 +125,7 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
         data: {
           kind: "entity",
           componentType: "service",
-          name: "API Cuentas",
+          name: "Accounts API",
           entityDql: 'smartscapeNodes "SERVICE"\n| filter contains(name, "account", caseSensitive: false)\n| fields id, name',
           icon: "ServicesIcon",
           failPoint: { problemMatch: 'event.category == "ERROR"', warningMin: 1, failingMin: 2 },
@@ -139,7 +139,7 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
         data: {
           kind: "entity",
           componentType: "service",
-          name: "API Pagos",
+          name: "Payments API",
           entityDql: 'smartscapeNodes "SERVICE"\n| filter contains(name, "payment", caseSensitive: false)\n| fields id, name',
           icon: "ServicesIcon",
           failPoint: { warningMin: 1, failingMin: 1 },
@@ -153,7 +153,7 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
         data: {
           kind: "custom",
           icon: "DatabaseIcon",
-          name: "Bases de datos",
+          name: "Databases",
           mode: "entities",
           entities: {
             dql: 'smartscapeNodes "DB_INSTANCE_*"\n| fields id, name\n| limit 5',
@@ -171,7 +171,7 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
         data: {
           kind: "custom",
           icon: "ServiceLevelObjectivesIcon",
-          name: "SLOs del negocio",
+          name: "Business SLOs",
           mode: "slos",
           slos: slos.slice(0, 3),
           maxVisibleRows: 8,

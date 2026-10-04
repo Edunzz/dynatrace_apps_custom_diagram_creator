@@ -86,7 +86,7 @@ export function useDiagramStatus(
         }
       } catch (e) {
         if (!isAbortError(e)) {
-          console.error("Error calculando el estado del diagrama", e);
+          console.error("Failed to compute the diagram status", e);
         }
       } finally {
         controllersRef.current.delete(controller);

@@ -83,7 +83,7 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
           -F 'request={"filePath":"/lookups/custom-diagram-creator/diagrams","lookupField":"id","overwrite":true,"displayName":"Custom Diagram Creator diagrams","parsePattern":"JSON{STRING:id, STRING:name, STRING:description, STRING:owner, STRING:createdAt, STRING:updatedAt, BOOLEAN:deleted, STRING:payload}:row"};type=application/json' \
           -F 'content=@rows.jsonl'
         ```
-      - Without delete permissions: upload the diagram JSON from the app (list → **Subir**).
+      - Without delete permissions: upload the diagram JSON from the app (list → **Upload**).
    e. Confirm: `dtctl query 'load "/lookups/custom-diagram-creator/diagrams" | fields id, name, updatedAt'`.
 6. **Deliver** the JSON to the user (also as a file) and the registered id. The diagram opens at
    `<environment>/ui/apps/my.custom.diagram.creator/ui/diagram/<id>`.

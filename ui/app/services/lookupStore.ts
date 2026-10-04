@@ -34,7 +34,7 @@ export type DiagramSummary = Omit<DiagramRow, "payload" | "deleted">;
 
 export class ConflictError extends Error {
   constructor(public readonly current: DiagramSummary) {
-    super("El diagrama fue modificado por otro usuario");
+    super("This diagram was modified by someone else");
     this.name = "ConflictError";
   }
 }
@@ -42,9 +42,9 @@ export class ConflictError extends Error {
 export class SizeLimitError extends Error {
   constructor(bytes: number) {
     super(
-      `El almacenamiento de diagramas ocuparía ${(bytes / 1024 / 1024).toFixed(1)} MB y supera el límite de ${
+      `Diagram storage would take ${(bytes / 1024 / 1024).toFixed(1)} MB, which exceeds the limit of ${
         MAX_FILE_BYTES / 1024 / 1024
-      } MB por lookup table.`,
+      } MB per lookup table.`,
     );
     this.name = "SizeLimitError";
   }
@@ -78,7 +78,7 @@ export function decodePayload(payload: string): Diagram {
   const json: unknown = JSON.parse(new TextDecoder().decode(base64ToBytes(payload)));
   const parsed = parseDiagram(json);
   if (!parsed.ok) {
-    throw new Error(`El diagrama almacenado no es válido: ${parsed.error}`);
+    throw new Error(`The stored diagram is not valid: ${parsed.error}`);
   }
   return parsed.diagram;
 }
@@ -193,7 +193,7 @@ export async function getDiagram(id: string, signal?: AbortSignal): Promise<{ di
   const result = await runQuery(query, undefined, { signal, maxResultRecords: 1 });
   const record = result.records[0];
   if (!record || record.deleted === true) {
-    throw new Error(`No existe el diagrama ${id}.`);
+    throw new Error(`Diagram ${id} doesn't exist.`);
   }
   const row = parseRow(record);
   return { diagram: decodePayload(row.payload), updatedAt: row.updatedAt };
@@ -222,7 +222,7 @@ export async function writeAllRows(rows: DiagramRow[]): Promise<void> {
         overwrite: true,
         autoFlatten: true,
         displayName: LOOKUP_DISPLAY_NAME,
-        description: "Diagramas de la app Custom Diagram Creator (payload = JSON en base64)",
+        description: "Diagrams of the Custom Diagram Creator app (payload = base64-encoded JSON)",
       },
     },
   });
@@ -231,7 +231,7 @@ export async function writeAllRows(rows: DiagramRow[]): Promise<void> {
 export interface SaveOptions {
   /** updatedAt the diagram was opened with. If it differs in the lookup, ConflictError is thrown. */
   expectedUpdatedAt?: string;
-  /** Skips the concurrency check («Sobrescribir» / overwrite option). */
+  /** Skips the concurrency check ("Overwrite" option). */
   force?: boolean;
 }
 

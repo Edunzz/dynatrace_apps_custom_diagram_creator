@@ -26,8 +26,8 @@ export const STATUS_LABEL: Record<Status, string> = {
   pass: "OK",
   warning: "Warning",
   failing: "Failing",
-  unknown: "Sin datos / error",
-  loading: "Cargando…",
+  unknown: "No data / error",
+  loading: "Loading…",
 };
 
 /** Color is never the only cue: each status also has its own icon. */

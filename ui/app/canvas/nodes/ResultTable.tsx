@@ -24,7 +24,7 @@ export function ResultTable({ result, maxRows }: { result: DqlResult; maxRows?: 
       <tbody>
         {rows.length === 0 ? (
           <tr>
-            <td colSpan={result.columns.length}>Sin filas</td>
+            <td colSpan={result.columns.length}>No rows</td>
           </tr>
         ) : (
           rows.map((record, i) => (

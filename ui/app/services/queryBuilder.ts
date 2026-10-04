@@ -101,13 +101,13 @@ export function countProblemsFor(keys: string[], problems: ProblemRow[]): number
 
 /** Preloaded entity DQL templates per type (editable). They use Smartscape (dt.entity.* is deprecated). */
 export const ENTITY_DQL_TEMPLATES: Record<ComponentType, string> = {
-  service: 'smartscapeNodes "SERVICE"\n| filter contains(name, "<texto>", caseSensitive: false)\n| fields id, name',
-  process: 'smartscapeNodes "PROCESS"\n| filter contains(name, "<texto>", caseSensitive: false)\n| fields id, name',
-  host: 'smartscapeNodes "HOST"\n| filter contains(name, "<texto>", caseSensitive: false)\n| fields id, name',
+  service: 'smartscapeNodes "SERVICE"\n| filter contains(name, "<text>", caseSensitive: false)\n| fields id, name',
+  process: 'smartscapeNodes "PROCESS"\n| filter contains(name, "<text>", caseSensitive: false)\n| fields id, name',
+  host: 'smartscapeNodes "HOST"\n| filter contains(name, "<text>", caseSensitive: false)\n| fields id, name',
   workload:
-    'smartscapeNodes "K8S_DEPLOYMENT", "K8S_STATEFULSET", "K8S_DAEMONSET"\n| filter contains(name, "<texto>", caseSensitive: false)\n| fields id, name, type',
+    'smartscapeNodes "K8S_DEPLOYMENT", "K8S_STATEFULSET", "K8S_DAEMONSET"\n| filter contains(name, "<text>", caseSensitive: false)\n| fields id, name, type',
   frontend: 'smartscapeNodes "FRONTEND"\n| filter frontend.type == "web"\n| fields id, id_classic, name',
   mobile: 'smartscapeNodes "FRONTEND"\n| filter frontend.type != "web"\n| fields id, id_classic, name',
 };
 
-export const CUSTOM_DQL_TEMPLATE = 'smartscapeNodes "SERVICE"\n| filter contains(name, "<texto>", caseSensitive: false)\n| fields id, name\n| limit 20';
+export const CUSTOM_DQL_TEMPLATE = 'smartscapeNodes "SERVICE"\n| filter contains(name, "<text>", caseSensitive: false)\n| fields id, name\n| limit 20';

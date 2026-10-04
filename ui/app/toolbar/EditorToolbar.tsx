@@ -84,40 +84,40 @@ export function EditorToolbar(props: EditorToolbarProps) {
       style={{ borderBottom: `1px solid ${Colors.Border.Neutral.Default}`, background: Colors.Background.Surface.Default }}
     >
       <Flex alignItems="center" gap={8} flexWrap="wrap">
-        <IconButton label="Volver a la lista" onClick={props.onBack}>
+        <IconButton label="Back to list" onClick={props.onBack}>
           <ArrowLeftIcon />
         </IconButton>
         <div style={{ width: 280 }}>
-          <TextInput value={props.name} onChange={(v) => props.onNameChange(v)} aria-label="Nombre del diagrama" readOnly={!edit} />
+          <TextInput value={props.name} onChange={(v) => props.onNameChange(v)} aria-label="Diagram name" readOnly={!edit} />
         </div>
-        {props.dirty && <span style={{ fontSize: 12, color: Colors.Text.Warning.Default }}>● Cambios sin guardar</span>}
+        {props.dirty && <span style={{ fontSize: 12, color: Colors.Text.Warning.Default }}>● Unsaved changes</span>}
         <div style={{ flex: 1 }} />
         <ToggleButtonGroup value={props.mode} onChange={(v) => props.onModeChange(v === "view" ? "view" : "edit")}>
           <ToggleButtonGroup.Item value="edit">
             <ToggleButtonGroup.Prefix>
               <EditIcon />
             </ToggleButtonGroup.Prefix>
-            Edición
+            Edit
           </ToggleButtonGroup.Item>
           <ToggleButtonGroup.Item value="view">
             <ToggleButtonGroup.Prefix>
               <ViewIcon />
             </ToggleButtonGroup.Prefix>
-            Vista
+            View
           </ToggleButtonGroup.Item>
         </ToggleButtonGroup>
         <Button variant="accent" color="primary" onClick={props.onSave} loading={props.saving} disabled={!edit && !props.dirty}>
           <Button.Prefix>
             <SaveIcon />
           </Button.Prefix>
-          Guardar
+          Save
         </Button>
-        <Button onClick={props.onSaveAs}>Guardar como</Button>
+        <Button onClick={props.onSaveAs}>Save as</Button>
         <Button onClick={props.onExport}>
           <Button.Prefix>
             <DownloadIcon />
           </Button.Prefix>
-          Exportar JSON
+          Export JSON
         </Button>
       </Flex>
 
@@ -143,46 +143,46 @@ export function EditorToolbar(props: EditorToolbarProps) {
               </Select.Content>
             </Select>
           </div>
-          <IconButton label="Refrescar ahora" onClick={props.onRefresh}>
+          <IconButton label="Refresh now" onClick={props.onRefresh}>
             <RefreshIcon />
           </IconButton>
         </Flex>
         <span style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued, minWidth: 170 }}>
-          {props.refreshing ? "Actualizando…" : `Última actualización: ${formatTime(props.lastUpdated)}`}
+          {props.refreshing ? "Refreshing…" : `Last updated: ${formatTime(props.lastUpdated)}`}
         </span>
         <div style={{ flex: 1 }} />
         <ToggleButtonGroup value={props.background} onChange={(v) => props.onBackgroundChange(v === "grid" ? "grid" : v === "blank" ? "blank" : "dots")}>
-          <ToggleButtonGroup.Item value="dots">Puntos</ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value="grid">Cuadrícula</ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value="blank">Blanco</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="dots">Dots</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="grid">Grid</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="blank">Blank</ToggleButtonGroup.Item>
         </ToggleButtonGroup>
         <Flex alignItems="center" gap={2}>
-          <IconButton label="Alejar" onClick={() => void zoomOut()}>
+          <IconButton label="Zoom out" onClick={() => void zoomOut()}>
             <ZoomOutIcon />
           </IconButton>
           <span style={{ fontSize: 12, width: 44, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
             {Math.round(zoom * 100)} %
           </span>
-          <IconButton label="Acercar" onClick={() => void zoomIn()}>
+          <IconButton label="Zoom in" onClick={() => void zoomIn()}>
             <ZoomInIcon />
           </IconButton>
-          <IconButton label="Ajustar a la vista" onClick={() => void fitView({ padding: 0.15, duration: 300 })}>
+          <IconButton label="Fit view" onClick={() => void fitView({ padding: 0.15, duration: 300 })}>
             <ZoomToFitIcon />
           </IconButton>
         </Flex>
         {edit && (
           <Flex alignItems="center" gap={2}>
-            <IconButton label="Deshacer (Ctrl+Z)" onClick={props.onUndo} disabled={!props.canUndo}>
+            <IconButton label="Undo (Ctrl+Z)" onClick={props.onUndo} disabled={!props.canUndo}>
               <UndoIcon />
             </IconButton>
-            <IconButton label="Rehacer (Ctrl+Y)" onClick={props.onRedo} disabled={!props.canRedo}>
+            <IconButton label="Redo (Ctrl+Y)" onClick={props.onRedo} disabled={!props.canRedo}>
               <RedoIcon />
             </IconButton>
             <Button size="condensed" onClick={props.onAutoLayout}>
               <Button.Prefix>
                 <DistributeIcon />
               </Button.Prefix>
-              Ordenar automáticamente
+              Auto-arrange
             </Button>
           </Flex>
         )}

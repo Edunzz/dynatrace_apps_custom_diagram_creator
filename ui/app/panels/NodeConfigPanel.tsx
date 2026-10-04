@@ -44,7 +44,7 @@ export interface NodeConfigPanelProps {
 type Update<T> = (next: T, commit?: CommitMode) => void;
 
 const warnNoName = (r: DqlResult) =>
-  r.columns.includes("name") ? null : "Aviso: la DQL no devuelve la columna name; se mostrará el id.";
+  r.columns.includes("name") ? null : "Warning: the DQL doesn't return a name column, so the id will be shown.";
 
 function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; update: Update<EntityNodeData>; timeframe: Timeframe }) {
   const changeType = (type: ComponentType) => {
@@ -64,14 +64,14 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
   const fp = draft.failPoint;
   return (
     <Tabs>
-      <Tab title="Datos">
+      <Tab title="Data">
         <Accordion multiple defaultExpanded={["dql", "type"]}>
           <Accordion.Section id="dql">
-            <Accordion.SectionLabel>DQL de entidad</Accordion.SectionLabel>
+            <Accordion.SectionLabel>Entity DQL</Accordion.SectionLabel>
             <Accordion.SectionContent>
               <DqlField
                 label="DQL"
-                hint="Debe devolver la columna id (y preferiblemente name). Se usan todas las filas. Run aplica la consulta al diagrama."
+                hint="Must return an id column (and preferably name). All rows are used. Run applies the query to the diagram."
                 value={draft.entityDql}
                 onChange={(v) => update({ ...draft, entityDql: v })}
                 onRun={() => update(draft, "now")}
@@ -82,7 +82,7 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
             </Accordion.SectionContent>
           </Accordion.Section>
           <Accordion.Section id="type">
-            <Accordion.SectionLabel>Tipo de componente</Accordion.SectionLabel>
+            <Accordion.SectionLabel>Component type</Accordion.SectionLabel>
             <Accordion.SectionContent>
               <Select value={draft.componentType} onChange={(v) => v && changeType(v)}>
                 <Select.Content>
@@ -97,11 +97,11 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
           </Accordion.Section>
         </Accordion>
       </Tab>
-      <Tab title="Estado">
+      <Tab title="Status">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
           <Field
-            label="Match (opcional)"
-            hint='Fragmento DQL que se añade como | filter … a la DQL de problems. Ej.: event.category == "ERROR"'
+            label="Match (optional)"
+            hint='DQL fragment appended as | filter … to the problems DQL. E.g. event.category == "ERROR"'
           >
             <TextInput
               value={fp.problemMatch ?? ""}
@@ -110,14 +110,14 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
             />
           </Field>
           <Flex gap={12}>
-            <Field label="Umbral warning (nº problems)">
+            <Field label="Warning threshold (# problems)">
               <NumberInputV2
                 value={fp.warningMin}
                 min={1}
                 onChange={(v) => update({ ...draft, failPoint: { ...fp, warningMin: Math.max(1, v ?? 1) } }, "debounced")}
               />
             </Field>
-            <Field label="Umbral failing (nº problems)">
+            <Field label="Failing threshold (# problems)">
               <NumberInputV2
                 value={fp.failingMin}
                 min={1}
@@ -126,16 +126,16 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
             </Field>
           </Flex>
           {fp.warningMin > fp.failingMin && (
-            <InlineMessage kind="warning">warning es mayor que failing: el nodo nunca se pondrá naranja.</InlineMessage>
+            <InlineMessage kind="warning">warning is greater than failing: the node will never turn orange.</InlineMessage>
           )}
         </Flex>
       </Tab>
       <Tab title="Visual">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
-          <Field label="Nombre" required>
+          <Field label="Name" required>
             <TextInput value={draft.name} onChange={(v) => update({ ...draft, name: v })} />
           </Field>
-          <Field label="Icono">
+          <Field label="Icon">
             <IconPicker value={draft.icon} componentType={draft.componentType} onChange={(icon) => update({ ...draft, icon })} />
           </Field>
         </Flex>
@@ -183,25 +183,25 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
 
   return (
     <Tabs>
-      <Tab title="Datos">
+      <Tab title="Data">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
-          <Field label="Modo">
+          <Field label="Mode">
             <ToggleButtonGroup
               value={draft.mode}
               onChange={(v) => update({ ...draft, mode: v === "slos" ? "slos" : "entities" }, "debounced")}
             >
-              <ToggleButtonGroup.Item value="entities">Entidades</ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value="entities">Entities</ToggleButtonGroup.Item>
               <ToggleButtonGroup.Item value="slos">SLOs</ToggleButtonGroup.Item>
             </ToggleButtonGroup>
           </Field>
           {draft.mode === "entities" ? (
             <Accordion multiple defaultExpanded={["dql", "options"]}>
               <Accordion.Section id="dql">
-                <Accordion.SectionLabel>DQL de entidades</Accordion.SectionLabel>
+                <Accordion.SectionLabel>Entity DQL</Accordion.SectionLabel>
                 <Accordion.SectionContent>
                   <DqlField
                     label="DQL"
-                    hint="Obligatorio: debe devolver las columnas id y name. Una fila = un subcomponente. Run aplica la consulta al diagrama."
+                    hint="Required: must return id and name columns. Each row is one child. Run applies the query to the diagram."
                     value={entities.dql}
                     onChange={(v) => update({ ...draft, entities: { ...entities, dql: v } })}
                     onRun={() => update(draft, "now")}
@@ -212,10 +212,10 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
                 </Accordion.SectionContent>
               </Accordion.Section>
               <Accordion.Section id="options">
-                <Accordion.SectionLabel>Opciones</Accordion.SectionLabel>
+                <Accordion.SectionLabel>Options</Accordion.SectionLabel>
                 <Accordion.SectionContent>
                   <Flex flexDirection="column" gap={12}>
-                    <Field label="Campo del nombre del subcomponente" hint="Ejecuta la DQL (Run) para ver todas las columnas.">
+                    <Field label="Child name field" hint="Run the query to see all columns.">
                       <Select
                         value={entities.subNameField}
                         onChange={(v) => v && update({ ...draft, entities: { ...entities, subNameField: v } }, "debounced")}
@@ -229,19 +229,19 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
                         </Select.Content>
                       </Select>
                     </Field>
-                    <Field label="Criterio">
+                    <Field label="Criterion">
                       <Select
                         value={entities.criterion}
                         onChange={(v) => v && update({ ...draft, entities: { ...entities, criterion: v } }, "debounced")}
                       >
                         <Select.Content>
-                          <Select.Option value="anyProblem">Cualquier problem activo pone la entidad en rojo</Select.Option>
-                          <Select.Option value="match">Solo los problems que cumplen el match</Select.Option>
+                          <Select.Option value="anyProblem">Any active problem turns the entity red</Select.Option>
+                          <Select.Option value="match">Only problems that satisfy the match</Select.Option>
                         </Select.Content>
                       </Select>
                     </Field>
                     {entities.criterion === "match" && (
-                      <Field label="Match" hint='Fragmento DQL para | filter … Ej.: event.category == "AVAILABILITY"'>
+                      <Field label="Match" hint='DQL fragment for | filter … E.g. event.category == "AVAILABILITY"'>
                         <TextInput
                           value={entities.problemMatch ?? ""}
                           onChange={(v) =>
@@ -255,7 +255,7 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
               </Accordion.Section>
             </Accordion>
           ) : (
-            <Field label="SLOs" hint="El estado se evalúa con el timeframe definido en cada SLO.">
+            <Field label="SLOs" hint="Status is evaluated using the timeframe defined in each SLO.">
               {sloError && <InlineMessage kind="error">{sloError}</InlineMessage>}
               <Select
                 multiple
@@ -282,7 +282,7 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
                 </Select.Content>
               </Select>
               {slos !== null && slos.length === 0 && !sloError && (
-                <InlineMessage kind="info">No hay SLOs en este entorno.</InlineMessage>
+                <InlineMessage kind="info">There are no SLOs in this environment.</InlineMessage>
               )}
             </Field>
           )}
@@ -290,13 +290,13 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
       </Tab>
       <Tab title="Visual">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
-          <Field label="Nombre" required>
+          <Field label="Name" required>
             <TextInput value={draft.name} onChange={(v) => update({ ...draft, name: v })} />
           </Field>
-          <Field label="Icono">
+          <Field label="Icon">
             <IconPicker value={draft.icon} componentType="custom" onChange={(icon) => update({ ...draft, icon })} />
           </Field>
-          <Field label="Filas visibles antes de hacer scroll">
+          <Field label="Visible rows before scrolling">
             <NumberInputV2
               value={draft.maxVisibleRows}
               min={1}
@@ -339,18 +339,18 @@ export function NodeConfigPanel({ nodeId, data, timeframe, onChange, onDelete, o
 
   const subtitle =
     draft.kind === "entity"
-      ? `Componente · ${COMPONENT_LABELS[draft.componentType]}`
-      : `Custom component · ${draft.mode === "slos" ? "SLOs" : "Entidades"}`;
+      ? `Component · ${COMPONENT_LABELS[draft.componentType]}`
+      : `Custom component · ${draft.mode === "slos" ? "SLOs" : "Entities"}`;
 
   return (
     <SidePanel
-      title={draft.name || "(sin nombre)"}
+      title={draft.name || "(untitled)"}
       subtitle={subtitle}
       onClose={onClose}
       actions={
         <Menu>
           <Menu.Trigger>
-            <Button aria-label="Más acciones" size="condensed">
+            <Button aria-label="More actions" size="condensed">
               <Button.Prefix>
                 <DotMenuIcon />
               </Button.Prefix>
@@ -361,14 +361,14 @@ export function NodeConfigPanel({ nodeId, data, timeframe, onChange, onDelete, o
               <Menu.Prefix>
                 <DeleteIcon />
               </Menu.Prefix>
-              Eliminar componente
+              Delete component
             </Menu.Item>
           </Menu.Content>
         </Menu>
       }
     >
       <Flex flexDirection="column" gap={8}>
-        {!draft.name.trim() && <InlineMessage kind="warning">El nombre es obligatorio.</InlineMessage>}
+        {!draft.name.trim() && <InlineMessage kind="warning">Name is required.</InlineMessage>}
         {error && <InlineMessage kind="error">{error}</InlineMessage>}
         {draft.kind === "entity" ? (
           <EntityTabs draft={draft} update={update} timeframe={timeframe} />

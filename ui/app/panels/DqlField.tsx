@@ -65,7 +65,7 @@ export function DqlField({ label, value, onChange, timeframe, validate, warn, on
           </Button>
           {result && !error && (
             <InlineMessage kind={validation ? "error" : "success"}>
-              {validation ?? `${result.records.length} fila(s) · columnas: ${result.columns.join(", ") || "—"}`}
+              {validation ?? `${result.records.length} row(s) · columns: ${result.columns.join(", ") || "—"}`}
             </InlineMessage>
           )}
         </Flex>

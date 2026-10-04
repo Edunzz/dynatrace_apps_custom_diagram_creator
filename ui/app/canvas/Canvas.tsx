@@ -136,7 +136,7 @@ export function Canvas(props: CanvasProps) {
             fontSize: 15,
           }}
         >
-          {edit ? "Añade tu primer componente desde la paleta" : "Este diagrama está vacío. Cambia a «Edición» para añadir componentes."}
+          {edit ? "Add your first component from the palette" : "This diagram is empty. Switch to \"Edit\" to add components."}
         </div>
       )}
     </div>

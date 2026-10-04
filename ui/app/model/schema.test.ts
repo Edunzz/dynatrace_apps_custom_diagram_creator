@@ -25,7 +25,7 @@ describe("diagram schema", () => {
     const parsed = Diagram.parse({
       schemaVersion: "1.0",
       id: "x",
-      name: "Mínimo",
+      name: "Minimal",
       createdAt: "2026-10-04T00:00:00Z",
       updatedAt: "2026-10-04T00:00:00Z",
       settings: {},
@@ -72,7 +72,7 @@ describe("diagram schema", () => {
     const withExtras = {
       ...sample,
       settings: { ...sample.settings, viewport: { x: 10, y: -20, zoom: 0.8 } },
-      edges: [...sample.edges, { ...newKpiEdge("n1", "n3", "e9"), direction: "backward" as const, label: "Latencia" }],
+      edges: [...sample.edges, { ...newKpiEdge("n1", "n3", "e9"), direction: "backward" as const, label: "Latency" }],
     };
     const reimported = parseDiagram(JSON.parse(JSON.stringify(withExtras)));
     expect(reimported.ok && reimported.diagram).toEqual(withExtras);

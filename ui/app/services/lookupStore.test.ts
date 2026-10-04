@@ -82,7 +82,7 @@ describe("payload encoding", () => {
   });
 
   it("rejects payloads that don't match the schema", () => {
-    expect(() => decodePayload(btoa(JSON.stringify({ hello: "world" })))).toThrow(/no es válido/);
+    expect(() => decodePayload(btoa(JSON.stringify({ hello: "world" })))).toThrow(/not valid/);
   });
 
   it("toRow / rowsToJsonl / parseRow preserve the fields", () => {
@@ -114,21 +114,21 @@ describe("CRUD on the lookup", () => {
   });
 
   it("create, read, update with concurrency control, and delete", async () => {
-    const created = await saveDiagram(newDiagram("d-1", "Uno", "a@x.com"));
-    await saveDiagram(newDiagram("d-2", "Dos", "b@x.com"));
+    const created = await saveDiagram(newDiagram("d-1", "One", "a@x.com"));
+    await saveDiagram(newDiagram("d-2", "Two", "b@x.com"));
     expect((await listDiagrams()).map((d) => d.id).sort()).toEqual(["d-1", "d-2"]);
 
     const { diagram, updatedAt } = await getDiagram("d-1");
-    expect(diagram.name).toBe("Uno");
+    expect(diagram.name).toBe("One");
     expect(updatedAt).toBe(created.updatedAt);
 
     // Another user saves in between -> conflict.
     await new Promise((r) => setTimeout(r, 5));
-    await saveDiagram({ ...diagram, name: "Uno (otro usuario)" }, { expectedUpdatedAt: updatedAt });
-    await expect(saveDiagram({ ...diagram, name: "Uno (yo)" }, { expectedUpdatedAt: updatedAt })).rejects.toBeInstanceOf(ConflictError);
-    // «Sobrescribir» (overwrite)
-    await saveDiagram({ ...diagram, name: "Uno (yo)" }, { expectedUpdatedAt: updatedAt, force: true });
-    expect((await getDiagram("d-1")).diagram.name).toBe("Uno (yo)");
+    await saveDiagram({ ...diagram, name: "One (someone else)" }, { expectedUpdatedAt: updatedAt });
+    await expect(saveDiagram({ ...diagram, name: "One (me)" }, { expectedUpdatedAt: updatedAt })).rejects.toBeInstanceOf(ConflictError);
+    // "Overwrite"
+    await saveDiagram({ ...diagram, name: "One (me)" }, { expectedUpdatedAt: updatedAt, force: true });
+    expect((await getDiagram("d-1")).diagram.name).toBe("One (me)");
 
     // Deleting one row doesn't touch the others.
     await deleteDiagrams(["d-1"]);
@@ -143,7 +143,7 @@ describe("CRUD on the lookup", () => {
     expect(await listDiagrams()).toEqual([]);
     await expect(getDiagram("solo")).rejects.toThrow();
     // Saving another diagram removes the marked row.
-    await saveDiagram(newDiagram("nuevo", "Nuevo", "a@x.com"));
-    expect(table.rows?.map((r) => r.id)).toEqual(["nuevo"]);
+    await saveDiagram(newDiagram("new", "New", "a@x.com"));
+    expect(table.rows?.map((r) => r.id)).toEqual(["new"]);
   });
 });

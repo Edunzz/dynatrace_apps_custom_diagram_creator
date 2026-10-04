@@ -62,7 +62,7 @@ export async function evaluateSlo(id: string, signal?: AbortSignal): Promise<Slo
   const name = response.definition?.name ?? id;
   const target = response.definition?.criteria?.[0]?.target;
   if (!result) {
-    return { name, status: "unknown", target, message: "La evaluación del SLO no devolvió resultados." };
+    return { name, status: "unknown", target, message: "The SLO evaluation returned no results." };
   }
   return {
     name,

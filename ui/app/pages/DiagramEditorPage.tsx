@@ -154,7 +154,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       return; // already loaded (e.g. after saving a new diagram and changing the URL)
     }
     if (diagramId === "new") {
-      applyDiagram(newDiagram(newId(), "Nuevo diagrama", currentUser()));
+      applyDiagram(newDiagram(newId(), "New diagram", currentUser()));
       loadedIdRef.current = "new";
       setPersisted(false);
       setLoadedUpdatedAt(undefined);
@@ -496,8 +496,8 @@ function EditorInner({ diagramId }: { diagramId: string }) {
     if (bytes > WARN_DIAGRAM_BYTES) {
       showToast({
         type: "warning",
-        title: "Diagrama muy grande",
-        message: `Ocupa ${(bytes / 1024 / 1024).toFixed(1)} MB en el lookup table (límite total del archivo: 100 MB).`,
+        title: "Diagram is very large",
+        message: `It takes up ${(bytes / 1024 / 1024).toFixed(1)} MB in the lookup table (total file limit: 100 MB).`,
       });
     }
   };
@@ -509,7 +509,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
         return;
       }
       if (!d.name.trim()) {
-        showToast({ type: "warning", title: "El diagrama necesita un nombre" });
+        showToast({ type: "warning", title: "The diagram needs a name" });
         return;
       }
       setSaving(true);
@@ -521,7 +521,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
         setPersisted(true);
         setDirty(false);
         setConflict(null);
-        showToast({ type: "success", title: "Diagrama guardado", lifespan: 3000 });
+        showToast({ type: "success", title: "Diagram saved", lifespan: 3000 });
         if (diagramId !== saved.id) {
           loadedIdRef.current = saved.id;
           navigate(`/diagram/${saved.id}`, { replace: true });
@@ -530,7 +530,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
         if (e instanceof ConflictError) {
           setConflict(e);
         } else {
-          showToast({ type: "critical", title: "No se pudo guardar", message: errorMessage(e), lifespan: "infinite" });
+          showToast({ type: "critical", title: "Couldn't save", message: errorMessage(e), lifespan: "infinite" });
         }
       } finally {
         setSaving(false);
@@ -557,10 +557,10 @@ function EditorInner({ diagramId }: { diagramId: string }) {
         setPersisted(true);
         setDirty(false);
         loadedIdRef.current = saved.id;
-        showToast({ type: "success", title: `Guardado como «${name}»`, lifespan: 3000 });
+        showToast({ type: "success", title: `Saved as "${name}"`, lifespan: 3000 });
         navigate(`/diagram/${saved.id}`, { replace: true });
       } catch (e) {
-        showToast({ type: "critical", title: "No se pudo guardar", message: errorMessage(e), lifespan: "infinite" });
+        showToast({ type: "critical", title: "Couldn't save", message: errorMessage(e), lifespan: "infinite" });
       } finally {
         setSaving(false);
       }
@@ -634,15 +634,15 @@ function EditorInner({ diagramId }: { diagramId: string }) {
   if (loading) {
     return (
       <Flex justifyContent="center" alignItems="center" style={{ height: "100%" }}>
-        <ProgressCircle aria-label="Cargando diagrama" />
+        <ProgressCircle aria-label="Loading diagram" />
       </Flex>
     );
   }
   if (loadError || !meta) {
     return (
       <Flex flexDirection="column" alignItems="center" justifyContent="center" gap={12} style={{ height: "100%" }}>
-        <span>No se pudo abrir el diagrama: {loadError}</span>
-        <Button onClick={() => navigate("/")}>Volver a la lista</Button>
+        <span>Couldn't open the diagram: {loadError}</span>
+        <Button onClick={() => navigate("/")}>Back to list</Button>
       </Flex>
     );
   }
@@ -673,7 +673,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
           dirty={dirty}
           saving={saving}
           onSave={() => void doSave()}
-          onSaveAs={() => setSaveAsName(`${meta.name} (copia)`)}
+          onSaveAs={() => setSaveAsName(`${meta.name} (copy)`)}
           onExport={doExport}
           onAutoLayout={doAutoLayout}
           onUndo={undo}
@@ -741,7 +741,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       </div>
 
       <Modal
-        title="El diagrama fue modificado por otro usuario"
+        title="This diagram was modified by someone else"
         show={conflict !== null}
         onDismiss={() => setConflict(null)}
         footer={
@@ -752,29 +752,29 @@ function EditorInner({ diagramId }: { diagramId: string }) {
                 void load(meta.id);
               }}
             >
-              Recargar
+              Reload
             </Button>
             <Button color="critical" variant="emphasized" onClick={() => void doSave(true)} loading={saving}>
-              Sobrescribir
+              Overwrite
             </Button>
           </Flex>
         }
       >
         {conflict && (
           <span>
-            Última modificación: {conflict.current.updatedAt} por {conflict.current.owner || "desconocido"}. «Recargar» descarta
-            tus cambios; «Sobrescribir» reemplaza la versión guardada.
+            Last modified {conflict.current.updatedAt} by {conflict.current.owner || "unknown"}. "Reload" discards your
+            changes; "Overwrite" replaces the saved version.
           </span>
         )}
       </Modal>
 
       <Modal
-        title="Guardar como"
+        title="Save as"
         show={saveAsName !== null}
         onDismiss={() => setSaveAsName(null)}
         footer={
           <Flex gap={8} justifyContent="flex-end">
-            <Button onClick={() => setSaveAsName(null)}>Cancelar</Button>
+            <Button onClick={() => setSaveAsName(null)}>Cancel</Button>
             <Button
               variant="accent"
               color="primary"
@@ -782,28 +782,28 @@ function EditorInner({ diagramId }: { diagramId: string }) {
               disabled={!saveAsName?.trim()}
               onClick={() => saveAsName && void doSaveAs(saveAsName.trim())}
             >
-              Guardar
+              Save
             </Button>
           </Flex>
         }
       >
-        <TextInput value={saveAsName ?? ""} onChange={(v) => setSaveAsName(v)} aria-label="Nombre del nuevo diagrama" />
+        <TextInput value={saveAsName ?? ""} onChange={(v) => setSaveAsName(v)} aria-label="New diagram name" />
       </Modal>
 
       <Modal
-        title="Hay cambios sin guardar"
+        title="You have unsaved changes"
         show={leaveOpen}
         onDismiss={() => setLeaveOpen(false)}
         footer={
           <Flex gap={8} justifyContent="flex-end">
-            <Button onClick={() => setLeaveOpen(false)}>Seguir editando</Button>
+            <Button onClick={() => setLeaveOpen(false)}>Keep editing</Button>
             <Button color="critical" onClick={() => navigate("/")}>
-              Salir sin guardar
+              Leave without saving
             </Button>
           </Flex>
         }
       >
-        Si sales ahora perderás los cambios.
+        If you leave now, your changes will be lost.
       </Modal>
     </DiagramContext.Provider>
   );

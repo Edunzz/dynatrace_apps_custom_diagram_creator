@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "id": "00000000-0000-4000-8000-000000000001",
   "name": "Sample – Online Banking",
-  "description": "Diagrama de ejemplo creado automáticamente",
+  "description": "Sample diagram created automatically",
   "owner": "system",
   "createdAt": "2026-10-04T00:00:00Z",
   "updatedAt": "2026-10-04T00:00:00Z",
@@ -44,7 +44,7 @@
       "data": {
         "kind": "entity",
         "componentType": "service",
-        "name": "API Cuentas",
+        "name": "Accounts API",
         "entityDql": "smartscapeNodes \"SERVICE\"\n| filter contains(name, \"account\", caseSensitive: false)\n| fields id, name",
         "icon": "ServicesIcon",
         "failPoint": {
@@ -70,7 +70,7 @@
       "data": {
         "kind": "entity",
         "componentType": "service",
-        "name": "API Pagos",
+        "name": "Payments API",
         "entityDql": "smartscapeNodes \"SERVICE\"\n| filter contains(name, \"payment\", caseSensitive: false)\n| fields id, name",
         "icon": "ServicesIcon",
         "failPoint": {
@@ -93,7 +93,7 @@
       "data": {
         "kind": "custom",
         "icon": "DatabaseIcon",
-        "name": "Bases de datos",
+        "name": "Databases",
         "mode": "entities",
         "entities": {
           "dql": "smartscapeNodes \"DB_INSTANCE_*\"\n| fields id, name\n| limit 5",
@@ -117,7 +117,7 @@
       "data": {
         "kind": "custom",
         "icon": "ServiceLevelObjectivesIcon",
-        "name": "SLOs del negocio",
+        "name": "Business SLOs",
         "mode": "slos",
         "slos": [],
         "maxVisibleRows": 8

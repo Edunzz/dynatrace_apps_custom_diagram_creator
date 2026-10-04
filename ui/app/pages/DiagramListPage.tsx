@@ -1,14 +1,23 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import Colors from "@dynatrace/strato-design-tokens/colors";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
-import { Heading } from "@dynatrace/strato-components/typography";
+import { Heading, Link } from "@dynatrace/strato-components/typography";
 import { Modal, Tooltip } from "@dynatrace/strato-components/overlays";
 import { TextInput } from "@dynatrace/strato-components/forms";
 import { DataTable, type DataTableColumnDef } from "@dynatrace/strato-components/tables";
 import { showToast } from "@dynatrace/strato-components/notifications";
-import { DeleteIcon, DownloadIcon, DuplicateIcon, FolderOpenIcon, PlusIcon, SettingIcon, UploadIcon } from "@dynatrace/strato-icons";
+import {
+  DeleteIcon,
+  DownloadIcon,
+  DuplicateIcon,
+  FolderOpenIcon,
+  InformationIcon,
+  PlusIcon,
+  SettingIcon,
+  UploadIcon,
+} from "@dynatrace/strato-icons";
 import { parseDiagram, type Diagram } from "../model/schema";
 import { buildSampleDiagram } from "../model/defaults";
 import { asText, dqlString, errorMessage, runQuery } from "../services/dql";
@@ -28,6 +37,7 @@ import {
 import { listSlos } from "../services/slo";
 import { formatDateTime } from "../services/time";
 import { InlineMessage } from "../panels/Field";
+import { AboutModal } from "../components/AboutModal";
 
 const ADMIN_PREFIX = "/lookups/custom-diagram-creator/";
 
@@ -72,21 +82,21 @@ function AdminModal({ show, onClose }: { show: boolean; onClose: () => void }) {
   }, [show, load]);
 
   return (
-    <Modal title="Administración del almacenamiento" show={show} onDismiss={onClose} size="large">
+    <Modal title="Storage administration" show={show} onDismiss={onClose} size="large">
       <Flex flexDirection="column" gap={12}>
         <InlineMessage kind="info">
-          Archivos de lookup de la app ({ADMIN_PREFIX}). Eliminar un archivo es irreversible; si eliminas {LOOKUP_PATH} se volverá
-          a crear con el diagrama de ejemplo al abrir la app.
+          Lookup files of the app ({ADMIN_PREFIX}). Deleting a file can't be undone; if you delete {LOOKUP_PATH} it is
+          created again with the sample diagram the next time the app opens.
         </InlineMessage>
         {error && <InlineMessage kind="error">{error}</InlineMessage>}
         <table className="cdc-kpi-table">
           <thead>
             <tr>
-              <th>Ruta</th>
-              <th>Nombre</th>
-              <th>Registros</th>
-              <th>Tamaño</th>
-              <th>Modificado</th>
+              <th>Path</th>
+              <th>Name</th>
+              <th>Records</th>
+              <th>Size</th>
+              <th>Modified</th>
               <th />
             </tr>
           </thead>
@@ -108,22 +118,22 @@ function AdminModal({ show, onClose }: { show: boolean; onClose: () => void }) {
                         onClick={() => {
                           deleteLookupFile(f.name)
                             .then(() => {
-                              showToast({ type: "success", title: `Eliminado ${f.name}`, lifespan: 3000 });
+                              showToast({ type: "success", title: `Deleted ${f.name}`, lifespan: 3000 });
                               setConfirm(null);
                               return load();
                             })
-                            .catch((e) => showToast({ type: "critical", title: "No se pudo eliminar", message: errorMessage(e) }));
+                            .catch((e) => showToast({ type: "critical", title: "Couldn't delete", message: errorMessage(e) }));
                         }}
                       >
-                        Confirmar
+                        Confirm
                       </Button>
                       <Button size="condensed" onClick={() => setConfirm(null)}>
-                        Cancelar
+                        Cancel
                       </Button>
                     </Flex>
                   ) : (
                     <Button size="condensed" color="critical" onClick={() => setConfirm(f.name)}>
-                      Eliminar archivo
+                      Delete file
                     </Button>
                   )}
                 </td>
@@ -131,7 +141,7 @@ function AdminModal({ show, onClose }: { show: boolean; onClose: () => void }) {
             ))}
             {files !== null && files.length === 0 && (
               <tr>
-                <td colSpan={6}>No hay archivos.</td>
+                <td colSpan={6}>No files.</td>
               </tr>
             )}
           </tbody>
@@ -150,6 +160,7 @@ export function DiagramListPage() {
   const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const reload = useCallback(async () => {
@@ -174,8 +185,8 @@ export function DiagramListPage() {
         if (result === "created") {
           showToast({
             type: "success",
-            title: "Se creó el almacenamiento de diagramas",
-            message: "Se añadió el diagrama de ejemplo «Sample – Online Banking».",
+            title: "Diagram storage created",
+            message: "The sample diagram \"Sample – Online Banking\" was added.",
           });
         }
       } catch (e) {
@@ -214,9 +225,9 @@ export function DiagramListPage() {
     withBusy(async () => {
       const { diagram } = await getDiagram(id);
       const now = new Date().toISOString();
-      const copy: Diagram = { ...diagram, id: newId(), name: `${diagram.name} (copia)`, owner: currentUser(), createdAt: now, updatedAt: now };
+      const copy: Diagram = { ...diagram, id: newId(), name: `${diagram.name} (copy)`, owner: currentUser(), createdAt: now, updatedAt: now };
       await saveDiagram(copy);
-      showToast({ type: "success", title: `Duplicado como «${copy.name}»`, lifespan: 3000 });
+      showToast({ type: "success", title: `Duplicated as "${copy.name}"`, lifespan: 3000 });
       await reload();
     });
 
@@ -233,7 +244,7 @@ export function DiagramListPage() {
       await deleteDiagrams(ids);
       setSelection({});
       setConfirmDelete(null);
-      showToast({ type: "success", title: `${ids.length} diagrama(s) eliminado(s)`, lifespan: 3000 });
+      showToast({ type: "success", title: `${ids.length} diagram(s) deleted`, lifespan: 3000 });
       await reload();
     });
 
@@ -249,12 +260,12 @@ export function DiagramListPage() {
         try {
           json = JSON.parse(await file.text());
         } catch {
-          showToast({ type: "critical", title: `${file.name}: no es un JSON válido` });
+          showToast({ type: "critical", title: `${file.name}: not valid JSON` });
           continue;
         }
         const parsed = parseDiagram(json);
         if (!parsed.ok) {
-          showToast({ type: "critical", title: `${file.name}: no cumple el esquema`, message: parsed.error, lifespan: "infinite" });
+          showToast({ type: "critical", title: `${file.name}: doesn't match the schema`, message: parsed.error, lifespan: "infinite" });
           continue;
         }
         let diagram = parsed.diagram;
@@ -268,69 +279,80 @@ export function DiagramListPage() {
         ok++;
       }
       if (ok) {
-        showToast({ type: "success", title: `${ok} diagrama(s) subido(s)`, lifespan: 3000 });
+        showToast({ type: "success", title: `${ok} diagram(s) uploaded`, lifespan: 3000 });
       }
       await reload();
     });
 
+  /** Plain text cell that opens the diagram on click, so the whole row (except checkbox and actions) is a target. */
+  const openCell = (id: string, text: string) => (
+    <div onClick={() => navigate(`/diagram/${id}`)} style={{ cursor: "pointer", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={text}>
+      {text}
+    </div>
+  );
+
   const columns: DataTableColumnDef<DiagramSummary>[] = [
     {
       id: "name",
-      header: "Nombre",
+      header: "Name",
       accessor: "name",
       width: "2fr",
       cell: ({ value, rowData }) => (
-        <Button variant="default" size="condensed" onClick={() => navigate(`/diagram/${rowData.id}`)}>
+        <Link
+          as={RouterLink}
+          to={`/diagram/${rowData.id}`}
+          style={{ display: "block", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
           {asText(value)}
-        </Button>
+        </Link>
       ),
     },
-    { id: "description", header: "Descripción", accessor: "description", width: "2fr" },
-    { id: "owner", header: "Propietario", accessor: "owner", width: "1fr" },
+    { id: "description", header: "Description", accessor: "description", width: "2fr", cell: ({ value, rowData }) => openCell(rowData.id, asText(value)) },
+    { id: "owner", header: "Owner", accessor: "owner", width: "1fr", cell: ({ value, rowData }) => openCell(rowData.id, asText(value)) },
     {
       id: "createdAt",
-      header: "Creado",
+      header: "Created",
       accessor: "createdAt",
       width: "1fr",
-      cell: ({ value }) => <span>{formatDateTime(value as string)}</span>,
+      cell: ({ value, rowData }) => openCell(rowData.id, formatDateTime(value as string)),
     },
     {
       id: "updatedAt",
-      header: "Modificado",
+      header: "Modified",
       accessor: "updatedAt",
       width: "1fr",
-      cell: ({ value }) => <span>{formatDateTime(value as string)}</span>,
+      cell: ({ value, rowData }) => openCell(rowData.id, formatDateTime(value as string)),
     },
     {
       id: "actions",
-      header: "Acciones",
+      header: "Actions",
       accessor: "id",
       width: "content",
       cell: ({ rowData }) => (
         <Flex gap={2}>
-          <Tooltip text="Abrir">
-            <Button aria-label="Abrir" size="condensed" onClick={() => navigate(`/diagram/${rowData.id}`)}>
+          <Tooltip text="Open">
+            <Button aria-label="Open" size="condensed" onClick={() => navigate(`/diagram/${rowData.id}`)}>
               <Button.Prefix>
                 <FolderOpenIcon />
               </Button.Prefix>
             </Button>
           </Tooltip>
-          <Tooltip text="Duplicar">
-            <Button aria-label="Duplicar" size="condensed" disabled={busy} onClick={() => void duplicate(rowData.id)}>
+          <Tooltip text="Duplicate">
+            <Button aria-label="Duplicate" size="condensed" disabled={busy} onClick={() => void duplicate(rowData.id)}>
               <Button.Prefix>
                 <DuplicateIcon />
               </Button.Prefix>
             </Button>
           </Tooltip>
-          <Tooltip text="Descargar JSON">
-            <Button aria-label="Descargar JSON" size="condensed" disabled={busy} onClick={() => void download([rowData.id])}>
+          <Tooltip text="Download JSON">
+            <Button aria-label="Download JSON" size="condensed" disabled={busy} onClick={() => void download([rowData.id])}>
               <Button.Prefix>
                 <DownloadIcon />
               </Button.Prefix>
             </Button>
           </Tooltip>
-          <Tooltip text="Eliminar">
-            <Button aria-label="Eliminar" size="condensed" color="critical" disabled={busy} onClick={() => setConfirmDelete([rowData.id])}>
+          <Tooltip text="Delete">
+            <Button aria-label="Delete" size="condensed" color="critical" disabled={busy} onClick={() => setConfirmDelete([rowData.id])}>
               <Button.Prefix>
                 <DeleteIcon />
               </Button.Prefix>
@@ -345,22 +367,22 @@ export function DiagramListPage() {
     <Flex flexDirection="column" gap={16} padding={24} style={{ height: "100%", boxSizing: "border-box", overflow: "auto" }}>
       <Flex alignItems="center" gap={12} flexWrap="wrap">
         <Flex flexDirection="column" gap={2} style={{ flex: 1, minWidth: 260 }}>
-          <Heading level={2}>Diagramas</Heading>
+          <Heading level={2}>Diagrams</Heading>
           <span style={{ color: Colors.Text.Neutral.Subdued, fontSize: 13 }}>
-            Arquitecturas personalizadas con estado en vivo (problems, SLOs y KPIs desde Grail).
+            Custom architecture diagrams with live status (problems, SLOs and KPIs from Grail).
           </span>
         </Flex>
         <Button variant="accent" color="primary" onClick={() => navigate("/diagram/new")}>
           <Button.Prefix>
             <PlusIcon />
           </Button.Prefix>
-          Nuevo diagrama
+          New diagram
         </Button>
         <Button onClick={() => fileInput.current?.click()} disabled={busy}>
           <Button.Prefix>
             <UploadIcon />
           </Button.Prefix>
-          Subir
+          Upload
         </Button>
         <input
           ref={fileInput}
@@ -373,8 +395,15 @@ export function DiagramListPage() {
             e.target.value = "";
           }}
         />
-        <Tooltip text="Administración del almacenamiento">
-          <Button aria-label="Administración" onClick={() => setAdminOpen(true)}>
+        <Tooltip text="About">
+          <Button aria-label="About" onClick={() => setAboutOpen(true)}>
+            <Button.Prefix>
+              <InformationIcon />
+            </Button.Prefix>
+          </Button>
+        </Tooltip>
+        <Tooltip text="Storage administration">
+          <Button aria-label="Storage administration" onClick={() => setAdminOpen(true)}>
             <Button.Prefix>
               <SettingIcon />
             </Button.Prefix>
@@ -384,22 +413,22 @@ export function DiagramListPage() {
 
       <Flex alignItems="center" gap={12} flexWrap="wrap">
         <div style={{ width: 320 }}>
-          <TextInput value={search} onChange={(v) => setSearch(v)} placeholder="Buscar por nombre…" aria-label="Buscar" />
+          <TextInput value={search} onChange={(v) => setSearch(v)} placeholder="Search by name…" aria-label="Search" />
         </div>
         {selectedIds.length > 0 && (
           <>
-            <span style={{ fontSize: 13 }}>{selectedIds.length} seleccionado(s)</span>
+            <span style={{ fontSize: 13 }}>{selectedIds.length} selected</span>
             <Button size="condensed" disabled={busy} onClick={() => void download(selectedIds)}>
               <Button.Prefix>
                 <DownloadIcon />
               </Button.Prefix>
-              Descargar
+              Download
             </Button>
             <Button size="condensed" color="critical" disabled={busy} onClick={() => setConfirmDelete(selectedIds)}>
               <Button.Prefix>
                 <DeleteIcon />
               </Button.Prefix>
-              Eliminar
+              Delete
             </Button>
           </>
         )}
@@ -419,32 +448,32 @@ export function DiagramListPage() {
         fullWidth
       >
         <DataTable.EmptyState>
-          {search ? "Ningún diagrama coincide con la búsqueda." : "Todavía no hay diagramas. Crea uno nuevo o sube un JSON."}
+          {search ? "No diagram matches your search." : "No diagrams yet. Create one or upload a JSON file."}
         </DataTable.EmptyState>
       </DataTable>
 
       <Modal
-        title="Eliminar diagramas"
+        title="Delete diagrams"
         show={confirmDelete !== null}
         onDismiss={() => setConfirmDelete(null)}
         footer={
           <Flex gap={8} justifyContent="flex-end">
-            <Button onClick={() => setConfirmDelete(null)}>Cancelar</Button>
+            <Button onClick={() => setConfirmDelete(null)}>Cancel</Button>
             <Button color="critical" variant="emphasized" loading={busy} onClick={() => confirmDelete && void remove(confirmDelete)}>
-              Eliminar
+              Delete
             </Button>
           </Flex>
         }
       >
         {confirmDelete && (
           <span>
-            ¿Eliminar {confirmDelete.length === 1 ? "este diagrama" : `${confirmDelete.length} diagramas`}? Esta acción no se puede
-            deshacer.
+            Delete {confirmDelete.length === 1 ? "this diagram" : `${confirmDelete.length} diagrams`}? This can't be undone.
           </span>
         )}
       </Modal>
 
       <AdminModal show={adminOpen} onClose={() => setAdminOpen(false)} />
+      <AboutModal show={aboutOpen} onClose={() => setAboutOpen(false)} />
     </Flex>
   );
 }

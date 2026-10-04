@@ -38,7 +38,7 @@ function KpiEdgeComponent({
     targetPosition,
     borderRadius: 10,
   });
-  // For «<-» the dots travel the reversed path (target to source).
+  // For "<-" the dots travel the reversed path (target to source).
   const motionPath =
     direction === "backward"
       ? getSmoothStepPath({
@@ -59,7 +59,7 @@ function KpiEdgeComponent({
       ? `${formatNumber(edgeStatus.value, kpi?.decimals ?? 2)}${kpi?.unit ? ` ${kpi.unit}` : ""}`
       : s === "loading"
         ? "…"
-        : "n/d";
+        : "n/a";
   const title = edgeStatus?.error ? `${STATUS_LABEL[s]}: ${edgeStatus.error}` : `${STATUS_LABEL[s]} · ${valueText}`;
 
   return (

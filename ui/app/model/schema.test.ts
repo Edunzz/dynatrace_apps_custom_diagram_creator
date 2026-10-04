@@ -59,6 +59,15 @@ describe("diagram schema", () => {
     }
   });
 
+  it("entity nodes keep a manual size and stay auto-sized otherwise", () => {
+    const [entity] = sample.nodes;
+    const resized = { ...entity, size: { w: 320, h: 140 } };
+    const flow = toFlowNodes([entity, resized]);
+    expect(flow[0]).toMatchObject({ width: 240, height: undefined });
+    expect(flow[1]).toMatchObject({ width: 320, height: 140 });
+    expect(fromFlowNodes(flow)).toEqual([entity, resized]);
+  });
+
   it("lossless export → import (JSON and React Flow round-trip conversion)", () => {
     const withExtras = {
       ...sample,

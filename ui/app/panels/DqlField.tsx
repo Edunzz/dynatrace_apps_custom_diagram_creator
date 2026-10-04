@@ -19,11 +19,13 @@ export interface DqlFieldProps {
   /** Non-blocking warnings (e.g. missing name column). */
   warn?: (result: DqlResult) => string | null;
   onResult?: (result: DqlResult | null) => void;
+  /** Called after every Run: the editor applies the query to the diagram and refreshes the element's status. */
+  onRun?: () => void;
   hint?: string;
 }
 
 /** DQLEditor + Run button + result preview and inline validation. */
-export function DqlField({ label, value, onChange, timeframe, validate, warn, onResult, hint }: DqlFieldProps) {
+export function DqlField({ label, value, onChange, timeframe, validate, warn, onResult, onRun, hint }: DqlFieldProps) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DqlResult | null>(null);
@@ -41,6 +43,7 @@ export function DqlField({ label, value, onChange, timeframe, validate, warn, on
       setError(errorMessage(e));
     } finally {
       setRunning(false);
+      onRun?.();
     }
   };
 

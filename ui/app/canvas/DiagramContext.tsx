@@ -9,6 +9,8 @@ export interface DiagramContextValue {
   reducedMotion: boolean;
   openDetail: (kind: "node" | "edge", id: string) => void;
   openConfig: (kind: "node" | "edge", id: string) => void;
+  duplicateNode: (id: string) => void;
+  deleteElement: (kind: "node" | "edge", id: string) => void;
 }
 
 export const DiagramContext = createContext<DiagramContextValue>({
@@ -17,6 +19,8 @@ export const DiagramContext = createContext<DiagramContextValue>({
   reducedMotion: false,
   openDetail: () => undefined,
   openConfig: () => undefined,
+  duplicateNode: () => undefined,
+  deleteElement: () => undefined,
 });
 
 export function useDiagramContext(): DiagramContextValue {

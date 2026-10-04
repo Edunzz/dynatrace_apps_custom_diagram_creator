@@ -24,6 +24,7 @@ import { DiagramContext, useReducedMotion, type DiagramContextValue, type Editor
 import { autoLayout } from "../canvas/autoLayout";
 import {
   CUSTOM_NODE_DEFAULT,
+  ENTITY_NODE_WIDTH,
   fromFlowEdges,
   fromFlowNodes,
   toFlowEdges,
@@ -50,10 +51,24 @@ import { DEFAULT_TIMEFRAME, REFRESH_MS } from "../services/time";
 import { EditorToolbar } from "../toolbar/EditorToolbar";
 import { PALETTE_MIME, Palette, type PaletteItem } from "../toolbar/Palette";
 import { EdgeConfigPanel, type EdgeDraft } from "../panels/EdgeConfigPanel";
-import { NodeConfigPanel } from "../panels/NodeConfigPanel";
+import { NodeConfigPanel, type CommitMode } from "../panels/NodeConfigPanel";
 import { NodeDetailDrawer, type DetailTarget } from "../panels/NodeDetailDrawer";
 
 type Meta = Omit<Diagram, "nodes" | "edges" | "settings">;
+
+type ElementKind = "node" | "edge";
+
+/** What the docked right panel shows: the editor of an element (edit mode) or its detail (view mode). */
+interface PanelTarget {
+  mode: "config" | "detail";
+  kind: ElementKind;
+  id: string;
+}
+
+/** Delay before recalculating the status after a threshold or filter change in the panel. */
+const COMMIT_DEBOUNCE_MS = 900;
+/** Offset of a duplicated node. */
+const DUPLICATE_OFFSET = 32;
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -81,9 +96,9 @@ function EditorInner({ diagramId }: { diagramId: string }) {
   const [mode, setMode] = useState<EditorMode>("view");
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [configNodeId, setConfigNodeId] = useState<string | null>(null);
-  const [configEdgeId, setConfigEdgeId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<{ kind: "node" | "edge"; id: string } | null>(null);
+  const [panel, setPanel] = useState<PanelTarget | null>(null);
+  // Bumped on undo/redo so an open editor panel remounts with the restored data.
+  const [panelVersion, setPanelVersion] = useState(0);
   const [conflict, setConflict] = useState<ConflictError | null>(null);
   const [saveAsName, setSaveAsName] = useState<string | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -93,6 +108,11 @@ function EditorInner({ diagramId }: { diagramId: string }) {
   nodesRef.current = nodes;
   edgesRef.current = edges;
   const loadedIdRef = useRef<string | null>(null);
+  const panelRef = useRef(panel);
+  panelRef.current = panel;
+  // One undo step per panel session, and whether its last changes still need a status refresh.
+  const sessionRef = useRef({ recorded: false, pending: false });
+  const commitTimerRef = useRef<number | undefined>(undefined);
 
   // ---------- loading ----------
   const applyDiagram = useCallback(
@@ -174,6 +194,172 @@ function EditorInner({ diagramId }: { diagramId: string }) {
     resetHistory();
   }, [meta?.id, resetHistory]);
 
+  const recordHistory = history.record;
+  // After undo/redo the open panel remounts with the restored data, and its next change is a new undo step.
+  const undo = useCallback(() => {
+    history.undo();
+    sessionRef.current.recorded = false;
+    setPanelVersion((v) => v + 1);
+  }, [history]);
+  const redo = useCallback(() => {
+    history.redo();
+    sessionRef.current.recorded = false;
+    setPanelVersion((v) => v + 1);
+  }, [history]);
+
+  // ---------- docked panel ----------
+  const refreshElement = useCallback(
+    (kind: ElementKind, id: string) => {
+      // After the state update has been applied, so the status engine reads the new definition.
+      window.setTimeout(() => void refresh(kind === "node" ? { nodeIds: [id] } : { edgeIds: [id] }), 0);
+    },
+    [refresh],
+  );
+
+  /** Ends the current panel session: pending changes get their status refreshed. */
+  const flushSession = useCallback(() => {
+    window.clearTimeout(commitTimerRef.current);
+    const current = panelRef.current;
+    if (current?.mode === "config" && sessionRef.current.pending) {
+      refreshElement(current.kind, current.id);
+    }
+    sessionRef.current = { recorded: false, pending: false };
+  }, [refreshElement]);
+
+  const openPanel = useCallback(
+    (next: PanelTarget | null) => {
+      const current = panelRef.current;
+      if (current && next && current.mode === next.mode && current.kind === next.kind && current.id === next.id) {
+        return;
+      }
+      flushSession();
+      setPanel(next);
+    },
+    [flushSession],
+  );
+
+  const recordOnce = useCallback(() => {
+    if (!sessionRef.current.recorded) {
+      recordHistory();
+      sessionRef.current.recorded = true;
+    }
+  }, [recordHistory]);
+
+  const commitChange = useCallback(
+    (kind: ElementKind, id: string, commit: CommitMode) => {
+      sessionRef.current.pending = true;
+      if (commit === "none") {
+        return;
+      }
+      window.clearTimeout(commitTimerRef.current);
+      const run = () => {
+        sessionRef.current.pending = false;
+        refreshElement(kind, id);
+      };
+      if (commit === "now") {
+        run();
+      } else {
+        commitTimerRef.current = window.setTimeout(run, COMMIT_DEBOUNCE_MS);
+      }
+    },
+    [refreshElement],
+  );
+
+  /** Live update from the node editor panel (no Apply button, like dashboard tiles). */
+  const changeNode = useCallback(
+    (id: string, data: NodeData, commit: CommitMode) => {
+      recordOnce();
+      setNodes((ns) =>
+        ns.map((n): FlowNode => {
+          if (n.id !== id) {
+            return n;
+          }
+          return data.kind === "entity" ? { ...n, type: "entityNode", data } : { ...n, type: "customNode", data };
+        }),
+      );
+      setDirty(true);
+      commitChange("node", id, commit);
+    },
+    [recordOnce, setNodes, commitChange],
+  );
+
+  /** Live update from the connection editor panel. */
+  const changeEdge = useCallback(
+    (id: string, draft: EdgeDraft, commit: CommitMode) => {
+      recordOnce();
+      setEdges((es) =>
+        es.map((e) =>
+          e.id === id
+            ? {
+                ...e,
+                type: draft.type,
+                data: { direction: draft.direction, label: draft.label, kpi: draft.type === "kpi" ? draft.kpi : undefined },
+              }
+            : e,
+        ),
+      );
+      setDirty(true);
+      commitChange("edge", id, commit);
+    },
+    [recordOnce, setEdges, commitChange],
+  );
+
+  const deleteElement = useCallback(
+    (kind: ElementKind, id: string) => {
+      recordHistory();
+      void rf.deleteElements(kind === "node" ? { nodes: [{ id }] } : { edges: [{ id }] });
+      setDirty(true);
+      if (panelRef.current?.id === id) {
+        window.clearTimeout(commitTimerRef.current);
+        sessionRef.current = { recorded: false, pending: false };
+        setPanel(null);
+      }
+    },
+    [recordHistory, rf],
+  );
+
+  const duplicateNode = useCallback(
+    (id: string) => {
+      const source = nodesRef.current.find((n) => n.id === id);
+      if (!source) {
+        return;
+      }
+      recordHistory();
+      const copyId = `n-${newId().slice(0, 8)}`;
+      const copy = {
+        ...source,
+        id: copyId,
+        position: { x: source.position.x + DUPLICATE_OFFSET, y: source.position.y + DUPLICATE_OFFSET },
+        data: structuredClone(source.data),
+        selected: true,
+      } as FlowNode;
+      setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), copy]);
+      setDirty(true);
+      refreshElement("node", copyId);
+    },
+    [recordHistory, setNodes, refreshElement],
+  );
+
+  // If the element shown in the panel disappears (keyboard delete, undo), the panel closes.
+  useEffect(() => {
+    if (!panel) {
+      return;
+    }
+    const exists = panel.kind === "node" ? nodes.some((n) => n.id === panel.id) : edges.some((e) => e.id === panel.id);
+    if (!exists) {
+      sessionRef.current = { recorded: false, pending: false };
+      setPanel(null);
+    }
+  }, [panel, nodes, edges]);
+
+  const changeMode = useCallback(
+    (next: EditorMode) => {
+      openPanel(null);
+      setMode(next);
+    },
+    [openPanel],
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (mode !== "edit" || isTypingTarget(e.target) || !(e.ctrlKey || e.metaKey)) {
@@ -182,15 +368,15 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       const key = e.key.toLowerCase();
       if (key === "z" && !e.shiftKey) {
         e.preventDefault();
-        history.undo();
+        undo();
       } else if (key === "y" || (key === "z" && e.shiftKey)) {
         e.preventDefault();
-        history.redo();
+        redo();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mode, history]);
+  }, [mode, undo, redo]);
 
   // Warn when leaving with unsaved changes.
   useEffect(() => {
@@ -238,19 +424,19 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       if (connection.source === connection.target) {
         return;
       }
-      history.record();
+      recordHistory();
       const id = `e-${newId().slice(0, 8)}`;
       setEdges((eds) => addEdge({ ...connection, id, type: "normal", data: { direction: "forward" } }, eds));
       setDirty(true);
-      // On connect, the type is chosen: Normal or KPI relation.
-      setConfigEdgeId(id);
+      // On connect, the type is chosen in the panel: Normal or KPI relation.
+      openPanel({ mode: "config", kind: "edge", id });
     },
-    [history, setEdges],
+    [recordHistory, setEdges, openPanel],
   );
 
   const addNodeAt = useCallback(
     (item: PaletteItem, position: { x: number; y: number }) => {
-      history.record();
+      recordHistory();
       const id = `n-${newId().slice(0, 8)}`;
       const node: FlowNode =
         item === "custom"
@@ -262,12 +448,12 @@ function EditorInner({ diagramId }: { diagramId: string }) {
               width: CUSTOM_NODE_DEFAULT.w,
               height: CUSTOM_NODE_DEFAULT.h,
             }
-          : { id, type: "entityNode", position, data: newEntityNodeData(item) };
+          : { id, type: "entityNode", position, data: newEntityNodeData(item), width: ENTITY_NODE_WIDTH };
       setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), { ...node, selected: true }]);
       setDirty(true);
-      setConfigNodeId(id);
+      openPanel({ mode: "config", kind: "node", id });
     },
-    [history, setNodes],
+    [recordHistory, setNodes, openPanel],
   );
 
   const onDropItem = useCallback(
@@ -290,67 +476,6 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       addNodeAt(item, rf.screenToFlowPosition(center));
     },
     [addNodeAt, rf],
-  );
-
-  // ---------- panels ----------
-  const applyNodeConfig = useCallback(
-    (id: string, data: NodeData) => {
-      history.record();
-      setNodes((ns) =>
-        ns.map((n): FlowNode => {
-          if (n.id !== id) {
-            return n;
-          }
-          return data.kind === "entity"
-            ? { ...n, type: "entityNode", data }
-            : { ...n, type: "customNode", data };
-        }),
-      );
-      setDirty(true);
-      setConfigNodeId(null);
-      // Recompute only that node, after the state change is applied.
-      setTimeout(() => void refresh({ nodeIds: [id] }), 0);
-    },
-    [history, setNodes, refresh],
-  );
-
-  const applyEdgeConfig = useCallback(
-    (id: string, draft: EdgeDraft) => {
-      history.record();
-      setEdges((es) =>
-        es.map((e) =>
-          e.id === id
-            ? { ...e, type: draft.type, data: { direction: draft.direction, label: draft.label, kpi: draft.type === "kpi" ? draft.kpi : undefined } }
-            : e,
-        ),
-      );
-      setDirty(true);
-      setConfigEdgeId(null);
-      if (draft.type === "kpi") {
-        setTimeout(() => void refresh({ edgeIds: [id] }), 0);
-      }
-    },
-    [history, setEdges, refresh],
-  );
-
-  const deleteNode = useCallback(
-    (id: string) => {
-      history.record();
-      void rf.deleteElements({ nodes: [{ id }] });
-      setDirty(true);
-      setConfigNodeId(null);
-    },
-    [history, rf],
-  );
-
-  const deleteEdge = useCallback(
-    (id: string) => {
-      history.record();
-      void rf.deleteElements({ edges: [{ id }] });
-      setDirty(true);
-      setConfigEdgeId(null);
-    },
-    [history, rf],
   );
 
   // ---------- save / export ----------
@@ -451,11 +576,11 @@ function EditorInner({ diagramId }: { diagramId: string }) {
   }, [buildDiagram]);
 
   const doAutoLayout = useCallback(() => {
-    history.record();
+    recordHistory();
     setNodes((ns) => autoLayout(ns, edgesRef.current));
     setDirty(true);
     setTimeout(() => void rf.fitView({ padding: 0.15, duration: 300 }), 50);
-  }, [history, setNodes, rf]);
+  }, [recordHistory, setNodes, rf]);
 
   const goBack = useCallback(() => {
     if (dirty) {
@@ -471,14 +596,16 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       status,
       mode,
       reducedMotion,
-      openDetail: (kind, id) => setDetail({ kind, id }),
-      openConfig: (kind, id) => (kind === "node" ? setConfigNodeId(id) : setConfigEdgeId(id)),
+      openDetail: (kind, id) => openPanel({ mode: "detail", kind, id }),
+      openConfig: (kind, id) => openPanel({ mode: "config", kind, id }),
+      duplicateNode,
+      deleteElement,
     }),
-    [status, mode, reducedMotion],
+    [status, mode, reducedMotion, openPanel, duplicateNode, deleteElement],
   );
 
-  const configNode = configNodeId ? nodes.find((n) => n.id === configNodeId) : undefined;
-  const configEdge = configEdgeId ? edges.find((e) => e.id === configEdgeId) : undefined;
+  const configNode = panel?.mode === "config" && panel.kind === "node" ? nodes.find((n) => n.id === panel.id) : undefined;
+  const configEdge = panel?.mode === "config" && panel.kind === "edge" ? edges.find((e) => e.id === panel.id) : undefined;
   const edgeDraft = useMemo<EdgeDraft | null>(
     () =>
       configEdge
@@ -493,16 +620,16 @@ function EditorInner({ diagramId }: { diagramId: string }) {
   );
 
   const detailTarget: DetailTarget = useMemo(() => {
-    if (!detail) {
+    if (panel?.mode !== "detail") {
       return null;
     }
-    if (detail.kind === "node") {
-      const n = nodes.find((x) => x.id === detail.id);
+    if (panel.kind === "node") {
+      const n = nodes.find((x) => x.id === panel.id);
       return n ? { kind: "node", node: fromFlowNodes([n])[0] } : null;
     }
-    const e = edges.find((x) => x.id === detail.id);
+    const e = edges.find((x) => x.id === panel.id);
     return e ? { kind: "edge", edge: fromFlowEdges([e])[0] } : null;
-  }, [detail, nodes, edges]);
+  }, [panel, nodes, edges]);
 
   if (loading) {
     return (
@@ -542,15 +669,15 @@ function EditorInner({ diagramId }: { diagramId: string }) {
             setDirty(true);
           }}
           mode={mode}
-          onModeChange={setMode}
+          onModeChange={changeMode}
           dirty={dirty}
           saving={saving}
           onSave={() => void doSave()}
           onSaveAs={() => setSaveAsName(`${meta.name} (copia)`)}
           onExport={doExport}
           onAutoLayout={doAutoLayout}
-          onUndo={history.undo}
-          onRedo={history.redo}
+          onUndo={undo}
+          onRedo={redo}
           canUndo={history.canUndo}
           canRedo={history.canRedo}
           onBack={goBack}
@@ -566,39 +693,52 @@ function EditorInner({ diagramId }: { diagramId: string }) {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeDragStart={history.record}
+            onNodeDragStart={recordHistory}
             onBeforeDelete={() => {
-              history.record();
+              recordHistory();
               return Promise.resolve(true);
             }}
             onDropItem={onDropItem}
+            onSelectElement={(kind, id) => {
+              // Like dashboards: with the editor open, clicking another element edits that one.
+              if (panelRef.current?.mode === "config") {
+                openPanel({ mode: "config", kind, id });
+              }
+            }}
           />
+          {configNode && (
+            <NodeConfigPanel
+              key={`node-${configNode.id}-${panelVersion}`}
+              nodeId={configNode.id}
+              data={configNode.data}
+              timeframe={timeframe}
+              onChange={changeNode}
+              onDelete={(id) => deleteElement("node", id)}
+              onClose={() => openPanel(null)}
+            />
+          )}
+          {configEdge && edgeDraft && (
+            <EdgeConfigPanel
+              key={`edge-${configEdge.id}-${panelVersion}`}
+              edgeId={configEdge.id}
+              value={edgeDraft}
+              timeframe={timeframe}
+              onChange={changeEdge}
+              onDelete={(id) => deleteElement("edge", id)}
+              onClose={() => openPanel(null)}
+            />
+          )}
+          {panel?.mode === "detail" && (
+            <NodeDetailDrawer
+              target={detailTarget}
+              nodeStatus={panel.kind === "node" ? status.nodes[panel.id] : undefined}
+              edgeStatus={panel.kind === "edge" ? status.edges[panel.id] : undefined}
+              tf={status.resolvedTimeframe}
+              onClose={() => openPanel(null)}
+            />
+          )}
         </div>
       </div>
-
-      <NodeConfigPanel
-        nodeId={configNode ? configNode.id : null}
-        data={configNode ? configNode.data : null}
-        timeframe={timeframe}
-        onApply={applyNodeConfig}
-        onDelete={deleteNode}
-        onClose={() => setConfigNodeId(null)}
-      />
-      <EdgeConfigPanel
-        edgeId={configEdge ? configEdge.id : null}
-        value={edgeDraft}
-        timeframe={timeframe}
-        onApply={applyEdgeConfig}
-        onDelete={deleteEdge}
-        onClose={() => setConfigEdgeId(null)}
-      />
-      <NodeDetailDrawer
-        target={detailTarget}
-        nodeStatus={detail?.kind === "node" ? status.nodes[detail.id] : undefined}
-        edgeStatus={detail?.kind === "edge" ? status.edges[detail.id] : undefined}
-        tf={status.resolvedTimeframe}
-        onClose={() => setDetail(null)}
-      />
 
       <Modal
         title="El diagrama fue modificado por otro usuario"

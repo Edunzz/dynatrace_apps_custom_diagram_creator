@@ -18,6 +18,9 @@ download, duplicate and delete.
 
 - **Canvas**: drag components from a palette, connect them from any side, zoom/pan, minimap, dots/grid/blank
   background, snap to grid, auto-layout (left to right), undo/redo, edit and view modes.
+- **Dashboard-style editing**: a floating toolbar on the selected element (size, duplicate, edit, more), resize grips
+  in the bottom corners, and an editor docked to the right with tabs (Data, Status, Visual, KPIs) where changes
+  apply live while the diagram stays visible.
 - **Entity components** (mobile, frontend, service, process, host, workload): a DQL query selects one or more
   entities; the node is colored by the number of *active* problems affecting them, with configurable warning and
   failing thresholds and an optional DQL filter on the problems.
@@ -82,11 +85,17 @@ On first use the app creates the lookup table with the **Sample – Online Banki
 1. **Diagram list**: search, sort, open, duplicate, download as JSON, delete (single or multiple), and upload `.json`
    files (validated against the schema; a new id is assigned if the id already exists). The ⚙ button opens storage
    administration (lists the app's lookup files and lets you delete one).
-2. **New diagram**: the editor opens in edit mode. Drag a component from the palette (or click it) and double-click
-   the node to configure it. Use **Run** under every DQL editor to preview and validate the result.
-3. **Connect** two nodes by dragging from the dots on their sides, then choose **Normal** or **KPI relation**.
-4. **View mode**: nodes can't be moved; a click opens the detail panel.
-5. **Save** (optimistic concurrency), **Save as**, **Export JSON**. An exported file can be uploaded again without
+2. **New diagram**: the editor opens in edit mode. Drag a component from the palette (or click it); its editor
+   opens docked on the right. Select a node to get the floating toolbar (size, duplicate, edit, ⋮ details/delete)
+   and the resize grips; double-click or ✎ opens the editor. While the editor is open, clicking another element
+   switches to it.
+3. **Edit live**: there is no Apply button. Text and visual changes show up immediately; **Run** under a DQL editor
+   previews the result, applies the query and refreshes that element's status; threshold and filter changes
+   refresh it after a short pause. Each editing session is one undo step (Ctrl+Z / Ctrl+Y).
+4. **Connect** two nodes by dragging from the dots on their sides; the connection editor opens to choose **Normal**
+   or **KPI relation**.
+5. **View mode**: nodes can't be moved; a click opens the detail panel, docked on the right.
+6. **Save** (optimistic concurrency), **Save as**, **Export JSON**. An exported file can be uploaded again without
    loss.
 
 Example entity queries (Smartscape; `fetch dt.entity.*` is deprecated and may not exist in newer environments):

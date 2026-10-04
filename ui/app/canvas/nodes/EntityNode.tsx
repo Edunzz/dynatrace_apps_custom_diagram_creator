@@ -6,10 +6,11 @@ import type { Status } from "../../model/types";
 import { COMPONENT_LABELS } from "../../model/defaults";
 import { resolveIcon } from "../../services/icons";
 import { useDiagramContext } from "../DiagramContext";
-import { ENTITY_NODE_WIDTH, type EntityFlowNode } from "../flowTypes";
+import type { EntityFlowNode } from "../flowTypes";
 import { STATUS_BG, STATUS_COLOR, STATUS_LABEL, StatusGlyph } from "../statusStyle";
 import { NodeHandles } from "./Handles";
 import { KpiBlock } from "./KpiBlock";
+import { NodeChrome } from "./NodeChrome";
 
 function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) {
   const { status, mode } = useDiagramContext();
@@ -24,12 +25,18 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) 
     <div
       className={`cdc-node cdc-clickable${selected ? " cdc-selected" : ""}`}
       style={{
-        width: ENTITY_NODE_WIDTH,
+        // Fills the size of the React Flow node: default width, auto height until the user resizes it.
+        width: "100%",
+        height: "100%",
+        minWidth: 180,
+        display: "flex",
+        flexDirection: "column",
         padding: "8px 10px",
         background: STATUS_BG[s],
         borderColor: STATUS_COLOR[s],
       }}
     >
+      <NodeChrome id={id} selected={selected} minWidth={180} minHeight={56} />
       <NodeHandles connectable={mode === "edit"} />
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Icon size="default" style={{ flexShrink: 0 }} />
@@ -64,7 +71,11 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) 
           </span>
         </Tooltip>
       </div>
-      {data.kpi?.enabled && <KpiBlock config={data.kpi} state={nodeStatus?.kpi} />}
+      {data.kpi?.enabled && (
+        <div className="nowheel" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+          <KpiBlock config={data.kpi} state={nodeStatus?.kpi} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Colors from "@dynatrace/strato-design-tokens/colors";
 import { Flex } from "@dynatrace/strato-components/layouts";
-import { Sheet } from "@dynatrace/strato-components/overlays";
 import { CodeSnippet, ProgressCircle } from "@dynatrace/strato-components/content";
 import { ExternalLink } from "@dynatrace/strato-components/typography";
 import { getIntentLink } from "@dynatrace-sdk/navigation";
@@ -15,6 +14,7 @@ import { formatDateTime, userTimezone } from "../services/time";
 import { ResultTable } from "../canvas/nodes/ResultTable";
 import { STATUS_LABEL, StatusDot, StatusGlyph } from "../canvas/statusStyle";
 import { InlineMessage, SectionTitle } from "./Field";
+import { SidePanel } from "./SidePanel";
 
 export type DetailTarget = { kind: "node"; node: DiagramNode } | { kind: "edge"; edge: DiagramEdge } | null;
 
@@ -298,20 +298,22 @@ function EdgeDetail({ edge, status, tf }: { edge: DiagramEdge; status?: EdgeStat
 
 /** Side detail panel shown when clicking a node or a KPI edge. */
 export function NodeDetailDrawer({ target, nodeStatus, edgeStatus, tf, onClose }: NodeDetailDrawerProps) {
-  const title =
-    target?.kind === "node" ? target.node.data.name : target?.kind === "edge" ? target.edge.label || "Conexión KPI" : "";
+  if (!target) {
+    return null;
+  }
+  const title = target.kind === "node" ? target.node.data.name : target.edge.label || "Conexión KPI";
   return (
-    <Sheet title={title} show={Boolean(target)} onDismiss={onClose}>
-      <Flex flexDirection="column" gap={16} style={{ maxWidth: 900 }}>
+    <SidePanel title={title} subtitle="Detalle" onClose={onClose}>
+      <Flex flexDirection="column" gap={16}>
         <Flex flexDirection="column" gap={2}>
           <SectionTitle>Timeframe aplicado</SectionTitle>
           <span style={{ fontSize: 13 }}>
             {tf ? `${formatDateTime(tf.from)} → ${formatDateTime(tf.to)} (${userTimezone()})` : "—"}
           </span>
         </Flex>
-        {target?.kind === "node" && <NodeDetail node={target.node} status={nodeStatus} tf={tf} />}
-        {target?.kind === "edge" && <EdgeDetail edge={target.edge} status={edgeStatus} tf={tf} />}
+        {target.kind === "node" && <NodeDetail node={target.node} status={nodeStatus} tf={tf} />}
+        {target.kind === "edge" && <EdgeDetail edge={target.edge} status={edgeStatus} tf={tf} />}
       </Flex>
-    </Sheet>
+    </SidePanel>
   );
 }

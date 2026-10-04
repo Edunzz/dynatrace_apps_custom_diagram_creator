@@ -42,6 +42,8 @@ export interface CanvasProps {
   onNodeDragStart: () => void;
   onBeforeDelete: () => Promise<boolean>;
   onDropItem: (event: DragEvent<HTMLDivElement>) => void;
+  /** Click on a node or connection in edit mode (selection). */
+  onSelectElement?: (kind: "node" | "edge", id: string) => void;
 }
 
 export function Canvas(props: CanvasProps) {
@@ -79,13 +81,17 @@ export function Canvas(props: CanvasProps) {
         onNodeDragStart={props.onNodeDragStart}
         onBeforeDelete={props.onBeforeDelete}
         onNodeClick={(_, node) => {
-          if (!edit) {
+          if (edit) {
+            props.onSelectElement?.("node", node.id);
+          } else {
             openDetail("node", node.id);
           }
         }}
         onNodeDoubleClick={(_, node) => (edit ? openConfig("node", node.id) : openDetail("node", node.id))}
         onEdgeClick={(_, edge) => {
-          if (!edit) {
+          if (edit) {
+            props.onSelectElement?.("edge", edge.id);
+          } else {
             openDetail("edge", edge.id);
           }
         }}

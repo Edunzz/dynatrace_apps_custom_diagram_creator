@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { NodeResizer, type NodeProps } from "@xyflow/react";
+import type { NodeProps } from "@xyflow/react";
 import Colors from "@dynatrace/strato-design-tokens/colors";
 import { Tooltip } from "@dynatrace/strato-components/overlays";
 import type { Status, SubStatus } from "../../model/types";
@@ -10,6 +10,7 @@ import type { CustomFlowNode } from "../flowTypes";
 import { STATUS_BG, STATUS_COLOR, STATUS_LABEL, StatusDot, StatusGlyph } from "../statusStyle";
 import { NodeHandles } from "./Handles";
 import { KpiBlock } from "./KpiBlock";
+import { NodeChrome } from "./NodeChrome";
 
 const ROW_HEIGHT = 24;
 
@@ -72,7 +73,7 @@ function CustomNodeComponent({ id, data, selected }: NodeProps<CustomFlowNode>) 
         borderLeftWidth: 6,
       }}
     >
-      <NodeResizer isVisible={mode === "edit" && selected} minWidth={200} minHeight={100} />
+      <NodeChrome id={id} selected={selected} minWidth={200} minHeight={100} />
       <NodeHandles connectable={mode === "edit"} />
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Icon size="default" style={{ flexShrink: 0 }} />

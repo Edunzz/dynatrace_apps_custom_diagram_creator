@@ -7,6 +7,7 @@ import { useDiagramContext } from "../DiagramContext";
 import type { FlowEdge } from "../flowTypes";
 import { STATUS_COLOR, STATUS_LABEL, StatusGlyph } from "../statusStyle";
 import { ArrowMarker, safeSvgId } from "./ArrowMarker";
+import { EdgeChrome } from "./EdgeChrome";
 
 const DOT_OFFSETS = ["0s", "0.66s", "1.33s"];
 
@@ -80,6 +81,7 @@ function KpiEdgeComponent({
             <animateMotion dur="2s" begin={begin} repeatCount="indefinite" path={motionPath} />
           </circle>
         ))}
+      <EdgeChrome id={id} selected={Boolean(selected)} x={labelX} y={data?.label ? labelY - 24 : labelY} />
       <EdgeLabelRenderer>
         <div
           className="cdc-pill nodrag nopan cdc-clickable"

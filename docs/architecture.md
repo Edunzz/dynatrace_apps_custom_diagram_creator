@@ -156,6 +156,20 @@ hidden (`document.visibilityState`) and refreshes when the tab becomes visible a
 - The canvas uses `ConnectionMode.Loose` with one handle per side (`t`, `r`, `b`, `l`); the arrow direction is a
   property of the edge (`forward`, `backward`, `none`).
 
+## Editing model (dashboard-style)
+
+- **Chrome** (`canvas/nodes/NodeChrome.tsx`, `canvas/edges/EdgeChrome.tsx`): in edit mode, a selected node shows a
+  React Flow `NodeToolbar` (size badge, duplicate, edit, ⋮ with details/delete) and two `NodeResizeControl` grips in
+  the bottom corners; a selected connection shows an `EdgeToolbar` (edit, delete).
+- **Docked panel** (`panels/SidePanel.tsx`): the node, connection and detail panels sit to the right of the canvas
+  instead of covering it. The node and connection editors use Strato `Tabs` and `Accordion` sections.
+- **Live apply**: the editors keep a local draft, validate it with zod on every change and push valid data to the
+  canvas immediately. Each change carries a commit mode: `none` (canvas only), `debounced` (status refresh after
+  900 ms, for thresholds and filters) or `now` (Run). Pending changes are refreshed when the panel closes or
+  switches to another element.
+- **Undo**: the first change of a panel session records one history snapshot; undo/redo remounts the open panel with
+  the restored data.
+
 ## Decisions verified against a live environment
 
 | Topic | Decision |

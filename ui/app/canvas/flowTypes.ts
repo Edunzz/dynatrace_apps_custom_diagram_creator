@@ -18,7 +18,15 @@ export const CUSTOM_NODE_DEFAULT = { w: 280, h: 200 };
 export function toFlowNodes(nodes: DiagramNode[]): FlowNode[] {
   return nodes.map((n): FlowNode => {
     if (n.data.kind === "entity") {
-      return { id: n.id, type: "entityNode", position: n.position, data: n.data };
+      // Default width with auto height; a saved size (after a manual resize) fixes both.
+      return {
+        id: n.id,
+        type: "entityNode",
+        position: n.position,
+        data: n.data,
+        width: n.size?.w ?? ENTITY_NODE_WIDTH,
+        height: n.size?.h,
+      };
     }
     const size = n.size ?? CUSTOM_NODE_DEFAULT;
     return { id: n.id, type: "customNode", position: n.position, data: n.data, width: size.w, height: size.h };
@@ -32,6 +40,10 @@ export function fromFlowNodes(nodes: FlowNode[]): DiagramNode[] {
       const w = n.width ?? n.measured?.width ?? CUSTOM_NODE_DEFAULT.w;
       const h = n.height ?? n.measured?.height ?? CUSTOM_NODE_DEFAULT.h;
       return { id: n.id, type: "customNode", position, size: { w: Math.round(w), h: Math.round(h) }, data: n.data };
+    }
+    if (n.height !== undefined) {
+      const w = n.width ?? n.measured?.width ?? ENTITY_NODE_WIDTH;
+      return { id: n.id, type: "entityNode", position, size: { w: Math.round(w), h: Math.round(n.height) }, data: n.data };
     }
     return { id: n.id, type: "entityNode", position, data: n.data };
   });

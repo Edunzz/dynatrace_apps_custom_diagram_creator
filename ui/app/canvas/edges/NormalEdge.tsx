@@ -3,6 +3,7 @@ import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from "
 import Colors from "@dynatrace/strato-design-tokens/colors";
 import type { FlowEdge } from "../flowTypes";
 import { ArrowMarker, safeSvgId } from "./ArrowMarker";
+import { EdgeChrome } from "./EdgeChrome";
 
 function NormalEdgeComponent({
   id,
@@ -40,6 +41,7 @@ function NormalEdgeComponent({
         markerStart={direction === "backward" ? `url(#cdc-start-${sid})` : undefined}
         style={{ stroke: color, strokeWidth: selected ? 2.5 : 1.5 }}
       />
+      <EdgeChrome id={id} selected={Boolean(selected)} x={labelX} y={labelY} />
       {data?.label && (
         <EdgeLabelRenderer>
           <div

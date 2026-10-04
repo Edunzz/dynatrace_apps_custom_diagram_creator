@@ -6,7 +6,8 @@ import type { Timeframe } from "../model/types";
 import { DEFAULT_KPI_BLOCK } from "../model/defaults";
 import { assertTable } from "../services/dql";
 import { DqlField } from "./DqlField";
-import { Field, SectionTitle } from "./Field";
+import { Field } from "./Field";
+import type { CommitMode } from "./NodeConfigPanel";
 
 /** Optional KPI block section, shared by every node form. */
 export function KpiBlockEditor({
@@ -15,15 +16,14 @@ export function KpiBlockEditor({
   timeframe,
 }: {
   value: KpiBlock | undefined;
-  onChange: (kpi: KpiBlock | undefined) => void;
+  onChange: (kpi: KpiBlock | undefined, commit?: CommitMode) => void;
   timeframe: Timeframe;
 }) {
   const enabled = value?.enabled ?? false;
   const kpi = value ?? { ...DEFAULT_KPI_BLOCK, enabled: false };
   return (
-    <Flex flexDirection="column" gap={8}>
-      <SectionTitle>Bloque KPI / Signals</SectionTitle>
-      <Switch value={enabled} onChange={(checked) => onChange({ ...kpi, enabled: checked })}>
+    <Flex flexDirection="column" gap={12} paddingTop={12}>
+      <Switch value={enabled} onChange={(checked) => onChange({ ...kpi, enabled: checked }, "now")}>
         Añadir KPIs bajo el nodo
       </Switch>
       {enabled && (
@@ -38,6 +38,7 @@ export function KpiBlockEditor({
             label="DQL (debe devolver una tabla)"
             value={kpi.dql}
             onChange={(v) => onChange({ ...kpi, dql: v })}
+            onRun={() => onChange(kpi, "now")}
             timeframe={timeframe}
             validate={assertTable}
           />

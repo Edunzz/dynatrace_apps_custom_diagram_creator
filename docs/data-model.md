@@ -31,7 +31,7 @@ generate.
 | `id` | string | unique in the diagram |
 | `type` | `entityNode` \| `customNode` | must match `data.kind` |
 | `position` | `{ x, y }` | |
-| `size` | `{ w, h }`, optional | containers only (resizable) |
+| `size` | `{ w, h }`, optional | set when the node is resized; entity nodes without it use the default width and an automatic height |
 | `data` | EntityNodeData \| CustomNodeData | discriminated by `kind` |
 
 ### Entity component (`kind: "entity"`)

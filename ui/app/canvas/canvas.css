@@ -187,3 +187,46 @@
     transition: none;
   }
 }
+
+/* Dashboard-like edit chrome: floating toolbar above the selected element and resize grips in the bottom corners. */
+.cdc-floating-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--dt-colors-border-neutral-default);
+  background: var(--dt-colors-background-surface-default);
+  box-shadow: var(--dt-box-shadows-surface-floating-rest);
+}
+
+.cdc-size-badge {
+  padding: 2px 6px;
+  margin-right: 2px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  background: var(--dt-colors-background-container-neutral-default);
+  color: var(--dt-colors-text-neutral-default);
+}
+
+.cdc-canvas .react-flow__resize-control.handle.cdc-resize-corner {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--dt-colors-border-primary-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cdc-canvas .react-flow__resize-control.handle.cdc-resize-corner.bottom.right {
+  translate: -100% -100%;
+}
+
+.cdc-canvas .react-flow__resize-control.handle.cdc-resize-corner.bottom.left {
+  translate: 0 -100%;
+}

@@ -39,6 +39,8 @@ export interface CanvasProps {
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void;
   onConnect: (connection: Connection) => void;
+  /** An end of a connection was dropped on another handle (same or different node). */
+  onReconnect: (edge: FlowEdge, connection: Connection) => void;
   onNodeDragStart: () => void;
   onBeforeDelete: () => Promise<boolean>;
   onDropItem: (event: DragEvent<HTMLDivElement>) => void;
@@ -78,6 +80,11 @@ export function Canvas(props: CanvasProps) {
         onConnect={props.onConnect}
         onConnectStart={() => setConnecting(true)}
         onConnectEnd={() => setConnecting(false)}
+        edgesReconnectable={edit}
+        reconnectRadius={12}
+        onReconnect={edit ? props.onReconnect : undefined}
+        onReconnectStart={() => setConnecting(true)}
+        onReconnectEnd={() => setConnecting(false)}
         onNodeDragStart={props.onNodeDragStart}
         onBeforeDelete={props.onBeforeDelete}
         onNodeClick={(_, node) => {

@@ -50,7 +50,7 @@ import {
 import { DEFAULT_TIMEFRAME, REFRESH_MS } from "../services/time";
 import { EditorToolbar } from "../toolbar/EditorToolbar";
 import { PALETTE_MIME, Palette, type PaletteItem } from "../toolbar/Palette";
-import { EdgeConfigPanel, type EdgeDraft } from "../panels/EdgeConfigPanel";
+import { EdgeConfigPanel, type EdgeDraft, type EdgeEnds } from "../panels/EdgeConfigPanel";
 import { NodeConfigPanel, type CommitMode } from "../panels/NodeConfigPanel";
 import { NodeDetailDrawer, type DetailTarget } from "../panels/NodeDetailDrawer";
 
@@ -319,6 +319,17 @@ function EditorInner({ diagramId }: { diagramId: string }) {
     [recordOnce, setEdges, commitChange],
   );
 
+  const changeEdgeEnds = useCallback(
+    (id: string, ends: EdgeEnds) => {
+      recordOnce();
+      setEdges((es) =>
+        es.map((e) => (e.id === id ? { ...e, sourceHandle: ends.sourceHandle ?? null, targetHandle: ends.targetHandle ?? null } : e)),
+      );
+      setDirty(true);
+    },
+    [recordOnce, setEdges],
+  );
+
   const deleteElement = useCallback(
     (kind: ElementKind, id: string) => {
       recordHistory();
@@ -447,6 +458,31 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       openPanel({ mode: "config", kind: "edge", id });
     },
     [recordHistory, setEdges, openPanel],
+  );
+
+  // Dragging an end of a connection onto another handle moves that end; the connection keeps its id and settings.
+  const onReconnect = useCallback(
+    (oldEdge: FlowEdge, connection: Connection) => {
+      if (!connection.source || !connection.target || connection.source === connection.target) {
+        return;
+      }
+      recordHistory();
+      setEdges((es) =>
+        es.map((e) =>
+          e.id === oldEdge.id
+            ? {
+                ...e,
+                source: connection.source,
+                target: connection.target,
+                sourceHandle: connection.sourceHandle ?? null,
+                targetHandle: connection.targetHandle ?? null,
+              }
+            : e,
+        ),
+      );
+      setDirty(true);
+    },
+    [recordHistory, setEdges],
   );
 
   const addNodeAt = useCallback(
@@ -709,6 +745,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onReconnect={onReconnect}
             onNodeDragStart={recordHistory}
             onBeforeDelete={() => {
               recordHistory();
@@ -738,8 +775,12 @@ function EditorInner({ diagramId }: { diagramId: string }) {
               key={`edge-${configEdge.id}-${panelVersion}`}
               edgeId={configEdge.id}
               value={edgeDraft}
+              ends={{ sourceHandle: configEdge.sourceHandle ?? undefined, targetHandle: configEdge.targetHandle ?? undefined }}
+              sourceName={nodes.find((n) => n.id === configEdge.source)?.data.name ?? configEdge.source}
+              targetName={nodes.find((n) => n.id === configEdge.target)?.data.name ?? configEdge.target}
               timeframe={timeframe}
               onChange={changeEdge}
+              onEndsChange={changeEdgeEnds}
               onDelete={(id) => deleteElement("edge", id)}
               onClose={() => openPanel(null)}
             />

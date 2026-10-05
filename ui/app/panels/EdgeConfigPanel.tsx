@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Colors from "@dynatrace/strato-design-tokens/colors";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { Accordion } from "@dynatrace/strato-components/content";
@@ -23,11 +24,22 @@ export interface EdgeDraft {
   kpi?: DiagramEdge["kpi"];
 }
 
+/** Connection points: the handle (side) used on the source and on the target component. */
+export interface EdgeEnds {
+  sourceHandle?: string;
+  targetHandle?: string;
+}
+
 export interface EdgeConfigPanelProps {
   edgeId: string;
   value: EdgeDraft;
+  /** Read live from the canvas, so dragging an end of the connection updates the panel too. */
+  ends: EdgeEnds;
+  sourceName: string;
+  targetName: string;
   timeframe: Timeframe;
   onChange: (id: string, draft: EdgeDraft, commit: CommitMode) => void;
+  onEndsChange: (id: string, ends: EdgeEnds) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 }
@@ -36,17 +48,37 @@ const FIRST_NUMERIC = "__first_numeric__";
 
 const defaultKpi = (): NonNullable<DiagramEdge["kpi"]> => ({
   dql: DEFAULT_EDGE_KPI_DQL,
-  unit: "ms",
-  decimals: 2,
+  unit: "count",
+  decimals: 0,
   animated: true,
-  threshold: { direction: "above", warning: null, failing: null },
+  // Low traffic is the usual concern for a request count; no limits until the user sets them.
+  threshold: { direction: "below", warning: null, failing: null },
 });
+
+/** Side of a node where a connection starts or ends (handle ids of the nodes). */
+const SIDES = [
+  { id: "t", label: "↑ Top" },
+  { id: "r", label: "→ Right" },
+  { id: "b", label: "↓ Bottom" },
+  { id: "l", label: "← Left" },
+];
 
 /**
  * Connection editor docked to the right of the canvas. Like the node editor, valid changes apply as you edit;
  * the parent mounts it with key={edgeId}.
  */
-export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, onClose }: EdgeConfigPanelProps) {
+export function EdgeConfigPanel({
+  edgeId,
+  value,
+  ends,
+  sourceName,
+  targetName,
+  timeframe,
+  onChange,
+  onEndsChange,
+  onDelete,
+  onClose,
+}: EdgeConfigPanelProps) {
   const [draft, setDraft] = useState<EdgeDraft>(() => structuredClone(value));
   const [columns, setColumns] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -72,8 +104,30 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
   };
   const setKpi = (k: NonNullable<DiagramEdge["kpi"]>, commit: CommitMode = "none") => update({ ...draft, kpi: k }, commit);
 
+  const sidePicker = (end: keyof EdgeEnds, label: string) => (
+    <Flex flexDirection="column" gap={4}>
+      <span style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued }}>{label}</span>
+      <ToggleButtonGroup value={ends[end] ?? ""} onChange={(v) => v && onEndsChange(edgeId, { ...ends, [end]: v })} aria-label={label}>
+        {SIDES.map((side) => (
+          <ToggleButtonGroup.Item key={side.id} value={side.id}>
+            {side.label}
+          </ToggleButtonGroup.Item>
+        ))}
+      </ToggleButtonGroup>
+    </Flex>
+  );
+
   const visualFields = (
     <Flex flexDirection="column" gap={12} paddingTop={12}>
+      <Field
+        label="Connection points"
+        hint="Side of each component where the connection starts and ends. On the canvas you can also drag an end of the selected connection onto another dot."
+      >
+        <Flex flexDirection="column" gap={8}>
+          {sidePicker("sourceHandle", `Starts at · ${sourceName}`)}
+          {sidePicker("targetHandle", `Ends at · ${targetName}`)}
+        </Flex>
+      </Field>
       <Field label="Direction">
         <ToggleButtonGroup
           value={draft.direction}

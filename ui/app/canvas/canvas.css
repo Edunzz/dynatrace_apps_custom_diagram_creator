@@ -15,6 +15,14 @@
   opacity: 1;
 }
 
+/* Ends of the selected connection: drag one onto another dot to reconnect it. */
+.cdc-canvas.cdc-edit .react-flow__edge.selected .react-flow__edgeupdater {
+  fill: var(--dt-colors-background-surface-default);
+  fill-opacity: 0.9;
+  stroke: var(--dt-colors-border-primary-accent);
+  stroke-width: 2;
+}
+
 .cdc-canvas.cdc-view .react-flow__handle {
   pointer-events: none;
 }

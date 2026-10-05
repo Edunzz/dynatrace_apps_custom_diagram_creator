@@ -27,7 +27,11 @@ export const DEFAULT_KPI_BLOCK: KpiBlock = {
   ],
 };
 
-export const DEFAULT_EDGE_KPI_DQL =
+/** New KPI connections start with the request count of the timeframe. */
+export const DEFAULT_EDGE_KPI_DQL = "timeseries requests = sum(dt.service.request.count, scalar: true)\n| fields requests";
+
+/** Average response time in ms (used by the sample diagram). */
+export const RESPONSE_TIME_EDGE_DQL =
   "timeseries r = avg(dt.service.request.response_time, scalar: true)\n| fieldsAdd v = r / 1000\n| fields v";
 
 export function newEntityNodeData(componentType: ComponentType): EntityNodeData {
@@ -61,7 +65,7 @@ export function newKpiEdge(source: string, target: string, id: string): DiagramE
     type: "kpi",
     direction: "forward",
     kpi: {
-      dql: DEFAULT_EDGE_KPI_DQL,
+      dql: RESPONSE_TIME_EDGE_DQL,
       unit: "ms",
       decimals: 1,
       animated: true,

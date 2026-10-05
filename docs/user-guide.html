@@ -79,9 +79,15 @@
 <li><strong>Normal</strong> — a plain line with an optional label.</li>
 <li><strong>KPI relation</strong> — a query that returns a single value (first row; the chosen column or the first numeric one), a unit (common units or a custom one), decimals and a threshold. <em>above</em> means high values are bad, <em>below</em> means low values are bad.</li>
 </ul>
-<p>Every connection has a direction — source to target, target to source, or no arrow. KPI connections show a pill with the value, color the line by status and animate dots in the arrow's direction (off when the system asks for reduced motion).</p><div class="code"><span class="label">dql</span><pre><code>timeseries r = avg(dt.service.request.response_time, scalar: true)
+<p>A new KPI relation starts with the request count of the page timeframe, without limits — set them on the <strong>Threshold</strong> tab:</p><div class="code"><span class="label">dql</span><pre><code>timeseries requests = sum(dt.service.request.count, scalar: true)
+| fields requests</code></pre></div><p>For the average response time in milliseconds:</p><div class="code"><span class="label">dql</span><pre><code>timeseries r = avg(dt.service.request.response_time, scalar: true)
 | fieldsAdd v = r / 1000
-| fields v</code></pre></div>
+| fields v</code></pre></div><p>Every connection has a direction — source to target, target to source, or no arrow. KPI connections show a pill with the value, color the line by status and animate dots in the arrow's direction (off when the system asks for reduced motion).</p>
+<h3>Changing where a connection starts or ends</h3>
+<ul>
+<li><strong>On the canvas:</strong> select the connection; its two ends show a small circle. Drag an end onto another dot — on the same component or on a different one. The connection keeps its type, query and label.</li>
+<li><strong>In the editor:</strong> on the <strong>Visual</strong> tab, <strong>Connection points</strong> sets the side (top, right, bottom or left) where it starts and where it ends.</li>
+</ul>
 <h2 id="editing">Editing like a dashboard</h2>
 <ul>
 <li><strong>Select</strong> a node to get the floating toolbar: its size, <strong>Duplicate</strong>, <strong>Edit</strong> and a ⋮ menu with <strong>View details</strong> and <strong>Delete</strong>. Selected connections get <strong>Edit</strong> and <strong>Delete</strong>.</li>

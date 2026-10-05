@@ -4,17 +4,14 @@ import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { Select } from "@dynatrace/strato-components/forms";
 import { XmarkIcon } from "@dynatrace/strato-icons";
+import { COMPONENT_TYPE_DEFS } from "../model/componentTypes";
 import type { ComponentType, EntityRef } from "../model/schema";
 import { COMPONENT_LABELS } from "../model/defaults";
 import { errorMessage } from "../services/dql";
-import { listEntities, type EntityOption } from "../services/entities";
+import { ENTITY_LIST_LIMIT, listEntities, smartscapeTypeLabel, type EntityOption } from "../services/entities";
 import { InlineMessage } from "./Field";
 
-const TYPE_LABELS: Record<string, string> = {
-  K8S_DEPLOYMENT: "Deployment",
-  K8S_STATEFULSET: "StatefulSet",
-  K8S_DAEMONSET: "DaemonSet",
-};
+const SEARCH_DELAY_MS = 350;
 
 /**
  * Combo box with the entities of one component type (Smartscape, last 7 days).
@@ -31,12 +28,21 @@ export function EntityPicker({
 }) {
   const [options, setOptions] = useState<EntityOption[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const smartscapeTypes = COMPONENT_TYPE_DEFS[componentType].smartscape;
+  const showType = smartscapeTypes.length > 1 || smartscapeTypes[0].endsWith("*");
+
+  useEffect(() => {
+    setFilter("");
+    setSearch("");
+  }, [componentType]);
 
   useEffect(() => {
     const controller = new AbortController();
     setOptions(null);
     setError(null);
-    listEntities(componentType, controller.signal)
+    listEntities(componentType, controller.signal, search)
       .then(setOptions)
       .catch((e) => {
         if (!controller.signal.aborted) {
@@ -45,12 +51,23 @@ export function EntityPicker({
         }
       });
     return () => controller.abort();
-  }, [componentType]);
+  }, [componentType, search]);
+
+  // Big environments: the first list stops at the limit, so the filter text is also searched on the server.
+  const truncated = (options?.length ?? 0) >= ENTITY_LIST_LIMIT;
+  useEffect(() => {
+    const text = filter.trim();
+    if (text === search || (!truncated && !search)) {
+      return;
+    }
+    const timer = setTimeout(() => setSearch(text), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [filter, search, truncated]);
 
   // Picked entities that are no longer listed (deleted, older than 7 days) stay visible so they can be removed.
   const all: EntityOption[] = [...(options ?? []), ...value.filter((v) => !(options ?? []).some((o) => o.id === v.id))];
   const byId = new Map(all.map((o) => [o.id, o]));
-  const typeLabel = COMPONENT_LABELS[componentType].toLowerCase();
+  const label = COMPONENT_LABELS[componentType];
 
   return (
     <Flex flexDirection="column" gap={8}>
@@ -70,19 +87,26 @@ export function EntityPicker({
             }),
           )
         }
-        aria-label={`${COMPONENT_LABELS[componentType]} entities`}
+        aria-label={`${label} entities`}
       >
-        <Select.Filter />
+        <Select.Filter value={filter} onChange={setFilter} />
         <Select.Content loading={options === null} showSelectedOptionsFirst>
           {all.map((o) => (
             <Select.Option key={o.id} value={o.id} textValue={`${o.name} ${o.id}`}>
               {o.name}
-              {o.type ? ` · ${TYPE_LABELS[o.type] ?? o.type}` : ""}
+              {showType && o.type ? ` · ${smartscapeTypeLabel(o.type)}` : ""}
             </Select.Option>
           ))}
         </Select.Content>
-        <Select.EmptyState>No {typeLabel} entities were seen in the last 7 days.</Select.EmptyState>
+        <Select.EmptyState>
+          {search ? `No ${label} entity matches “${search}”.` : `No ${label} entities were seen in the last 7 days.`}
+        </Select.EmptyState>
       </Select>
+      {truncated && !search && (
+        <span style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued }}>
+          Showing the first {ENTITY_LIST_LIMIT.toLocaleString("en-US")} by name. Type in the list to search all of them.
+        </span>
+      )}
       {value.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {value.map((e) => (

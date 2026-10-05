@@ -1,28 +1,40 @@
+import { COMPONENT_TYPE_DEFS, type ComponentTypeDef } from "../model/componentTypes";
 import type { ComponentType, EntityRef } from "../model/schema";
-import { asText, runQuery } from "./dql";
+import { asText, dqlString, runQuery } from "./dql";
 
 export interface EntityOption extends EntityRef {
-  /** Smartscape node type, shown for workloads (deployment, statefulset, daemonset). */
+  /** Smartscape node type, shown when a component type covers several (e.g. deployment, statefulset). */
   type?: string;
 }
 
-/** Entities that existed in the last 7 days, per component type (Smartscape; dt.entity.* is deprecated). */
-export const ENTITY_LIST_DQL: Record<ComponentType, string> = {
-  service: 'smartscapeNodes "SERVICE", from: now()-7d\n| fields id, name\n| sort name asc\n| limit 2000',
-  process: 'smartscapeNodes "PROCESS", from: now()-7d\n| fields id, name\n| sort name asc\n| limit 2000',
-  host: 'smartscapeNodes "HOST", from: now()-7d\n| fields id, name\n| sort name asc\n| limit 2000',
-  workload:
-    'smartscapeNodes "K8S_DEPLOYMENT", "K8S_STATEFULSET", "K8S_DAEMONSET", from: now()-7d\n| fields id, name, type\n| sort name asc\n| limit 2000',
-  frontend: 'smartscapeNodes "FRONTEND", from: now()-7d\n| filter frontend.type == "web"\n| fields id, id_classic, name\n| sort name asc\n| limit 2000',
-  mobile: 'smartscapeNodes "FRONTEND", from: now()-7d\n| filter frontend.type != "web"\n| fields id, id_classic, name\n| sort name asc\n| limit 2000',
-};
+/** Entities listed per query. Larger environments are searched on the server as you type. */
+export const ENTITY_LIST_LIMIT = 2000;
 
-export async function listEntities(type: ComponentType, signal?: AbortSignal): Promise<EntityOption[]> {
-  const result = await runQuery(ENTITY_LIST_DQL[type], undefined, { signal, maxResultRecords: 2000 });
+/**
+ * Entities of a component type that existed in the last 7 days (Smartscape; dt.entity.* is deprecated).
+ * With a search text, only the entities whose name or id contains it.
+ */
+export function entityListDql(type: ComponentType, search = ""): string {
+  const def: ComponentTypeDef = COMPONENT_TYPE_DEFS[type];
+  const text = search.trim();
+  return [
+    `smartscapeNodes ${def.smartscape.map((t) => `"${t}"`).join(", ")}, from: now()-7d`,
+    ...(def.filter ? [`| filter ${def.filter}`] : []),
+    ...(text
+      ? [`| filter contains(name, ${dqlString(text)}, caseSensitive: false) or contains(toString(id), ${dqlString(text)}, caseSensitive: false)`]
+      : []),
+    "| fields id, id_classic, name, type",
+    "| sort name asc",
+    `| limit ${ENTITY_LIST_LIMIT}`,
+  ].join("\n");
+}
+
+export async function listEntities(type: ComponentType, signal?: AbortSignal, search = ""): Promise<EntityOption[]> {
+  const result = await runQuery(entityListDql(type, search), undefined, { signal, maxResultRecords: ENTITY_LIST_LIMIT });
   return result.records.map((r) => {
     const option: EntityOption = { id: asText(r.id), name: asText(r.name) || asText(r.id) };
     const classicId = asText(r.id_classic);
-    if (classicId) {
+    if (classicId && classicId !== option.id) {
       option.classicId = classicId;
     }
     const nodeType = asText(r.type);
@@ -31,6 +43,36 @@ export async function listEntities(type: ComponentType, signal?: AbortSignal): P
     }
     return option;
   });
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  K8S_DEPLOYMENT: "Deployment",
+  K8S_STATEFULSET: "StatefulSet",
+  K8S_DAEMONSET: "DaemonSet",
+  GENAI_SERVICE: "Service",
+  GENAI_AGENT: "Agent",
+  GENAI_MODEL: "Model",
+};
+
+const DB_ENGINES: Record<string, string> = {
+  POSTGRES: "PostgreSQL",
+  MYSQL: "MySQL",
+  MSSQL: "SQL Server",
+  ORACLE: "Oracle",
+  HANA: "SAP HANA",
+};
+
+/** Readable Smartscape type: known names, DB_INSTANCE_POSTGRES → "PostgreSQL instance", otherwise the raw type. */
+export function smartscapeTypeLabel(type: string): string {
+  if (TYPE_LABELS[type]) {
+    return TYPE_LABELS[type];
+  }
+  const db = /^DB_(INSTANCE|DATABASE)_(.+)$/.exec(type);
+  if (db) {
+    const engine = DB_ENGINES[db[2]] ?? db[2].charAt(0) + db[2].slice(1).toLowerCase();
+    return `${engine} ${db[1] === "INSTANCE" ? "instance" : "database"}`;
+  }
+  return type;
 }
 
 /** Ids used to match problems: Smartscape ids plus classic ids when known. */

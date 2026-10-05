@@ -13,8 +13,12 @@ export const App = () => {
         <Header />
       </PageLayout.Header>
       <PageLayout.Content>
-        {/* overflow: clip keeps tall content (e.g. a long query in an editor panel) from scrolling the whole page. */}
-        <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "clip" }}>
+        {/*
+          The page never scrolls: each view scrolls inside itself. position: relative makes this box the containing
+          block of absolutely positioned helpers (hidden form inputs, editor measurers), so overflow: clip contains them
+          too instead of letting them stretch and scroll the page.
+        */}
+        <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "clip", position: "relative" }}>
           <div style={{ flex: 1, minHeight: 0 }}>
             <Routes>
               <Route path="/" element={<DiagramListPage />} />

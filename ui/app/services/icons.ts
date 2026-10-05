@@ -1,6 +1,7 @@
 import * as StratoIcons from "@dynatrace/strato-icons";
 import type { SvgIconProps } from "@dynatrace/strato-icons";
 import type { ComponentType as ReactComponentType } from "react";
+import { COMPONENT_TYPE_DEFS, COMPONENT_TYPE_IDS, type ComponentCategory } from "../model/componentTypes";
 import type { ComponentType } from "../model/schema";
 
 export type IconComponent = ReactComponentType<SvgIconProps>;
@@ -25,12 +26,7 @@ export function iconExists(name: string): boolean {
 }
 
 export const DEFAULT_ICONS: Record<ComponentType | "custom", string> = {
-  mobile: "MobileIcon",
-  frontend: "ApplicationsIcon",
-  service: "ServicesIcon",
-  process: "ProcessIcon",
-  host: "HostsIcon",
-  workload: "ContainerIcon",
+  ...(Object.fromEntries(COMPONENT_TYPE_IDS.map((t) => [t, COMPONENT_TYPE_DEFS[t].icon])) as Record<ComponentType, string>),
   custom: "ComponentIcon",
 };
 
@@ -53,13 +49,24 @@ export const ICON_GROUPS: IconGroup[] = [
   { id: "client", label: "Client", keywords: ["Mobile", "Browser", "Application", "Apps", "Desktop", "User", "Internet", "Shop", "Account"] },
 ];
 
+/** Icon groups suggested first in the icon picker, per component category (with a few per-type overrides). */
+const CATEGORY_GROUPS: Record<ComponentCategory, string[]> = {
+  Applications: ["service", "client", "technology"],
+  Infrastructure: ["infra", "database"],
+  Kubernetes: ["infra", "technology"],
+  AWS: ["infra", "service", "database", "technology"],
+  Azure: ["infra", "service", "database", "technology"],
+  "Google Cloud": ["infra", "service", "database", "technology"],
+};
+
 export const RELEVANT_GROUPS: Record<ComponentType | "custom", string[]> = {
+  ...(Object.fromEntries(COMPONENT_TYPE_IDS.map((t) => [t, CATEGORY_GROUPS[COMPONENT_TYPE_DEFS[t].category]])) as Record<ComponentType, string[]>),
   mobile: ["client"],
   frontend: ["client"],
   service: ["service", "database", "technology"],
   process: ["infra", "technology", "service"],
   host: ["infra"],
-  workload: ["infra", "technology"],
+  database: ["database"],
   custom: [],
 };
 

@@ -11,7 +11,8 @@ SLOs, and connections show KPI values with animated flow.
 ## What you get
 
 - A canvas to draw and connect components, with Dashboards-style editing.
-- Pick the real entities behind each component from a searchable list; live status from Davis problems and SLOs.
+- 45 entity component types (apps, hosts, Kubernetes, databases, AWS, Azure, Google Cloud): pick the real entities
+  from a searchable list and get live status from Davis problems and SLOs.
 - Containers built from your own DQL queries or a set of SLOs.
 - As many KPIs as you need under any component, and KPI values on the connections, with ready-made or custom units.
 - Diagrams stored in Grail, managed like dashboards: list, duplicate, upload, download, delete.

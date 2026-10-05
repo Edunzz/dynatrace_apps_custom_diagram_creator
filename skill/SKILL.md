@@ -34,16 +34,20 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
    ```
    dtctl query 'smartscapeNodes "SERVICE" | filter contains(name, "<x>", caseSensitive: false) | fields id, name | limit 20'
    ```
-   (in Windows PowerShell 5.1, escape the inner double quotes as `\"`). Useful types: `SERVICE`, `PROCESS`, `HOST`,
-   `FRONTEND` (also returns `id_classic`), `K8S_DEPLOYMENT`, `K8S_STATEFULSET`, `K8S_DAEMONSET`, `DB_INSTANCE_*`.
+   (in Windows PowerShell 5.1, escape the inner double quotes as `\"`). Each `componentType` lists fixed Smartscape
+   types — the catalog is `ui/app/model/componentTypes.ts` (e.g. `service` → `SERVICE`, `workload` →
+   `K8S_DEPLOYMENT`/`K8S_STATEFULSET`/`K8S_DAEMONSET`, `database` → `DB_INSTANCE_*`/`DB_DATABASE_*`, `awsLambda` →
+   `AWS_LAMBDA_FUNCTION`). Pick the component type whose Smartscape types include the entity you found.
    Put the entities you found in the node's `entities` list — `[{ "id": "SERVICE-…", "name": "…" }]`, plus
    `"classicId"` for frontends (the `id_classic` column). That is what the app's entity picker writes. Use an
    `entityDql` instead only when the user wants the selection to stay dynamic (it is used only while `entities` is
    empty).
 3. **Build the JSON** following the schema:
    - `schemaVersion: "1.0"`, `id`: UUID v4, `createdAt/updatedAt`: ISO 8601 UTC.
-   - `entityNode` nodes (`componentType` ∈ mobile|frontend|service|process|host|workload, `entities` or
-     `entityDql`) or `customNode` (`mode` entities|slos; in entities mode the query must return `id` and `name`).
+   - `entityNode` nodes (`componentType`: one of the ids in `componentTypes.ts` / the `diagram.schema.json` enum —
+     frontend, mobile, service, process, genai, host, container, database, networkDevice, k8s*, workload, aws*,
+     azure*, gcp*; plus `entities` or `entityDql`) or `customNode` (`mode` entities|slos; in entities mode the query
+     must return `id` and `name`).
    - KPIs under a node: `kpi: { enabled: true, title, items: [...] }`. Each item is
      `{ id, dql, valueField?, labelMode: "text"|"column", labelText?, labelField?, unit?, decimals, maxRows }`:
      `text` shows the first row's value with `labelText` as its name; `column` shows one line per row (up to

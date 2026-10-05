@@ -665,7 +665,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
 
   return (
     <DiagramContext.Provider value={contextValue}>
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "clip" }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "clip", position: "relative" }}>
         <EditorToolbar
           name={meta.name}
           onNameChange={(name) => {
@@ -698,7 +698,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
           canRedo={history.canRedo}
           onBack={goBack}
         />
-        <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "clip", position: "relative" }}>
           {mode === "edit" && <Palette onAdd={onPaletteAdd} />}
           <Canvas
             nodes={nodes}

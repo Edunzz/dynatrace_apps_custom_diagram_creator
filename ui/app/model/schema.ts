@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COMPONENT_TYPE_IDS } from "./componentTypes";
 
 /** KPI edge threshold. above: value > X is bad; below: value < X is bad. */
 export const Threshold = z.object({
@@ -49,7 +50,8 @@ export const EntityFailPoint = z.object({
   failingMin: z.number().int().min(1).default(1),
 });
 
-export const ComponentType = z.enum(["mobile", "frontend", "service", "process", "host", "workload"]);
+/** Kinds of entity component; see componentTypes.ts for labels, Smartscape types and icons. */
+export const ComponentType = z.enum(COMPONENT_TYPE_IDS);
 
 /** An entity picked in the editor. classicId is the classic entity id (e.g. APPLICATION-…) when Smartscape has one. */
 export const EntityRef = z.object({

@@ -11,6 +11,7 @@ import { DEFAULT_EDGE_KPI_DQL } from "../model/defaults";
 import { assertSingleValue, numericColumns } from "../services/dql";
 import { DqlField } from "./DqlField";
 import { Field, InlineMessage } from "./Field";
+import { IntegerInput } from "./IntegerInput";
 import type { CommitMode } from "./NodeConfigPanel";
 import { SidePanel } from "./SidePanel";
 import { UnitField } from "./UnitField";
@@ -177,12 +178,7 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
                           <UnitField value={kpi.unit} onChange={(unit) => setKpi({ ...kpi, unit })} />
                         </div>
                         <Field label="Decimals">
-                          <NumberInputV2
-                            value={kpi.decimals}
-                            min={0}
-                            max={10}
-                            onChange={(v) => setKpi({ ...kpi, decimals: Math.min(10, Math.max(0, v ?? 2)) })}
-                          />
+                          <IntegerInput value={kpi.decimals} min={0} max={10} aria-label="Decimals" onChange={(decimals) => setKpi({ ...kpi, decimals })} />
                         </Field>
                       </Flex>
                     </Flex>

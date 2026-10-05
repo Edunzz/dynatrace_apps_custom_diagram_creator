@@ -127,17 +127,39 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid var(--dt-colors-border-neutral-default);
   background: var(--dt-colors-background-surface-default);
   cursor: grab;
   user-select: none;
   font-size: 13px;
+  line-height: 1.25;
+}
+
+.cdc-palette-item > svg {
+  flex-shrink: 0;
 }
 
 .cdc-palette-item:hover {
   border-color: var(--dt-colors-border-primary-accent);
+}
+
+/* The custom component is pinned above the filter. */
+.cdc-palette-item--pinned {
+  padding: 8px 10px;
+  font-weight: 600;
+  border-color: var(--dt-colors-border-primary-default);
+  background: var(--dt-colors-background-container-primary-default);
+}
+
+.cdc-palette-group {
+  margin: 10px 2px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dt-colors-text-neutral-subdued);
 }
 
 .cdc-icon-grid {

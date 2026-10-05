@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Colors from "@dynatrace/strato-design-tokens/colors";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
-import { NumberInputV2, Select, Switch, TextInput, ToggleButtonGroup } from "@dynatrace/strato-components/forms";
+import { Select, Switch, TextInput, ToggleButtonGroup } from "@dynatrace/strato-components/forms";
 import { Tooltip } from "@dynatrace/strato-components/overlays";
 import { DeleteIcon, PlusIcon } from "@dynatrace/strato-icons";
 import type { KpiBlock, KpiItem } from "../model/schema";
@@ -11,6 +11,7 @@ import { numericColumns } from "../services/dql";
 import { kpiItems, labelColumns, newKpiItem } from "../services/kpi";
 import { DqlField } from "./DqlField";
 import { Field, InlineMessage } from "./Field";
+import { IntegerInput } from "./IntegerInput";
 import type { CommitMode } from "./NodeConfigPanel";
 import { UnitField } from "./UnitField";
 
@@ -94,7 +95,7 @@ function KpiItemEditor({
         hint={
           item.labelMode === "text"
             ? "A fixed name; the KPI shows the value of the first row."
-            : "Read the name from a column; the KPI shows one line per row."
+            : "Read the name from a column; the KPI shows one line per result row."
         }
       >
         <Flex flexDirection="column" gap={6}>
@@ -113,47 +114,43 @@ function KpiItemEditor({
               aria-label="KPI name"
             />
           ) : (
-            <Flex gap={8} alignItems="flex-end">
-              <div style={{ flex: 1 }}>
-                <Select
-                  value={item.labelField ?? FIRST}
-                  onChange={(v) => onChange({ ...item, labelField: !v || v === FIRST ? undefined : v }, "debounced")}
-                >
-                  <Select.Content>
-                    <Select.Option value={FIRST}>First text column</Select.Option>
-                    {labelOptions.map((c) => (
-                      <Select.Option key={c} value={c}>
-                        {c}
-                      </Select.Option>
-                    ))}
-                  </Select.Content>
-                </Select>
-              </div>
-              <div style={{ width: 110 }}>
-                <NumberInputV2
-                  value={item.maxRows}
-                  min={1}
-                  max={50}
-                  aria-label="Max rows"
-                  onChange={(v) => onChange({ ...item, maxRows: Math.min(50, Math.max(1, v ?? 5)) }, "debounced")}
-                />
-              </div>
-            </Flex>
+            <Select
+              value={item.labelField ?? FIRST}
+              onChange={(v) => onChange({ ...item, labelField: !v || v === FIRST ? undefined : v }, "debounced")}
+              aria-label="Name column"
+            >
+              <Select.Content>
+                <Select.Option value={FIRST}>First text column</Select.Option>
+                {labelOptions.map((c) => (
+                  <Select.Option key={c} value={c}>
+                    {c}
+                  </Select.Option>
+                ))}
+              </Select.Content>
+            </Select>
           )}
         </Flex>
       </Field>
+      {item.labelMode === "column" && (
+        <Field label="Lines to show" hint="How many result rows the KPI lists under the node, from the top (1–50).">
+          <div style={{ width: 110 }}>
+            <IntegerInput
+              value={item.maxRows}
+              min={1}
+              max={50}
+              aria-label="Lines to show"
+              onChange={(maxRows) => onChange({ ...item, maxRows }, "debounced")}
+            />
+          </div>
+        </Field>
+      )}
       <Flex gap={12}>
         <div style={{ flex: 1 }}>
           <UnitField value={item.unit} onChange={(unit) => onChange({ ...item, unit })} />
         </div>
         <div style={{ width: 110 }}>
           <Field label="Decimals">
-            <NumberInputV2
-              value={item.decimals}
-              min={0}
-              max={10}
-              onChange={(v) => onChange({ ...item, decimals: Math.min(10, Math.max(0, v ?? 2)) })}
-            />
+            <IntegerInput value={item.decimals} min={0} max={10} aria-label="Decimals" onChange={(decimals) => onChange({ ...item, decimals })} />
           </Field>
         </div>
       </Flex>

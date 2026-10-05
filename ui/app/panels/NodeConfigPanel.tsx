@@ -3,7 +3,7 @@ import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { Accordion, CodeSnippet } from "@dynatrace/strato-components/content";
 import { Menu, Tab, Tabs } from "@dynatrace/strato-components/navigation";
-import { NumberInputV2, Select, TextInput, ToggleButtonGroup } from "@dynatrace/strato-components/forms";
+import { Select, TextInput, ToggleButtonGroup } from "@dynatrace/strato-components/forms";
 import { DeleteIcon, DotMenuIcon } from "@dynatrace/strato-icons";
 import {
   NodeData,
@@ -13,6 +13,7 @@ import {
   type NodeData as NodeDataType,
 } from "../model/schema";
 import type { Timeframe } from "../model/types";
+import { COMPONENT_CATEGORIES, COMPONENT_TYPE_DEFS } from "../model/componentTypes";
 import { COMPONENT_LABELS, COMPONENT_TYPES } from "../model/defaults";
 import { assertColumns, errorMessage } from "../services/dql";
 import { CUSTOM_DQL_TEMPLATE } from "../services/queryBuilder";
@@ -22,6 +23,7 @@ import { IconPicker } from "../toolbar/IconPicker";
 import { DqlField } from "./DqlField";
 import { EntityPicker } from "./EntityPicker";
 import { Field, InlineMessage } from "./Field";
+import { IntegerInput } from "./IntegerInput";
 import { KpiBlockEditor } from "./KpiBlockEditor";
 import { SidePanel } from "./SidePanel";
 
@@ -68,12 +70,18 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
       <Tab title="Data">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
           <Field label="Component type" hint="Which kind of entity this component represents. Changing it clears the selection.">
-            <Select value={draft.componentType} onChange={(v) => v && changeType(v)}>
+            <Select value={draft.componentType} onChange={(v) => v && changeType(v)} aria-label="Component type">
+              <Select.Filter />
               <Select.Content>
-                {COMPONENT_TYPES.map((t) => (
-                  <Select.Option key={t} value={t}>
-                    {COMPONENT_LABELS[t]}
-                  </Select.Option>
+                {COMPONENT_CATEGORIES.map((category) => (
+                  <Select.Group key={category}>
+                    <Select.GroupLabel>{category}</Select.GroupLabel>
+                    {COMPONENT_TYPES.filter((t) => COMPONENT_TYPE_DEFS[t].category === category).map((t) => (
+                      <Select.Option key={t} value={t}>
+                        {COMPONENT_LABELS[t]}
+                      </Select.Option>
+                    ))}
+                  </Select.Group>
                 ))}
               </Select.Content>
             </Select>
@@ -121,17 +129,19 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
           </Field>
           <Flex gap={12}>
             <Field label="Warning threshold (# problems)">
-              <NumberInputV2
+              <IntegerInput
                 value={fp.warningMin}
                 min={1}
-                onChange={(v) => update({ ...draft, failPoint: { ...fp, warningMin: Math.max(1, v ?? 1) } }, "debounced")}
+                aria-label="Warning threshold"
+                onChange={(warningMin) => update({ ...draft, failPoint: { ...fp, warningMin } }, "debounced")}
               />
             </Field>
             <Field label="Failing threshold (# problems)">
-              <NumberInputV2
+              <IntegerInput
                 value={fp.failingMin}
                 min={1}
-                onChange={(v) => update({ ...draft, failPoint: { ...fp, failingMin: Math.max(1, v ?? 1) } }, "debounced")}
+                aria-label="Failing threshold"
+                onChange={(failingMin) => update({ ...draft, failPoint: { ...fp, failingMin } }, "debounced")}
               />
             </Field>
           </Flex>
@@ -331,11 +341,12 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
             label="Visible rows before scrolling"
             hint="Rows shown before the container scrolls. A container with a single entity shows it as one large block instead."
           >
-            <NumberInputV2
+            <IntegerInput
               value={draft.maxVisibleRows}
               min={1}
               max={50}
-              onChange={(v) => update({ ...draft, maxVisibleRows: Math.max(1, v ?? 8) })}
+              aria-label="Visible rows before scrolling"
+              onChange={(maxVisibleRows) => update({ ...draft, maxVisibleRows })}
             />
           </Field>
         </Flex>

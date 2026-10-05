@@ -61,7 +61,8 @@ export function SidePanel({ title, subtitle, actions, onClose, children }: SideP
           </Button>
         </Tooltip>
       </div>
-      <div className="cdc-side-panel-body" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 16px 16px" }}>
+      {/* position: relative keeps absolutely positioned helpers inside this scroll area. */}
+      <div className="cdc-side-panel-body" style={{ flex: 1, minHeight: 0, overflowY: "auto", position: "relative", padding: "0 16px 16px" }}>
         {children}
       </div>
     </aside>

@@ -1,17 +1,13 @@
 import type { ComponentType, CustomNodeData, Diagram, DiagramEdge, EntityNodeData, KpiBlock } from "./schema";
+import { COMPONENT_TYPE_DEFS, COMPONENT_TYPE_IDS } from "./componentTypes";
 import { CUSTOM_DQL_TEMPLATE } from "../services/queryBuilder";
 import { DEFAULT_ICONS } from "../services/icons";
 
-export const COMPONENT_LABELS: Record<ComponentType, string> = {
-  mobile: "Mobile",
-  frontend: "Frontend",
-  service: "Service",
-  process: "Process",
-  host: "Host",
-  workload: "Workload",
-};
+export const COMPONENT_LABELS = Object.fromEntries(
+  COMPONENT_TYPE_IDS.map((t) => [t, COMPONENT_TYPE_DEFS[t].label]),
+) as Record<ComponentType, string>;
 
-export const COMPONENT_TYPES = Object.keys(COMPONENT_LABELS) as ComponentType[];
+export const COMPONENT_TYPES: ComponentType[] = COMPONENT_TYPE_IDS;
 
 /** New KPI blocks start with one KPI per service: label from the "service" column, value from "avg_ms". */
 export const DEFAULT_KPI_BLOCK: KpiBlock = {

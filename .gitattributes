@@ -1,0 +1,2 @@
+# Shell scripts run in Linux containers (Codespaces): always check them out with LF line endings.
+*.sh text eol=lf

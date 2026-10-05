@@ -1,0 +1,26 @@
+{
+  // GitHub Codespaces / Dev Containers: everything needed to build and deploy the app, with no local setup.
+  // After the container is created, run `npm run deploy:token` (see README.md).
+  "name": "Custom Diagram Creator",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postCreateCommand": "npm ci",
+  // Codespaces asks for these values when the codespace is created and passes them as environment variables.
+  "secrets": {
+    "DT_APP_ENVIRONMENT_URL": {
+      "description": "URL of the Dynatrace environment to deploy to, e.g. https://abc12345.apps.dynatrace.com",
+      "documentationUrl": "https://edunzz.github.io/dynatrace_apps_custom_diagram_creator/getting-started.html#codespaces"
+    },
+    "DT_APP_PLATFORM_TOKEN": {
+      "description": "Dynatrace platform token with the scopes app-engine:apps:install, app-engine:apps:run and app-engine:apps:delete",
+      "documentationUrl": "https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["dynatrace.dynatrace-apps", "dbaeumer.vscode-eslint"]
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
+    }
+  }
+}

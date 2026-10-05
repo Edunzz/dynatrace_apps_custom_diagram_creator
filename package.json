@@ -11,6 +11,7 @@
     "create:action": "dt-app action create",
     "uninstall": "dt-app uninstall",
     "deploy": "dt-app deploy",
+    "deploy:token": "bash scripts/deploy.sh",
     "update": "dt-app update",
     "info": "dt-app info",
     "help": "dt-app help",

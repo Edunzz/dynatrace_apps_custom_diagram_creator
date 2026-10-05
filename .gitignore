@@ -1,3 +1,6 @@
+# Local secrets (see .env.example)
+.env
+
 # DT APP files
 .dt-app/*
 !/.dt-app/deployment.json

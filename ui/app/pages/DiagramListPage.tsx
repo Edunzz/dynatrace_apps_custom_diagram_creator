@@ -39,6 +39,9 @@ import { formatDateTime } from "../services/time";
 import { InlineMessage } from "../panels/Field";
 import { AboutModal } from "../components/AboutModal";
 
+/** Single-line text that ends with … when the column is too narrow. */
+const ELLIPSIS = { display: "block", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
+
 const ADMIN_PREFIX = "/lookups/custom-diagram-creator/";
 
 interface FileRow {
@@ -284,11 +287,14 @@ export function DiagramListPage() {
       await reload();
     });
 
-  /** Plain text cell that opens the diagram on click, so the whole row (except checkbox and actions) is a target. */
+  /**
+   * Plain text cell that opens the diagram on click, so the whole row (except checkbox and actions) is a target.
+   * Custom cells go inside DataTable.DefaultCell to keep the table's padding and vertical alignment.
+   */
   const openCell = (id: string, text: string) => (
-    <div onClick={() => navigate(`/diagram/${id}`)} style={{ cursor: "pointer", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={text}>
-      {text}
-    </div>
+    <DataTable.DefaultCell onClick={() => navigate(`/diagram/${id}`)} style={{ cursor: "pointer" }} title={text}>
+      <span style={ELLIPSIS}>{text}</span>
+    </DataTable.DefaultCell>
   );
 
   const columns: DataTableColumnDef<DiagramSummary>[] = [
@@ -298,13 +304,11 @@ export function DiagramListPage() {
       accessor: "name",
       width: "2fr",
       cell: ({ value, rowData }) => (
-        <Link
-          as={RouterLink}
-          to={`/diagram/${rowData.id}`}
-          style={{ display: "block", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-        >
-          {asText(value)}
-        </Link>
+        <DataTable.DefaultCell>
+          <Link as={RouterLink} to={`/diagram/${rowData.id}`} style={ELLIPSIS}>
+            {asText(value)}
+          </Link>
+        </DataTable.DefaultCell>
       ),
     },
     { id: "description", header: "Description", accessor: "description", width: "2fr", cell: ({ value, rowData }) => openCell(rowData.id, asText(value)) },
@@ -329,36 +333,38 @@ export function DiagramListPage() {
       accessor: "id",
       width: "content",
       cell: ({ rowData }) => (
-        <Flex gap={2}>
-          <Tooltip text="Open">
-            <Button aria-label="Open" size="condensed" onClick={() => navigate(`/diagram/${rowData.id}`)}>
-              <Button.Prefix>
-                <FolderOpenIcon />
-              </Button.Prefix>
-            </Button>
-          </Tooltip>
-          <Tooltip text="Duplicate">
-            <Button aria-label="Duplicate" size="condensed" disabled={busy} onClick={() => void duplicate(rowData.id)}>
-              <Button.Prefix>
-                <DuplicateIcon />
-              </Button.Prefix>
-            </Button>
-          </Tooltip>
-          <Tooltip text="Download JSON">
-            <Button aria-label="Download JSON" size="condensed" disabled={busy} onClick={() => void download([rowData.id])}>
-              <Button.Prefix>
-                <DownloadIcon />
-              </Button.Prefix>
-            </Button>
-          </Tooltip>
-          <Tooltip text="Delete">
-            <Button aria-label="Delete" size="condensed" color="critical" disabled={busy} onClick={() => setConfirmDelete([rowData.id])}>
-              <Button.Prefix>
-                <DeleteIcon />
-              </Button.Prefix>
-            </Button>
-          </Tooltip>
-        </Flex>
+        <DataTable.DefaultCell>
+          <Flex gap={2}>
+            <Tooltip text="Open">
+              <Button aria-label="Open" size="condensed" onClick={() => navigate(`/diagram/${rowData.id}`)}>
+                <Button.Prefix>
+                  <FolderOpenIcon />
+                </Button.Prefix>
+              </Button>
+            </Tooltip>
+            <Tooltip text="Duplicate">
+              <Button aria-label="Duplicate" size="condensed" disabled={busy} onClick={() => void duplicate(rowData.id)}>
+                <Button.Prefix>
+                  <DuplicateIcon />
+                </Button.Prefix>
+              </Button>
+            </Tooltip>
+            <Tooltip text="Download JSON">
+              <Button aria-label="Download JSON" size="condensed" disabled={busy} onClick={() => void download([rowData.id])}>
+                <Button.Prefix>
+                  <DownloadIcon />
+                </Button.Prefix>
+              </Button>
+            </Tooltip>
+            <Tooltip text="Delete">
+              <Button aria-label="Delete" size="condensed" color="critical" disabled={busy} onClick={() => setConfirmDelete([rowData.id])}>
+                <Button.Prefix>
+                  <DeleteIcon />
+                </Button.Prefix>
+              </Button>
+            </Tooltip>
+          </Flex>
+        </DataTable.DefaultCell>
       ),
     },
   ];

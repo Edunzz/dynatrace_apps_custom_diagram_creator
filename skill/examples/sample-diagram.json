@@ -26,6 +26,7 @@
         "kind": "entity",
         "componentType": "frontend",
         "name": "Web Banking",
+        "entities": [],
         "entityDql": "smartscapeNodes \"FRONTEND\"\n| fields id, id_classic, name\n| limit 1",
         "icon": "ApplicationsIcon",
         "failPoint": {
@@ -45,6 +46,7 @@
         "kind": "entity",
         "componentType": "service",
         "name": "Accounts API",
+        "entities": [],
         "entityDql": "smartscapeNodes \"SERVICE\"\n| filter contains(name, \"account\", caseSensitive: false)\n| fields id, name",
         "icon": "ServicesIcon",
         "failPoint": {
@@ -55,8 +57,18 @@
         "kpi": {
           "enabled": true,
           "title": "Signals",
-          "maxRows": 3,
-          "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true), by: {dt.smartscape.service}\n| fieldsAdd service = getNodeName(dt.smartscape.service), avg_ms = rt / 1000\n| fields service, avg_ms\n| sort avg_ms desc\n| limit 5"
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true), by: {dt.smartscape.service}\n| fieldsAdd service = getNodeName(dt.smartscape.service), avg_ms = rt / 1000\n| fields service, avg_ms\n| sort avg_ms desc\n| limit 5",
+              "valueField": "avg_ms",
+              "labelMode": "column",
+              "labelField": "service",
+              "unit": "ms",
+              "decimals": 1,
+              "maxRows": 3
+            }
+          ]
         }
       }
     },
@@ -71,6 +83,7 @@
         "kind": "entity",
         "componentType": "service",
         "name": "Payments API",
+        "entities": [],
         "entityDql": "smartscapeNodes \"SERVICE\"\n| filter contains(name, \"payment\", caseSensitive: false)\n| fields id, name",
         "icon": "ServicesIcon",
         "failPoint": {

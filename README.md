@@ -11,8 +11,9 @@ SLOs, and connections show KPI values with animated flow.
 ## What you get
 
 - A canvas to draw and connect components, with Dashboards-style editing.
-- Live status from Davis problems, SLO evaluations and your own DQL queries.
-- KPI tables under any component and KPI values on the connections.
+- Pick the real entities behind each component from a searchable list; live status from Davis problems and SLOs.
+- Containers built from your own DQL queries or a set of SLOs.
+- As many KPIs as you need under any component, and KPI values on the connections, with ready-made or custom units.
 - Diagrams stored in Grail, managed like dashboards: list, duplicate, upload, download, delete.
 - A skill so an AI agent with `dtctl` can build diagrams from real entities.
 

@@ -13,6 +13,7 @@ import { DqlField } from "./DqlField";
 import { Field, InlineMessage } from "./Field";
 import type { CommitMode } from "./NodeConfigPanel";
 import { SidePanel } from "./SidePanel";
+import { UnitField } from "./UnitField";
 
 export interface EdgeDraft {
   type: DiagramEdge["type"];
@@ -172,9 +173,9 @@ export function EdgeConfigPanel({ edgeId, value, timeframe, onChange, onDelete, 
                         </Select>
                       </Field>
                       <Flex gap={12}>
-                        <Field label="Unit">
-                          <TextInput value={kpi.unit ?? ""} onChange={(v) => setKpi({ ...kpi, unit: v || undefined })} placeholder="ms, %, req/s…" />
-                        </Field>
+                        <div style={{ flex: 1 }}>
+                          <UnitField value={kpi.unit} onChange={(unit) => setKpi({ ...kpi, unit })} />
+                        </div>
                         <Field label="Decimals">
                           <NumberInputV2
                             value={kpi.decimals}

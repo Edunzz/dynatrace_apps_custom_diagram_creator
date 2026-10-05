@@ -26,7 +26,13 @@
         "kind": "entity",
         "componentType": "frontend",
         "name": "My web application",
-        "entityDql": "smartscapeNodes \"FRONTEND\"\n| fields id, id_classic, name",
+        "entities": [
+          {
+            "id": "FRONTEND-12DCB920668AFDF0",
+            "name": "My web application",
+            "classicId": "APPLICATION-EA7C4B59F27D43EB"
+          }
+        ],
         "icon": "ApplicationsIcon",
         "failPoint": {
           "warningMin": 1,
@@ -35,8 +41,28 @@
         "kpi": {
           "enabled": true,
           "title": "Events by kind (timeframe)",
-          "maxRows": 5,
-          "dql": "fetch events\n| summarize events = count(), by: {event.kind}\n| sort events desc\n| limit 5"
+          "items": [
+            {
+              "id": "k1",
+              "dql": "fetch events\n| summarize events = count(), by: {event.kind}\n| sort events desc\n| limit 5",
+              "valueField": "events",
+              "labelMode": "column",
+              "labelField": "event.kind",
+              "unit": "events",
+              "decimals": 0,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "fetch dt.system.events\n| summarize total = count()",
+              "valueField": "total",
+              "labelMode": "text",
+              "labelText": "System events",
+              "unit": "events",
+              "decimals": 0,
+              "maxRows": 5
+            }
+          ]
         }
       }
     },

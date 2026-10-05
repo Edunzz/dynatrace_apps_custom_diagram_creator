@@ -1,5 +1,5 @@
 import type { ComponentType, CustomNodeData, Diagram, DiagramEdge, EntityNodeData, KpiBlock } from "./schema";
-import { CUSTOM_DQL_TEMPLATE, ENTITY_DQL_TEMPLATES } from "../services/queryBuilder";
+import { CUSTOM_DQL_TEMPLATE } from "../services/queryBuilder";
 import { DEFAULT_ICONS } from "../services/icons";
 
 export const COMPONENT_LABELS: Record<ComponentType, string> = {
@@ -13,11 +13,22 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
 
 export const COMPONENT_TYPES = Object.keys(COMPONENT_LABELS) as ComponentType[];
 
+/** New KPI blocks start with one KPI per service: label from the "service" column, value from "avg_ms". */
 export const DEFAULT_KPI_BLOCK: KpiBlock = {
   enabled: true,
   title: "KPIs",
-  maxRows: 5,
-  dql: "timeseries rt = avg(dt.service.request.response_time, scalar: true), by: {dt.smartscape.service}\n| fieldsAdd service = getNodeName(dt.smartscape.service), avg_ms = rt / 1000\n| fields service, avg_ms\n| sort avg_ms desc\n| limit 5",
+  items: [
+    {
+      id: "k1",
+      dql: "timeseries rt = avg(dt.service.request.response_time, scalar: true), by: {dt.smartscape.service}\n| fieldsAdd service = getNodeName(dt.smartscape.service), avg_ms = rt / 1000\n| fields service, avg_ms\n| sort avg_ms desc\n| limit 5",
+      valueField: "avg_ms",
+      labelMode: "column",
+      labelField: "service",
+      unit: "ms",
+      decimals: 1,
+      maxRows: 5,
+    },
+  ],
 };
 
 export const DEFAULT_EDGE_KPI_DQL =
@@ -28,7 +39,7 @@ export function newEntityNodeData(componentType: ComponentType): EntityNodeData 
     kind: "entity",
     componentType,
     name: COMPONENT_LABELS[componentType],
-    entityDql: ENTITY_DQL_TEMPLATES[componentType],
+    entities: [],
     icon: DEFAULT_ICONS[componentType],
     failPoint: { warningMin: 1, failingMin: 1 },
   };
@@ -113,6 +124,7 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
           kind: "entity",
           componentType: "frontend",
           name: "Web Banking",
+          entities: [],
           entityDql: 'smartscapeNodes "FRONTEND"\n| fields id, id_classic, name\n| limit 1',
           icon: "ApplicationsIcon",
           failPoint: { warningMin: 1, failingMin: 3 },
@@ -126,10 +138,11 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
           kind: "entity",
           componentType: "service",
           name: "Accounts API",
+          entities: [],
           entityDql: 'smartscapeNodes "SERVICE"\n| filter contains(name, "account", caseSensitive: false)\n| fields id, name',
           icon: "ServicesIcon",
           failPoint: { problemMatch: 'event.category == "ERROR"', warningMin: 1, failingMin: 2 },
-          kpi: { ...DEFAULT_KPI_BLOCK, title: "Signals", maxRows: 3 },
+          kpi: { ...DEFAULT_KPI_BLOCK, title: "Signals", items: [{ ...DEFAULT_KPI_BLOCK.items[0], maxRows: 3 }] },
         },
       },
       {
@@ -140,6 +153,7 @@ export function buildSampleDiagram(owner: string, slos: Array<{ id: string; name
           kind: "entity",
           componentType: "service",
           name: "Payments API",
+          entities: [],
           entityDql: 'smartscapeNodes "SERVICE"\n| filter contains(name, "payment", caseSensitive: false)\n| fields id, name',
           icon: "ServicesIcon",
           failPoint: { warningMin: 1, failingMin: 1 },

@@ -47,10 +47,17 @@ export interface SubStatus {
   message?: string;
 }
 
-export interface KpiTableState {
-  status: "loading" | "ok" | "error";
+/** Result of one KPI item under a node. */
+export interface KpiItemState {
+  id: string;
+  status: "ok" | "error";
   error?: string;
-  result?: DqlResult;
+  lines: Array<{ label: string; value: number | null }>;
+}
+
+/** Results of the KPI block of a node, one entry per KPI item. */
+export interface KpiState {
+  items: KpiItemState[];
 }
 
 export interface NodeStatus {
@@ -62,7 +69,7 @@ export interface NodeStatus {
   /** Problems DQL (active) with timeframe and ids already inserted */
   problemsDql?: string;
   children?: SubStatus[];
-  kpi?: KpiTableState;
+  kpi?: KpiState;
 }
 
 export interface EdgeStatus {

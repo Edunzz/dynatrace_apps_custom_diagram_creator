@@ -1,6 +1,6 @@
 {
   "name": "custom-diagram-creator",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Custom Diagram Creator: custom architecture diagrams with live status from Grail",
   "scripts": {
     "build": "dt-app build",

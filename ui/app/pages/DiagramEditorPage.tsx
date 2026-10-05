@@ -234,8 +234,23 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       }
       flushSession();
       setPanel(next);
+      // The element being edited becomes the selection, so its floating toolbar shows as well.
+      if (next?.mode === "config") {
+        setNodes((ns) =>
+          ns.map((n) => {
+            const want = next.kind === "node" && n.id === next.id;
+            return Boolean(n.selected) === want ? n : { ...n, selected: want };
+          }),
+        );
+        setEdges((es) =>
+          es.map((e) => {
+            const want = next.kind === "edge" && e.id === next.id;
+            return Boolean(e.selected) === want ? e : { ...e, selected: want };
+          }),
+        );
+      }
     },
-    [flushSession],
+    [flushSession, setNodes, setEdges],
   );
 
   const recordOnce = useCallback(() => {
@@ -595,13 +610,14 @@ function EditorInner({ diagramId }: { diagramId: string }) {
     () => ({
       status,
       mode,
+      editingId: panel?.mode === "config" ? panel.id : undefined,
       reducedMotion,
       openDetail: (kind, id) => openPanel({ mode: "detail", kind, id }),
       openConfig: (kind, id) => openPanel({ mode: "config", kind, id }),
       duplicateNode,
       deleteElement,
     }),
-    [status, mode, reducedMotion, openPanel, duplicateNode, deleteElement],
+    [status, mode, panel, reducedMotion, openPanel, duplicateNode, deleteElement],
   );
 
   const configNode = panel?.mode === "config" && panel.kind === "node" ? nodes.find((n) => n.id === panel.id) : undefined;
@@ -649,7 +665,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
 
   return (
     <DiagramContext.Provider value={contextValue}>
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "clip" }}>
         <EditorToolbar
           name={meta.name}
           onNameChange={(name) => {

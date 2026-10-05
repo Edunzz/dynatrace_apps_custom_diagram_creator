@@ -13,7 +13,8 @@ export const App = () => {
         <Header />
       </PageLayout.Header>
       <PageLayout.Content>
-        <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+        {/* overflow: clip keeps tall content (e.g. a long query in an editor panel) from scrolling the whole page. */}
+        <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "clip" }}>
           <div style={{ flex: 1, minHeight: 0 }}>
             <Routes>
               <Route path="/" element={<DiagramListPage />} />

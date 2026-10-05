@@ -88,7 +88,11 @@ function align(date: Date, factor: number, unit: Unit, weekday?: number): Date {
  * Returns null if not recognized.
  */
 export function resolveTimeExpression(expr: string, now: Date = new Date()): Date | null {
-  const trimmed = expr.trim();
+  let trimmed = expr.trim();
+  // Strato presets such as "@d" (today) or "-1d@d" (yesterday) leave out "now()".
+  if (/^[@+-]/.test(trimmed)) {
+    trimmed = `now()${trimmed}`;
+  }
   const match = EXPR_RE.exec(trimmed);
   if (match) {
     let date = new Date(now.getTime());

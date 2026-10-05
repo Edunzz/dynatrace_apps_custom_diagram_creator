@@ -36,11 +36,18 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
    ```
    (in Windows PowerShell 5.1, escape the inner double quotes as `\"`). Useful types: `SERVICE`, `PROCESS`, `HOST`,
    `FRONTEND` (also returns `id_classic`), `K8S_DEPLOYMENT`, `K8S_STATEFULSET`, `K8S_DAEMONSET`, `DB_INSTANCE_*`.
-   Use the query as the node's `entityDql` (not fixed ids, unless the user asks for them).
+   Put the entities you found in the node's `entities` list — `[{ "id": "SERVICE-…", "name": "…" }]`, plus
+   `"classicId"` for frontends (the `id_classic` column). That is what the app's entity picker writes. Use an
+   `entityDql` instead only when the user wants the selection to stay dynamic (it is used only while `entities` is
+   empty).
 3. **Build the JSON** following the schema:
    - `schemaVersion: "1.0"`, `id`: UUID v4, `createdAt/updatedAt`: ISO 8601 UTC.
-   - `entityNode` nodes (`componentType` ∈ mobile|frontend|service|process|host|workload) or `customNode`
-     (`mode` entities|slos; in entities mode the query must return `id` and `name`).
+   - `entityNode` nodes (`componentType` ∈ mobile|frontend|service|process|host|workload, `entities` or
+     `entityDql`) or `customNode` (`mode` entities|slos; in entities mode the query must return `id` and `name`).
+   - KPIs under a node: `kpi: { enabled: true, title, items: [...] }`. Each item is
+     `{ id, dql, valueField?, labelMode: "text"|"column", labelText?, labelField?, unit?, decimals, maxRows }`:
+     `text` shows the first row's value with `labelText` as its name; `column` shows one line per row (up to
+     `maxRows`) named by `labelField`. Without `valueField`, the first numeric column is used.
    - `icon`: an export name from `@dynatrace/strato-icons`. Verified: `ServicesIcon`, `DatabaseIcon`,
      `ApplicationsIcon`, `HostsIcon`, `ProcessIcon`, `ContainerIcon`, `MobileIcon`, `ComponentIcon`,
      `ServiceLevelObjectivesIcon`, `WorldmapIcon`. **Not existing**: `ApplicationIcon`, `HostIcon`, `KubernetesIcon`,
@@ -57,7 +64,7 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
    - Every query with `dtctl query`:
      - `entityDql` / container query → returns `id` (and `name` for containers).
      - KPI edge query → one row with a numeric value (`long` values arrive as strings).
-     - KPI block query → a table.
+     - KPI item query → a numeric column (`valueField`) and, in `column` mode, a name column (`labelField`).
    - An empty result is **not** a syntax error (the node will show gray "no data"); tell the user.
 5. **Register it in the lookup**:
    a. Download the current rows:

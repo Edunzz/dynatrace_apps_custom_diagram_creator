@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
-import { Accordion } from "@dynatrace/strato-components/content";
+import { Accordion, CodeSnippet } from "@dynatrace/strato-components/content";
 import { Menu, Tab, Tabs } from "@dynatrace/strato-components/navigation";
 import { NumberInputV2, Select, TextInput, ToggleButtonGroup } from "@dynatrace/strato-components/forms";
 import { DeleteIcon, DotMenuIcon } from "@dynatrace/strato-icons";
@@ -12,14 +12,15 @@ import {
   type EntityNodeData,
   type NodeData as NodeDataType,
 } from "../model/schema";
-import type { DqlResult, Timeframe } from "../model/types";
+import type { Timeframe } from "../model/types";
 import { COMPONENT_LABELS, COMPONENT_TYPES } from "../model/defaults";
 import { assertColumns, errorMessage } from "../services/dql";
-import { CUSTOM_DQL_TEMPLATE, ENTITY_DQL_TEMPLATES } from "../services/queryBuilder";
+import { CUSTOM_DQL_TEMPLATE } from "../services/queryBuilder";
 import { DEFAULT_ICONS } from "../services/icons";
 import { listSlos, type SloOption } from "../services/slo";
 import { IconPicker } from "../toolbar/IconPicker";
 import { DqlField } from "./DqlField";
+import { EntityPicker } from "./EntityPicker";
 import { Field, InlineMessage } from "./Field";
 import { KpiBlockEditor } from "./KpiBlockEditor";
 import { SidePanel } from "./SidePanel";
@@ -43,9 +44,6 @@ export interface NodeConfigPanelProps {
 
 type Update<T> = (next: T, commit?: CommitMode) => void;
 
-const warnNoName = (r: DqlResult) =>
-  r.columns.includes("name") ? null : "Warning: the DQL doesn't return a name column, so the id will be shown.";
-
 function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; update: Update<EntityNodeData>; timeframe: Timeframe }) {
   const changeType = (type: ComponentType) => {
     const prevType = draft.componentType;
@@ -53,8 +51,10 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
       {
         ...draft,
         componentType: type,
-        // If the user didn't touch the default template / icon / name, they change with the type.
-        entityDql: draft.entityDql === ENTITY_DQL_TEMPLATES[prevType] ? ENTITY_DQL_TEMPLATES[type] : draft.entityDql,
+        // Picked entities belong to the previous type, so the selection (and any query) starts over.
+        entities: [],
+        entityDql: undefined,
+        // If the user didn't touch the default icon / name, they change with the type.
         icon: draft.icon === DEFAULT_ICONS[prevType] ? DEFAULT_ICONS[type] : draft.icon,
         name: draft.name === COMPONENT_LABELS[prevType] ? COMPONENT_LABELS[type] : draft.name,
       },
@@ -62,40 +62,50 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
     );
   };
   const fp = draft.failPoint;
+  const usesQuery = draft.entities.length === 0 && Boolean(draft.entityDql?.trim());
   return (
     <Tabs>
       <Tab title="Data">
-        <Accordion multiple defaultExpanded={["dql", "type"]}>
-          <Accordion.Section id="dql">
-            <Accordion.SectionLabel>Entity DQL</Accordion.SectionLabel>
-            <Accordion.SectionContent>
-              <DqlField
-                label="DQL"
-                hint="Must return an id column (and preferably name). All rows are used. Run applies the query to the diagram."
-                value={draft.entityDql}
-                onChange={(v) => update({ ...draft, entityDql: v })}
-                onRun={() => update(draft, "now")}
-                timeframe={timeframe}
-                validate={(r) => assertColumns(r, ["id"])}
-                warn={warnNoName}
-              />
-            </Accordion.SectionContent>
-          </Accordion.Section>
-          <Accordion.Section id="type">
-            <Accordion.SectionLabel>Component type</Accordion.SectionLabel>
-            <Accordion.SectionContent>
-              <Select value={draft.componentType} onChange={(v) => v && changeType(v)}>
-                <Select.Content>
-                  {COMPONENT_TYPES.map((t) => (
-                    <Select.Option key={t} value={t}>
-                      {COMPONENT_LABELS[t]}
-                    </Select.Option>
-                  ))}
-                </Select.Content>
-              </Select>
-            </Accordion.SectionContent>
-          </Accordion.Section>
-        </Accordion>
+        <Flex flexDirection="column" gap={12} paddingTop={12}>
+          <Field label="Component type" hint="Which kind of entity this component represents. Changing it clears the selection.">
+            <Select value={draft.componentType} onChange={(v) => v && changeType(v)}>
+              <Select.Content>
+                {COMPONENT_TYPES.map((t) => (
+                  <Select.Option key={t} value={t}>
+                    {COMPONENT_LABELS[t]}
+                  </Select.Option>
+                ))}
+              </Select.Content>
+            </Select>
+          </Field>
+          <Field
+            label={`${COMPONENT_LABELS[draft.componentType]} entities`}
+            hint="Pick one or more entities. The component turns orange or red from the active Davis problems that affect any of them."
+          >
+            <EntityPicker
+              componentType={draft.componentType}
+              value={draft.entities}
+              // Picking entities replaces any query the component had.
+              onChange={(entities) => update({ ...draft, entities, entityDql: entities.length ? undefined : draft.entityDql }, "debounced")}
+            />
+          </Field>
+          {usesQuery && (
+            <Flex flexDirection="column" gap={6}>
+              <InlineMessage kind="info">
+                This component selects its entities with a query (from the sample diagram, an imported file or the agent
+                skill). Picking entities above replaces the query with a fixed selection.
+              </InlineMessage>
+              <CodeSnippet language="dql" lineBreaks maxHeight={160}>
+                {draft.entityDql ?? ""}
+              </CodeSnippet>
+              <div>
+                <Button size="condensed" onClick={() => update({ ...draft, entityDql: undefined }, "debounced")}>
+                  Remove the query
+                </Button>
+              </div>
+            </Flex>
+          )}
+        </Flex>
       </Tab>
       <Tab title="Status">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
@@ -185,7 +195,19 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
     <Tabs>
       <Tab title="Data">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
-          <Field label="Mode">
+          <InlineMessage kind="info">
+            A custom component is a container with one row per child — an entity or an SLO — each with its own status
+            light. The container's color sums them up: red when every child is red, orange when at least one child is red
+            or orange, green when all are green, and gray when there are no children or some have no data.
+          </InlineMessage>
+          <Field
+            label="Mode"
+            hint={
+              draft.mode === "entities"
+                ? "Entities: one row per entity returned by your query, colored by the Davis problems affecting it."
+                : "SLOs: one row per selected SLO, colored by its evaluation."
+            }
+          >
             <ToggleButtonGroup
               value={draft.mode}
               onChange={(v) => update({ ...draft, mode: v === "slos" ? "slos" : "entities" }, "debounced")}
@@ -201,7 +223,7 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
                 <Accordion.SectionContent>
                   <DqlField
                     label="DQL"
-                    hint="Required: must return id and name columns. Each row is one child. Run applies the query to the diagram."
+                    hint="One row per child. Required columns: id (the entity id matched against Davis problems; Smartscape ids such as SERVICE-… and classic ids both work, and an id_classic column is matched too) and name. Run previews the rows and applies the query."
                     value={entities.dql}
                     onChange={(v) => update({ ...draft, entities: { ...entities, dql: v } })}
                     onRun={() => update(draft, "now")}
@@ -215,7 +237,7 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
                 <Accordion.SectionLabel>Options</Accordion.SectionLabel>
                 <Accordion.SectionContent>
                   <Flex flexDirection="column" gap={12}>
-                    <Field label="Child name field" hint="Run the query to see all columns.">
+                    <Field label="Child name field" hint="Column shown as each row's label (default: name). Run the query to list all its columns.">
                       <Select
                         value={entities.subNameField}
                         onChange={(v) => v && update({ ...draft, entities: { ...entities, subNameField: v } }, "debounced")}
@@ -229,7 +251,10 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
                         </Select.Content>
                       </Select>
                     </Field>
-                    <Field label="Criterion">
+                    <Field
+                      label="Criterion"
+                      hint="Which problems turn a child red: any active problem affecting that entity, or only the active problems that also satisfy the match."
+                    >
                       <Select
                         value={entities.criterion}
                         onChange={(v) => v && update({ ...draft, entities: { ...entities, criterion: v } }, "debounced")}
@@ -241,7 +266,10 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
                       </Select>
                     </Field>
                     {entities.criterion === "match" && (
-                      <Field label="Match" hint='DQL fragment for | filter … E.g. event.category == "AVAILABILITY"'>
+                      <Field
+                        label="Match"
+                        hint='DQL filter fragment appended as | filter <match> to the problem query, e.g. event.category == "AVAILABILITY".'
+                      >
                         <TextInput
                           value={entities.problemMatch ?? ""}
                           onChange={(v) =>
@@ -255,7 +283,10 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
               </Accordion.Section>
             </Accordion>
           ) : (
-            <Field label="SLOs" hint="Status is evaluated using the timeframe defined in each SLO.">
+            <Field
+              label="SLOs"
+              hint="Each row shows the SLO's current value and error budget: green when it meets its target, orange below its warning, red below its target. Each SLO is evaluated with the timeframe defined in the SLO, not the page timeframe."
+            >
               {sloError && <InlineMessage kind="error">{sloError}</InlineMessage>}
               <Select
                 multiple
@@ -290,13 +321,16 @@ function CustomTabs({ draft, update, timeframe }: { draft: CustomNodeData; updat
       </Tab>
       <Tab title="Visual">
         <Flex flexDirection="column" gap={12} paddingTop={12}>
-          <Field label="Name" required>
+          <Field label="Name" required hint="Shown in the container header.">
             <TextInput value={draft.name} onChange={(v) => update({ ...draft, name: v })} />
           </Field>
-          <Field label="Icon">
+          <Field label="Icon" hint="Any Strato icon, shown next to the name.">
             <IconPicker value={draft.icon} componentType="custom" onChange={(icon) => update({ ...draft, icon })} />
           </Field>
-          <Field label="Visible rows before scrolling">
+          <Field
+            label="Visible rows before scrolling"
+            hint="Rows shown before the container scrolls. A container with a single entity shows it as one large block instead."
+          >
             <NumberInputV2
               value={draft.maxVisibleRows}
               min={1}

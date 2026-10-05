@@ -53,7 +53,8 @@ export function DqlField({ label, value, onChange, timeframe, validate, warn, on
   return (
     <Field label={label} hint={hint}>
       <Flex flexDirection="column" gap={6}>
-        <div style={{ minHeight: 90 }}>
+        {/* Long queries scroll inside the editor instead of stretching the panel. */}
+        <div style={{ minHeight: 90, maxHeight: 280, overflow: "auto" }}>
           <DQLEditor value={value} onChange={onChange} lineWrap />
         </div>
         <Flex alignItems="center" gap={8}>

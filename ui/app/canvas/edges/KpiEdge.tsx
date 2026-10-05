@@ -3,6 +3,7 @@ import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from "
 import Colors from "@dynatrace/strato-design-tokens/colors";
 import type { Status } from "../../model/types";
 import { formatNumber } from "../../services/dql";
+import { withUnit } from "../../services/units";
 import { useDiagramContext } from "../DiagramContext";
 import type { FlowEdge } from "../flowTypes";
 import { STATUS_COLOR, STATUS_LABEL, StatusGlyph } from "../statusStyle";
@@ -22,7 +23,8 @@ function KpiEdgeComponent({
   data,
   selected,
 }: EdgeProps<FlowEdge>) {
-  const { status, reducedMotion, mode, openDetail, openConfig } = useDiagramContext();
+  const { status, reducedMotion, mode, openDetail, openConfig, editingId } = useDiagramContext();
+  const editing = editingId === id;
   const edgeStatus = status.edges[id];
   const s: Status = edgeStatus?.status ?? "loading";
   const color = STATUS_COLOR[s];
@@ -56,7 +58,7 @@ function KpiEdgeComponent({
   const animate = Boolean(kpi?.animated) && !reducedMotion && (s === "pass" || s === "warning" || s === "failing");
   const valueText =
     edgeStatus?.value !== undefined
-      ? `${formatNumber(edgeStatus.value, kpi?.decimals ?? 2)}${kpi?.unit ? ` ${kpi.unit}` : ""}`
+      ? withUnit(formatNumber(edgeStatus.value, kpi?.decimals ?? 2), kpi?.unit)
       : s === "loading"
         ? "…"
         : "n/a";
@@ -73,7 +75,7 @@ function KpiEdgeComponent({
         path={path}
         markerEnd={direction === "forward" ? `url(#cdc-kend-${sid})` : undefined}
         markerStart={direction === "backward" ? `url(#cdc-kstart-${sid})` : undefined}
-        style={{ stroke: color, strokeWidth: selected ? 3.5 : 2.5 }}
+        style={{ stroke: color, strokeWidth: editing ? 4.5 : selected ? 3.5 : 2.5 }}
       />
       {animate &&
         DOT_OFFSETS.map((begin) => (
@@ -106,7 +108,7 @@ function KpiEdgeComponent({
             display: "flex",
             alignItems: "center",
             gap: 4,
-            outline: selected ? `2px solid ${Colors.Border.Primary.Accent}` : undefined,
+            outline: selected || editing ? `${editing ? 3 : 2}px solid ${Colors.Border.Primary.Accent}` : undefined,
           }}
         >
           <StatusGlyph status={s} />

@@ -7,12 +7,37 @@ export const Threshold = z.object({
   failing: z.number().nullable(),
 });
 
-/** Optional KPI table shown below any node. The DQL must return a table. */
+/**
+ * One KPI shown under a node: a value read from a DQL result, a label and a unit.
+ * - labelMode "text": a fixed label and the value of the first row (one line).
+ * - labelMode "column": one line per result row (up to maxRows), labelled with a result column.
+ */
+export const KpiItem = z.object({
+  id: z.string(),
+  dql: z.string(),
+  /** Column holding the value; default: the first numeric column. */
+  valueField: z.string().optional(),
+  labelMode: z.enum(["text", "column"]).default("text"),
+  /** Fixed label for labelMode "text". */
+  labelText: z.string().optional(),
+  /** Column holding the label for labelMode "column"; default: the first non-numeric column. */
+  labelField: z.string().optional(),
+  /** Free text; the editor offers common units and a custom one. */
+  unit: z.string().optional(),
+  decimals: z.number().int().min(0).max(10).default(2),
+  /** Maximum lines when the label comes from a column. */
+  maxRows: z.number().int().min(1).max(50).default(5),
+});
+
+/** Optional list of KPIs shown below any node. */
 export const KpiBlock = z.object({
   enabled: z.boolean().default(false),
   title: z.string().default("KPIs"),
-  dql: z.string(),
-  maxRows: z.number().int().min(1).default(5),
+  items: z.array(KpiItem).default([]),
+  /** Legacy (≤ 0.2): a single query rendered as a table. Read as one "column" KPI; dropped when edited. */
+  dql: z.string().optional(),
+  /** Legacy (≤ 0.2): rows of the legacy table. */
+  maxRows: z.number().int().min(1).optional(),
 });
 
 export const EntityFailPoint = z.object({
@@ -26,12 +51,24 @@ export const EntityFailPoint = z.object({
 
 export const ComponentType = z.enum(["mobile", "frontend", "service", "process", "host", "workload"]);
 
+/** An entity picked in the editor. classicId is the classic entity id (e.g. APPLICATION-…) when Smartscape has one. */
+export const EntityRef = z.object({
+  id: z.string(),
+  name: z.string(),
+  classicId: z.string().optional(),
+});
+
 export const EntityNodeData = z.object({
   kind: z.literal("entity"),
   componentType: ComponentType,
   name: z.string(),
-  /** Must return at least the `id` column (and preferably `name`). */
-  entityDql: z.string(),
+  /** Entities picked in the editor (the normal way to define a component). */
+  entities: z.array(EntityRef).default([]),
+  /**
+   * Optional query that selects the entities dynamically (must return `id`, preferably `name`).
+   * Used only when no entities are picked, e.g. by the sample diagram, imported files or the agent skill.
+   */
+  entityDql: z.string().optional(),
   /** Export name from @dynatrace/strato-icons, e.g. "ServicesIcon". */
   icon: z.string(),
   failPoint: EntityFailPoint,
@@ -119,7 +156,9 @@ export const Diagram = z.object({
 });
 
 export type Threshold = z.infer<typeof Threshold>;
+export type KpiItem = z.infer<typeof KpiItem>;
 export type KpiBlock = z.infer<typeof KpiBlock>;
+export type EntityRef = z.infer<typeof EntityRef>;
 export type EntityFailPoint = z.infer<typeof EntityFailPoint>;
 export type ComponentType = z.infer<typeof ComponentType>;
 export type EntityNodeData = z.infer<typeof EntityNodeData>;

@@ -6,7 +6,69 @@ vi.mock("@dynatrace-sdk/client-service-level-objectives", () => ({
   serviceLevelObjectivesEvaluationClient: {},
 }));
 
-import { aggregateContainer, createLimiter, evalThreshold, statusFromProblemCount } from "./statusEngine";
+import type { EntityNodeData } from "../model/schema";
+import type { DqlResult } from "../model/types";
+import { aggregateContainer, computeEntityNode, createLimiter, evalThreshold, statusFromProblemCount, type StatusCycleContext } from "./statusEngine";
+
+function fakeContext(answer: (dql: string) => DqlResult): StatusCycleContext & { queries: string[] } {
+  const queries: string[] = [];
+  return {
+    tf: { from: "2026-10-04T06:00:00.000Z", to: "2026-10-04T08:00:00.000Z" },
+    signal: new AbortController().signal,
+    queries,
+    query: (dql: string) => {
+      queries.push(dql);
+      return Promise.resolve(answer(dql));
+    },
+  };
+}
+
+const problem = (id: string, affected: string[]) => ({
+  "event.id": id,
+  "event.status": "ACTIVE",
+  affected_entity_ids: affected,
+});
+
+describe("computeEntityNode", () => {
+  const base: EntityNodeData = {
+    kind: "entity",
+    componentType: "frontend",
+    name: "Web",
+    entities: [],
+    icon: "ApplicationsIcon",
+    failPoint: { warningMin: 1, failingMin: 2 },
+  };
+
+  it("uses the picked entities (Smartscape and classic ids) without an entity query", async () => {
+    const ctx = fakeContext(() => ({ columns: [], types: {}, records: [problem("p1", ["APPLICATION-1"])] }));
+    const status = await computeEntityNode(
+      { ...base, entities: [{ id: "FRONTEND-1", name: "Web", classicId: "APPLICATION-1" }] },
+      ctx,
+    );
+    expect(ctx.queries).toHaveLength(1);
+    expect(ctx.queries[0]).toContain("fetch dt.davis.problems");
+    expect(ctx.queries[0]).toContain('"FRONTEND-1", "APPLICATION-1"');
+    expect(status).toMatchObject({ status: "warning", activeProblems: 1, entityIds: ["FRONTEND-1", "APPLICATION-1"] });
+  });
+
+  it("falls back to the entity query when nothing is picked", async () => {
+    const ctx = fakeContext((dql) =>
+      dql.startsWith("smartscapeNodes")
+        ? { columns: ["id", "name"], types: {}, records: [{ id: "SERVICE-9", name: "api" }] }
+        : { columns: [], types: {}, records: [] },
+    );
+    const status = await computeEntityNode({ ...base, entityDql: 'smartscapeNodes "SERVICE" | fields id, name' }, ctx);
+    expect(ctx.queries).toHaveLength(2);
+    expect(status).toMatchObject({ status: "pass", activeProblems: 0, entityIds: ["SERVICE-9"] });
+  });
+
+  it("asks to pick entities when there is neither a selection nor a query", async () => {
+    const ctx = fakeContext(() => ({ columns: [], types: {}, records: [] }));
+    const status = await computeEntityNode(base, ctx);
+    expect(ctx.queries).toHaveLength(0);
+    expect(status).toMatchObject({ status: "unknown", error: "Pick at least one entity." });
+  });
+});
 
 describe("evalThreshold", () => {
   it("above: bad if the value is higher", () => {

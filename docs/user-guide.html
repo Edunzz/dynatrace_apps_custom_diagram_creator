@@ -39,12 +39,16 @@
 <li><strong>⚙ Storage administration</strong> lists the app's lookup files and can delete one.</li>
 </ul>
 <h2 id="toolbar">The editor toolbar</h2>
-<div class="table-wrap"><table><thead><tr><th>Control</th><th>What it does</th></tr></thead><tbody><tr><td>Diagram name</td><td>Rename the diagram (saved with <strong>Save</strong>).</td></tr><tr><td>Edit / View</td><td>Edit mode shows the palette, the floating toolbar and the resize grips. View mode locks the layout; a click opens the details.</td></tr><tr><td>Save · Save as · Export JSON</td><td>Save to the lookup, save a copy with a new name, or download the JSON.</td></tr><tr><td>Timeframe</td><td>Applies to every query on the page: entities, problems, KPI blocks and KPI connections.</td></tr><tr><td>Auto-refresh · ⟳</td><td>Off by default; 30 s to 30 min. Pauses while the browser tab is hidden. ⟳ refreshes now.</td></tr><tr><td>Dots · Grid · Blank</td><td>Canvas background. Dots and grid also snap nodes to a 16 px grid.</td></tr><tr><td>Zoom out · % · Zoom in · Fit view</td><td>Zoom controls (the mouse wheel and pinch also zoom).</td></tr><tr><td>Undo · Redo · Auto-arrange</td><td>History of canvas changes, and a left-to-right layout with dagre.</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Control</th><th>What it does</th></tr></thead><tbody><tr><td>Diagram name</td><td>Rename the diagram (saved with <strong>Save</strong>).</td></tr><tr><td>Edit / View</td><td>Edit mode shows the palette, the floating toolbar and the resize grips. View mode locks the layout; a click opens the details.</td></tr><tr><td>Save · Save as · Export JSON</td><td>Save to the lookup, save a copy with a new name, or download the JSON.</td></tr><tr><td>Timeframe</td><td>Applies to every query on the page: problems, KPIs and KPI connections. Presets go from the last 5 minutes to the last 7 days, plus any custom range.</td></tr><tr><td>Auto-refresh · ⟳</td><td>Off by default; 30 s to 30 min. Pauses while the browser tab is hidden. ⟳ refreshes now.</td></tr><tr><td>Dots · Grid · Blank</td><td>Canvas background. Dots and grid also snap nodes to a 16 px grid.</td></tr><tr><td>Zoom out · % · Zoom in · Fit view</td><td>Zoom controls (the mouse wheel and pinch also zoom).</td></tr><tr><td>Undo · Redo · Auto-arrange</td><td>History of canvas changes, and a left-to-right layout with dagre.</td></tr></tbody></table></div>
 <h2 id="components">Adding components</h2>
 <p>In edit mode, drag a component from the palette onto the canvas (or click it to drop it in the middle). Its editor opens docked on the right.</p>
-<p><strong>Entity components</strong> — mobile, frontend, service, process, host and workload — run a DQL query that returns one or more entities. Each type starts from a Smartscape template you can edit:</p><div class="code"><span class="label">dql</span><pre><code>smartscapeNodes &quot;SERVICE&quot;
-| filter contains(name, &quot;&lt;text&gt;&quot;, caseSensitive: false)
-| fields id, name</code></pre></div><p>The query must return an <code>id</code> column (and preferably <code>name</code>). Use <strong>Run</strong> to preview the result: Run also applies the query to the diagram and refreshes the component.</p>
+<p><strong>Entity components</strong> — mobile, frontend, service, process, host and workload — represent one or more real entities. On the <strong>Data</strong> tab:</p>
+<ol>
+<li>pick the <strong>component type</strong> (changing it clears the selection);</li>
+<li>open the <strong>entities</strong> combo box, type to search and pick one or more entities. It lists the Smartscape entities of that type seen in the last 7 days (web frontends for <em>frontend</em>, mobile frontends for <em>mobile</em>, deployments, statefulsets and daemonsets for <em>workload</em>).</li>
+</ol>
+<p>The component then reflects the active Davis problems that affect any of the picked entities. Frontends also match their classic id (<code>APPLICATION-…</code>), so problems raised on either id count.</p>
+<p>Components created from a query — the sample diagram, an imported file or the agent skill — keep working: the panel shows the query, and picking entities replaces it with a fixed selection.</p>
 <p>On the <strong>Status</strong> tab you set when the component changes color:</p>
 <ul>
 <li><strong>Warning threshold</strong> — number of active problems to turn orange.</li>
@@ -52,14 +56,19 @@
 <li><strong>Match</strong> — an optional DQL fragment appended as <code>| filter …</code> to the problem query, e.g. <code>event.category == "ERROR"</code>.</li>
 </ul>
 <h2 id="containers">Custom components (containers)</h2>
-<p>A custom component is a large container with one row per child, each with its own status light.</p>
-<ul>
-<li><strong>Entities mode</strong> — a DQL query that returns <code>id</code> and <code>name</code>. Choose which column names each child and whether any active problem turns a child red, or only the problems that match a filter.</li>
-<li><strong>SLOs mode</strong> — pick SLOs; each row shows the current value and error budget. SLOs are evaluated with the timeframe defined in each SLO.</li>
-</ul>
-<p>The container itself is <strong>red</strong> when every child is red, <strong>orange</strong> when some child is red or orange, and <strong>green</strong> when all are green. A container with a single entity shows it as one big block.</p>
+<p>A custom component is a resizable <strong>container</strong> with one row per <strong>child</strong>. A child is either an entity returned by your own DQL query or an SLO you pick. Every row has its own status light, and the container's color sums them up.</p>
+<h3>How the container color is computed</h3><div class="table-wrap"><table><thead><tr><th>Children</th><th>Container</th></tr></thead><tbody><tr><td>All children are red</td><td><strong>Red</strong> (failing)</td></tr><tr><td>At least one child is red or orange, but not all are red</td><td><strong>Orange</strong> (warning)</td></tr><tr><td>All children are green</td><td><strong>Green</strong> (pass)</td></tr><tr><td>No children, or green mixed with children without data</td><td><strong>Gray</strong> (no data)</td></tr></tbody></table></div><p>A container with a single entity shows that entity as one large block in the container's color instead of a list.</p>
+<h3>Entities mode</h3>
+<p>Write a DQL query that returns <strong>one row per child</strong>. Use it to group entities that belong together — the databases of a domain, the services of a team, the hosts of a cluster.</p><div class="code"><span class="label">dql</span><pre><code>smartscapeNodes &quot;DB_INSTANCE_*&quot;
+| filter contains(name, &quot;orders&quot;, caseSensitive: false)
+| fields id, name
+| limit 20</code></pre></div><div class="table-wrap"><table><thead><tr><th>Field</th><th>What it does</th></tr></thead><tbody><tr><td>DQL</td><td>Required columns: <code>id</code> — the entity id matched against Davis problems; Smartscape ids such as <code>SERVICE-…</code> and classic ids both work, and an <code>id_classic</code> column is matched too — and <code>name</code>. <strong>Run</strong> previews the rows, loads the columns into the selectors and applies the query.</td></tr><tr><td>Child name field</td><td>Column shown as each row's label. Default: <code>name</code>.</td></tr><tr><td>Criterion</td><td><em>Any active problem</em> turns a child red as soon as an active problem affects it. <em>Only problems that satisfy the match</em> counts only the problems that also pass the match filter.</td></tr><tr><td>Match</td><td>DQL filter fragment appended as <code>| filter &lt;match&gt;</code> to the problem query, e.g. <code>event.category == "AVAILABILITY"</code>.</td></tr></tbody></table></div><h3>SLOs mode</h3>
+<p>Pick one or more SLOs. Each row shows the SLO's current value and error budget and is <strong>green</strong> when the SLO meets its target, <strong>orange</strong> when it is below its warning and <strong>red</strong> when it is below its target. Each SLO is evaluated with the timeframe defined in the SLO itself, not the page timeframe.</p>
+<h3>Visual options</h3><div class="table-wrap"><table><thead><tr><th>Field</th><th>What it does</th></tr></thead><tbody><tr><td>Name</td><td>Shown in the container header.</td></tr><tr><td>Icon</td><td>Any Strato icon, shown next to the name.</td></tr><tr><td>Visible rows before scrolling</td><td>How many rows are shown before the container scrolls internally. Default: 8.</td></tr></tbody></table></div>
 <h2 id="kpis">KPI blocks</h2>
-<p>Any node can show a compact table under it. On the <strong>KPIs</strong> tab, turn on <strong>Show KPIs under the node</strong> and write a query that returns a table:</p><div class="code"><span class="label">dql</span><pre><code>timeseries rt = avg(dt.service.request.response_time, scalar: true), by: {dt.smartscape.service}
+<p>Any node can show a list of KPIs under it. On the <strong>KPIs</strong> tab, turn on <strong>Show KPIs under the node</strong>, give the block a title and add as many KPIs as you need with <strong>Add KPI</strong>. Each KPI has its own query and its own settings:</p><div class="table-wrap"><table><thead><tr><th>Field</th><th>What it does</th></tr></thead><tbody><tr><td>Query</td><td>Any DQL that returns a numeric column. <strong>Run</strong> previews it and loads its columns into the selectors.</td></tr><tr><td>Value</td><td>The result column that holds the number to show. Default: the first numeric column. Timeseries arrays show their last value.</td></tr><tr><td>Name</td><td><em>Custom text</em>: a fixed name; the KPI shows the value of the first row. <em>From a column</em>: the name comes from a result column and the KPI shows one line per row, up to the max rows you set.</td></tr><tr><td>Unit</td><td>Pick a common unit (ms, s, %, req/s, B, MB, …) or <em>Custom…</em> to type any unit.</td></tr><tr><td>Decimals</td><td>Digits after the decimal point (0–10).</td></tr></tbody></table></div><p>A single value with a custom name:</p><div class="code"><span class="label">dql</span><pre><code>timeseries rt = avg(dt.service.request.response_time, scalar: true)
+| fieldsAdd avg_ms = rt / 1000
+| fields avg_ms</code></pre></div><p>One line per service, named from the <code>service</code> column:</p><div class="code"><span class="label">dql</span><pre><code>timeseries rt = avg(dt.service.request.response_time, scalar: true), by: {dt.smartscape.service}
 | fieldsAdd service = getNodeName(dt.smartscape.service), avg_ms = rt / 1000
 | fields service, avg_ms
 | sort avg_ms desc
@@ -68,7 +77,7 @@
 <p>Drag from the dots on the side of a node to another node. The connection editor opens so you can choose:</p>
 <ul>
 <li><strong>Normal</strong> — a plain line with an optional label.</li>
-<li><strong>KPI relation</strong> — a query that returns a single value (first row; the chosen column or the first numeric one), a unit, decimals and a threshold. <em>above</em> means high values are bad, <em>below</em> means low values are bad.</li>
+<li><strong>KPI relation</strong> — a query that returns a single value (first row; the chosen column or the first numeric one), a unit (common units or a custom one), decimals and a threshold. <em>above</em> means high values are bad, <em>below</em> means low values are bad.</li>
 </ul>
 <p>Every connection has a direction — source to target, target to source, or no arrow. KPI connections show a pill with the value, color the line by status and animate dots in the arrow's direction (off when the system asks for reduced motion).</p><div class="code"><span class="label">dql</span><pre><code>timeseries r = avg(dt.service.request.response_time, scalar: true)
 | fieldsAdd v = r / 1000
@@ -77,7 +86,8 @@
 <ul>
 <li><strong>Select</strong> a node to get the floating toolbar: its size, <strong>Duplicate</strong>, <strong>Edit</strong> and a ⋮ menu with <strong>View details</strong> and <strong>Delete</strong>. Selected connections get <strong>Edit</strong> and <strong>Delete</strong>.</li>
 <li><strong>Resize</strong> any node from the grips in its bottom corners.</li>
-<li><strong>Edit</strong> in the panel docked to the right. There is no Apply button: names, icons and labels change on the canvas as you type, <strong>Run</strong> applies a query, and threshold or filter changes refresh the status after a short pause.</li>
+<li><strong>Edit</strong> in the panel docked to the right. There is no Apply button: names, icons and labels change on the canvas as you type, <strong>Run</strong> applies a query, and threshold, filter and selection changes refresh the status after a short pause.</li>
+<li>The element you are editing is <strong>highlighted</strong> on the canvas with a blue outline and an <em>Editing</em> badge, and becomes the selection.</li>
 <li>While the editor is open, <strong>click another element</strong> to switch to it.</li>
 <li>Each editing session is one undo step.</li>
 </ul>
@@ -85,7 +95,8 @@
 <p>In view mode, click a node or a KPI connection to open its details on the right:</p>
 <ul>
 <li>the applied timeframe, in your time zone;</li>
-<li>the entity query and the full problem query, with the timeframe and ids already filled in — copy them or open them in Notebooks;</li>
+<li>the picked entities (name, id and classic id) or the entity query, and the full problem query with the timeframe and ids already filled in — copy it or open it in Notebooks;</li>
+<li>each KPI with its query and its current lines;</li>
 <li>the problems in the timeframe, each linking to the Problems app;</li>
 <li>the breakdown per child or per SLO, and for KPI connections the raw value and how the threshold was evaluated.</li>
 </ul>

@@ -36,6 +36,19 @@ describe("diagram schema", () => {
     expect(parsed.edges[0].direction).toBe("forward");
   });
 
+  it("reads diagrams saved by older versions (entity query, single-table KPI block)", () => {
+    const legacy = structuredClone(sample) as unknown as { nodes: Array<{ data: Record<string, unknown> }> };
+    delete legacy.nodes[1].data.entities;
+    legacy.nodes[1].data.kpi = { enabled: true, title: "Signals", dql: "fetch logs | summarize c = count()", maxRows: 3 };
+    const parsed = parseDiagram(legacy);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      const data = parsed.diagram.nodes[1].data;
+      expect(data.kind === "entity" && data.entities).toEqual([]);
+      expect(data.kpi).toMatchObject({ items: [], dql: "fetch logs | summarize c = count()", maxRows: 3 });
+    }
+  });
+
   it("rejects unknown component types with a readable message", () => {
     const bad = structuredClone(sample) as unknown as { nodes: Array<{ data: { componentType?: string } }> };
     bad.nodes[0].data.componentType = "mainframe";

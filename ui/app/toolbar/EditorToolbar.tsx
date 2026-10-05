@@ -4,7 +4,7 @@ import Colors from "@dynatrace/strato-design-tokens/colors";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { Select, TextInput, ToggleButtonGroup } from "@dynatrace/strato-components/forms";
-import { TimeframeSelector } from "@dynatrace/strato-components/filters";
+import { TIMEFRAME_SELECTOR_PRESETS, TimeframeSelector } from "@dynatrace/strato-components/filters";
 import { Tooltip } from "@dynatrace/strato-components/overlays";
 import {
   ArrowLeftIcon,
@@ -51,6 +51,9 @@ export interface EditorToolbarProps {
   canRedo: boolean;
   onBack: () => void;
 }
+
+/** Strato's default presets plus "Last 5 minutes" at the top. */
+const TIMEFRAME_PRESETS = [{ from: "now()-5m", to: "now()" }, ...TIMEFRAME_SELECTOR_PRESETS];
 
 const REFRESH_OPTIONS: Array<{ value: RefreshInterval; label: string }> = [
   { value: "off", label: "Off" },
@@ -129,7 +132,13 @@ export function EditorToolbar(props: EditorToolbarProps) {
               props.onTimeframeChange({ from: v.from.value, to: v.to.value });
             }
           }}
-        />
+        >
+          <TimeframeSelector.Presets>
+            {TIMEFRAME_PRESETS.map((preset) => (
+              <TimeframeSelector.PresetItem key={`${preset.from}|${preset.to}`} value={preset} />
+            ))}
+          </TimeframeSelector.Presets>
+        </TimeframeSelector>
         <Flex alignItems="center" gap={4}>
           <span style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued }}>Auto-refresh</span>
           <div style={{ width: 90 }}>

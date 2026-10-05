@@ -33,7 +33,7 @@
 <h2 id="what">What it does</h2>
 <p><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/blob/main/skill/SKILL.md"><code>skill/SKILL.md</code></a> teaches an AI agent that has <a href="https://github.com/dynatrace-oss/dtctl"><code>dtctl</code></a> how to create, validate and register diagrams in the same lookup table the app reads. Ask it for "a diagram of the checkout flow" and it:</p>
 <ol>
-<li>discovers the real entities with Smartscape queries — it never invents ids;</li>
+<li>discovers the real entities with Smartscape queries — it never invents ids — and writes them into each component's <code>entities</code> list (or an <code>entityDql</code> when the selection must stay dynamic);</li>
 <li>builds a JSON document that matches <code>skill/diagram.schema.json</code>, with layers laid out from left to right;</li>
 <li>runs every query to check it returns what the app expects;</li>
 <li>upserts the diagram into <code>/lookups/custom-diagram-creator/diagrams</code> without touching other rows;</li>

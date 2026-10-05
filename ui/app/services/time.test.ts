@@ -24,6 +24,14 @@ describe("resolveTimeExpression", () => {
     expect([M.getMonth(), M.getDate()]).toEqual([9, 1]);
   });
 
+  it("Strato presets without now(): today, yesterday and relative offsets", () => {
+    const today = resolveTimeExpression("@d", now)!;
+    expect([today.getDate(), today.getHours(), today.getMinutes()]).toEqual([4, 0, 0]);
+    const yesterday = resolveTimeExpression("-1d@d", now)!;
+    expect([yesterday.getDate(), yesterday.getHours()]).toEqual([3, 0]);
+    expect(resolveTimeExpression("-5m", now)?.getTime()).toBe(now.getTime() - 5 * 60_000);
+  });
+
   it("ISO 8601 and invalid expressions", () => {
     expect(resolveTimeExpression("2026-10-04T06:00:00Z", now)?.toISOString()).toBe("2026-10-04T06:00:00.000Z");
     expect(resolveTimeExpression("yesterday", now)).toBeNull();

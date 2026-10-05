@@ -1,18 +1,21 @@
-import type { CustomNodeData, DiagramEdge, DiagramNode, EntityFailPoint, EntityNodeData, KpiBlock, Threshold } from "../model/schema";
+import type { CustomNodeData, DiagramEdge, DiagramNode, EntityFailPoint, EntityNodeData, KpiBlock, KpiItem, Threshold } from "../model/schema";
 import type {
   DiagramStatus,
   DqlResult,
   EdgeStatus,
-  KpiTableState,
+  KpiItemState,
+  KpiState,
   NodeStatus,
   ProblemRow,
   ResolvedTimeframe,
   Status,
   SubStatus,
 } from "../model/types";
-import { asText, assertColumns, assertSingleValue, assertTable, errorMessage, isAbortError, runQuery } from "./dql";
+import { asText, assertColumns, assertSingleValue, errorMessage, isAbortError, runQuery } from "./dql";
 import { buildProblemsDql, countProblemsFor, entityKeys, toProblemRow } from "./queryBuilder";
 import { evaluateSlo } from "./slo";
+import { pickedEntityIds } from "./entities";
+import { kpiItems, kpiLines } from "./kpi";
 
 export type ThresholdResult = "pass" | "warning" | "failing";
 
@@ -119,20 +122,30 @@ export function createCycleContext(tf: ResolvedTimeframe, signal: AbortSignal, c
   };
 }
 
-async function runKpiBlock(kpi: KpiBlock | undefined, ctx: StatusCycleContext): Promise<KpiTableState | undefined> {
-  if (!kpi?.enabled || !kpi.dql.trim()) {
-    return undefined;
+async function runKpiItem(item: KpiItem, ctx: StatusCycleContext): Promise<KpiItemState> {
+  if (!item.dql.trim()) {
+    return { id: item.id, status: "error", error: "Write the KPI query.", lines: [] };
   }
   try {
-    const result = await ctx.query(kpi.dql);
-    const err = assertTable(result);
-    return err ? { status: "error", error: err } : { status: "ok", result };
+    const result = await ctx.query(item.dql);
+    const lines = kpiLines(item, result);
+    return lines.ok
+      ? { id: item.id, status: "ok", lines: lines.lines }
+      : { id: item.id, status: "error", error: lines.error, lines: [] };
   } catch (e) {
     if (isAbortError(e)) {
       throw e;
     }
-    return { status: "error", error: errorMessage(e) };
+    return { id: item.id, status: "error", error: errorMessage(e), lines: [] };
   }
+}
+
+async function runKpiBlock(kpi: KpiBlock | undefined, ctx: StatusCycleContext): Promise<KpiState | undefined> {
+  const items = kpiItems(kpi);
+  if (!kpi?.enabled || items.length === 0) {
+    return undefined;
+  }
+  return { items: await Promise.all(items.map((item) => runKpiItem(item, ctx))) };
 }
 
 async function fetchProblems(
@@ -151,6 +164,21 @@ export async function computeEntityNode(data: EntityNodeData, ctx: StatusCycleCo
   kpiPromise.catch(() => undefined);
   let base: NodeStatus;
   try {
+    if (data.entities.length > 0) {
+      // Entities picked in the editor: no entity query needed.
+      const ids = pickedEntityIds(data.entities);
+      const { dql, problems } = await fetchProblems(ids, data.failPoint.problemMatch, ctx);
+      return {
+        status: statusFromProblemCount(problems.length, data.failPoint),
+        activeProblems: problems.length,
+        entityIds: ids,
+        problemsDql: dql,
+        kpi: await kpiPromise,
+      };
+    }
+    if (!data.entityDql?.trim()) {
+      return { status: "unknown", error: "Pick at least one entity.", entityIds: [], kpi: await kpiPromise };
+    }
     const entities = await ctx.query(data.entityDql);
     const colErr = assertColumns(entities, ["id"]);
     if (colErr) {

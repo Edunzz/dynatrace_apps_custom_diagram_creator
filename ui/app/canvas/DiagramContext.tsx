@@ -6,6 +6,8 @@ export type EditorMode = "edit" | "view";
 export interface DiagramContextValue {
   status: DiagramStatus;
   mode: EditorMode;
+  /** Node or connection whose editor panel is open (highlighted on the canvas). */
+  editingId?: string;
   reducedMotion: boolean;
   openDetail: (kind: "node" | "edge", id: string) => void;
   openConfig: (kind: "node" | "edge", id: string) => void;

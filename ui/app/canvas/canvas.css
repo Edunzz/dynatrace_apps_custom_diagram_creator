@@ -230,3 +230,63 @@
 .cdc-canvas .react-flow__resize-control.handle.cdc-resize-corner.bottom.left {
   translate: 0 -100%;
 }
+
+/* Node being edited in the docked panel: strong primary outline, soft halo and a small badge. */
+.cdc-node.cdc-editing {
+  outline: 3px solid var(--dt-colors-border-primary-accent);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 9px color-mix(in srgb, var(--dt-colors-border-primary-accent) 16%, transparent),
+    var(--dt-box-shadows-surface-raised-rest);
+}
+
+.cdc-editing-badge {
+  position: absolute;
+  top: -28px;
+  right: -3px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--dt-colors-border-primary-accent);
+  color: var(--dt-colors-text-neutral-on-accent-default);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* KPI lines under a node: "label ........ value unit". */
+.cdc-kpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cdc-kpi-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cdc-kpi-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dt-colors-text-neutral-subdued);
+}
+
+.cdc-kpi-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cdc-kpi-error {
+  font-size: 11px;
+  color: var(--dt-colors-text-critical-default);
+  white-space: normal;
+}

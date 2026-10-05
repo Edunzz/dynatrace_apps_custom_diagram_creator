@@ -109,6 +109,8 @@
 <h2 id="status-engine">Status engine</h2>
 <ul>
 <li><strong>Triggers:</strong> load, timeframe change, manual refresh, auto-refresh, and changes made in the editor panel (for that element only).</li>
+<li><strong>Entity components:</strong> picked entities go straight into the problem query — no entity query runs. Only components without a selection run their <code>entityDql</code>.</li>
+<li><strong>KPIs:</strong> each KPI item runs its own query (cached like the rest) and is turned into lines by its value column, name mode and row limit.</li>
 <li><strong>Cache:</strong> during a cycle, results are cached by timeframe + query, so identical queries run once.</li>
 <li><strong>Concurrency:</strong> at most four queries in flight.</li>
 <li><strong>Cancellation:</strong> a full refresh aborts the previous cycle with an <code>AbortController</code>.</li>

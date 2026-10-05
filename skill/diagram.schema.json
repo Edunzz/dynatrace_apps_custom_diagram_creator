@@ -159,6 +159,28 @@
                   "name": {
                     "type": "string"
                   },
+                  "entities": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "classicId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    }
+                  },
                   "entityDql": {
                     "type": "string"
                   },
@@ -196,26 +218,72 @@
                         "default": "KPIs",
                         "type": "string"
                       },
+                      "items": {
+                        "default": [],
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "dql": {
+                              "type": "string"
+                            },
+                            "valueField": {
+                              "type": "string"
+                            },
+                            "labelMode": {
+                              "default": "text",
+                              "type": "string",
+                              "enum": [
+                                "text",
+                                "column"
+                              ]
+                            },
+                            "labelText": {
+                              "type": "string"
+                            },
+                            "labelField": {
+                              "type": "string"
+                            },
+                            "unit": {
+                              "type": "string"
+                            },
+                            "decimals": {
+                              "default": 2,
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10
+                            },
+                            "maxRows": {
+                              "default": 5,
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 50
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "dql"
+                          ]
+                        }
+                      },
                       "dql": {
                         "type": "string"
                       },
                       "maxRows": {
-                        "default": 5,
                         "type": "integer",
                         "minimum": 1,
                         "maximum": 9007199254740991
                       }
-                    },
-                    "required": [
-                      "dql"
-                    ]
+                    }
                   }
                 },
                 "required": [
                   "kind",
                   "componentType",
                   "name",
-                  "entityDql",
                   "icon",
                   "failPoint"
                 ]
@@ -301,19 +369,66 @@
                         "default": "KPIs",
                         "type": "string"
                       },
+                      "items": {
+                        "default": [],
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "dql": {
+                              "type": "string"
+                            },
+                            "valueField": {
+                              "type": "string"
+                            },
+                            "labelMode": {
+                              "default": "text",
+                              "type": "string",
+                              "enum": [
+                                "text",
+                                "column"
+                              ]
+                            },
+                            "labelText": {
+                              "type": "string"
+                            },
+                            "labelField": {
+                              "type": "string"
+                            },
+                            "unit": {
+                              "type": "string"
+                            },
+                            "decimals": {
+                              "default": 2,
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10
+                            },
+                            "maxRows": {
+                              "default": 5,
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 50
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "dql"
+                          ]
+                        }
+                      },
                       "dql": {
                         "type": "string"
                       },
                       "maxRows": {
-                        "default": 5,
                         "type": "integer",
                         "minimum": 1,
                         "maximum": 9007199254740991
                       }
-                    },
-                    "required": [
-                      "dql"
-                    ]
+                    }
                   }
                 },
                 "required": [

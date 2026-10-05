@@ -10,8 +10,9 @@ import type { EdgeStatus, NodeStatus, ProblemRow, ResolvedTimeframe, Status } fr
 import { errorMessage, formatNumber, runQuery } from "../services/dql";
 import { buildProblemsDql, toProblemRow } from "../services/queryBuilder";
 import { evalThreshold } from "../services/statusEngine";
+import { kpiItems } from "../services/kpi";
+import { withUnit } from "../services/units";
 import { formatDateTime, userTimezone } from "../services/time";
-import { ResultTable } from "../canvas/nodes/ResultTable";
 import { STATUS_LABEL, StatusDot, StatusGlyph } from "../canvas/statusStyle";
 import { InlineMessage, SectionTitle } from "./Field";
 import { SidePanel } from "./SidePanel";
@@ -123,7 +124,15 @@ function NodeDetail({ node, status, tf }: { node: DiagramNode; status?: NodeStat
   const [problems, setProblems] = useState<ProblemRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const data = node.data;
-  const entityDql = data.kind === "entity" ? data.entityDql : data.mode === "entities" ? data.entities?.dql : undefined;
+  const picked = data.kind === "entity" ? data.entities : [];
+  const entityDql =
+    data.kind === "entity"
+      ? picked.length === 0
+        ? data.entityDql
+        : undefined
+      : data.mode === "entities"
+        ? data.entities?.dql
+        : undefined;
   const problemMatch =
     data.kind === "entity" ? data.failPoint.problemMatch : data.entities?.criterion === "match" ? data.entities.problemMatch : undefined;
   const ids = status?.entityIds ?? [];
@@ -155,6 +164,30 @@ function NodeDetail({ node, status, tf }: { node: DiagramNode; status?: NodeStat
         }
       />
       {status?.error && <InlineMessage kind="error">{status.error}</InlineMessage>}
+
+      {picked.length > 0 && (
+        <Flex flexDirection="column" gap={4}>
+          <SectionTitle>Entities</SectionTitle>
+          <table className="cdc-kpi-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Id</th>
+                <th>Classic id</th>
+              </tr>
+            </thead>
+            <tbody>
+              {picked.map((e) => (
+                <tr key={e.id}>
+                  <td title={e.name}>{e.name}</td>
+                  <td>{e.id}</td>
+                  <td>{e.classicId ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Flex>
+      )}
 
       {entityDql && <DqlBlock title="Entity DQL" query={entityDql} tf={tf} />}
 
@@ -236,17 +269,37 @@ function NodeDetail({ node, status, tf }: { node: DiagramNode; status?: NodeStat
         </Flex>
       )}
 
-      {data.kpi?.enabled && (
-        <Flex flexDirection="column" gap={4}>
-          <DqlBlock title={`KPI block DQL "${data.kpi.title}"`} query={data.kpi.dql} tf={tf} />
-          {status?.kpi?.status === "error" && <InlineMessage kind="error">{status.kpi.error}</InlineMessage>}
-          {status?.kpi?.result && (
-            <div className="cdc-preview-table-wrap">
-              <ResultTable result={status.kpi.result} />
-            </div>
-          )}
-        </Flex>
-      )}
+      {data.kpi?.enabled &&
+        kpiItems(data.kpi).map((item, index) => {
+          const result = status?.kpi?.items.find((r) => r.id === item.id);
+          const name = item.labelMode === "text" && item.labelText ? item.labelText : `KPI ${index + 1}`;
+          return (
+            <Flex key={item.id} flexDirection="column" gap={4}>
+              <DqlBlock title={`${data.kpi?.title ?? "KPIs"} · ${name}`} query={item.dql} tf={tf} />
+              {result?.status === "error" && <InlineMessage kind="error">{result.error}</InlineMessage>}
+              {result?.status === "ok" && (
+                <table className="cdc-kpi-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.lines.map((line, i) => (
+                      <tr key={i}>
+                        <td>{line.label}</td>
+                        <td className="cdc-num">
+                          {line.value === null ? "—" : withUnit(formatNumber(line.value, item.decimals), item.unit)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </Flex>
+          );
+        })}
     </Flex>
   );
 }
@@ -262,7 +315,7 @@ function EdgeDetail({ edge, status, tf }: { edge: DiagramEdge; status?: EdgeStat
     <Flex flexDirection="column" gap={16}>
       <StatusLine
         status={status?.status ?? "loading"}
-        text={status?.value !== undefined ? `${formatNumber(status.value, kpi.decimals)} ${kpi.unit ?? ""}` : undefined}
+        text={status?.value !== undefined ? withUnit(formatNumber(status.value, kpi.decimals), kpi.unit) : undefined}
       />
       {status?.error && <InlineMessage kind="error">{status.error}</InlineMessage>}
       <DqlBlock title="KPI DQL" query={kpi.dql} tf={tf} />

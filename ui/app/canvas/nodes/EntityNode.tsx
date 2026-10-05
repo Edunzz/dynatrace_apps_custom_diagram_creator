@@ -13,7 +13,8 @@ import { KpiBlock } from "./KpiBlock";
 import { NodeChrome } from "./NodeChrome";
 
 function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) {
-  const { status, mode } = useDiagramContext();
+  const { status, mode, editingId } = useDiagramContext();
+  const editing = editingId === id;
   const nodeStatus = status.nodes[id];
   const s: Status = nodeStatus?.status ?? "loading";
   const Icon = resolveIcon(data.icon);
@@ -23,8 +24,9 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) 
 
   return (
     <div
-      className={`cdc-node cdc-clickable${selected ? " cdc-selected" : ""}`}
+      className={`cdc-node cdc-clickable${selected ? " cdc-selected" : ""}${editing ? " cdc-editing" : ""}`}
       style={{
+        position: "relative",
         // Fills the size of the React Flow node: default width, auto height until the user resizes it.
         width: "100%",
         height: "100%",
@@ -36,6 +38,7 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) 
         borderColor: STATUS_COLOR[s],
       }}
     >
+      {editing && <span className="cdc-editing-badge">Editing</span>}
       <NodeChrome id={id} selected={selected} minWidth={180} minHeight={56} />
       <NodeHandles connectable={mode === "edit"} />
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

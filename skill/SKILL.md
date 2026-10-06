@@ -121,8 +121,10 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
    - Edges `normal` or `kpi`; `direction` forward|backward|none. KPI edges need
      `kpi: { dql (single value), unit, decimals, animated, threshold: { direction: above|below, warning, failing } }`.
    - Valid handles: `t`, `r`, `b`, `l` (optional).
-   - Problems are matched against both `affected_entity_ids` and `smartscape.affected_entity.ids`, so classic and
-     Smartscape ids both work. A component counts the problems **open at any time during the diagram's timeframe**
+   - Problems are matched against `affected_entity_ids`, `smartscape.affected_entity.ids` and
+     `smartscape.affected_entities[][id]` (some environments only fill the last one), so classic and Smartscape ids
+     both work. When you query problems yourself, compare Smartscape ids with `toString(…)`:
+     `iAny(in(toString(smartscape.affected_entities[][id]), array("SERVICE-…")))`. A component counts the problems **open at any time during the diagram's timeframe**
      (a snapshot: a past window shows what was open then, even if it closed later), so pick the timeframe the
      diagram should tell the story of.
 4. **Validate**:

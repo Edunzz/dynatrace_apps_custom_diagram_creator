@@ -96,16 +96,17 @@
 | filter event.start &lt;= toTimestamp(&quot;&lt;to&gt;&quot;)
       and coalesce(event.end, now()) &gt;= toTimestamp(&quot;&lt;from&gt;&quot;)
 | filter iAny(in(affected_entity_ids[], array(&lt;ids&gt;)))
-      or iAny(in(toString(smartscape.affected_entity.ids[]), array(&lt;ids&gt;)))
+    or iAny(in(toString(smartscape.affected_entity.ids[]), array(&lt;ids&gt;)))
+    or iAny(in(toString(smartscape.affected_entities[][id]), array(&lt;ids&gt;)))
 | filter &lt;match&gt;                           // optional
 | fields event.id, event.kind, display_id, event.name, event.status, event.category,
-         event.start, event.end, affected_entity_ids, smartscape.affected_entity.ids,
+         event.start, event.end, affected_entity_ids, smartscape.affected_entity.ids, smartscape.affected_entities,
          root_cause_entity_id, root_cause_entity_name
 | sort event.start desc
 | limit 1000</code></pre></div><ul>
 <li>It counts the problems <strong>open at any time during the timeframe</strong>: started before its end and not closed before its start (an open problem has no <code>event.end</code>). Grail already matches <code>dt.davis.problems</code> by that active interval — a problem keeps one record with its latest state, whose <code>timestamp</code> is its last update — and the explicit filter states it. <code>event.status</code> is the state today, shown as <em>still active</em> or <em>closed</em>.</li>
 <li><code>dedup</code> keeps one row per problem.</li>
-<li>Matching both id arrays makes classic ids (<code>SERVICE-…</code>) and Smartscape ids work; <code>id_classic</code> is matched too when the entity query returns it.</li>
+<li>The ids are looked up in every field environments use for affected entities: classic ids (<code>affected_entity_ids</code>), Smartscape ids (<code>smartscape.affected_entity.ids</code>) and Smartscape entity records (<code>smartscape.affected_entities</code>, a list of <code>{ id, name, type }</code> — in some environments the only one filled). Smartscape ids only match through <code>toString(…)</code>. <code>id_classic</code> is matched too when the entity query returns it.</li>
 <li>Containers run a single problem query for all their ids and group the problems per child in memory.</li>
 </ul>
 <h2 id="status-engine">Status engine</h2>

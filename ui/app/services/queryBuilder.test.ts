@@ -18,6 +18,8 @@ describe("buildProblemsDql", () => {
     expect(dql).not.toContain('event.status == "ACTIVE"');
     expect(dql).toContain('iAny(in(affected_entity_ids[], array("SERVICE-1", "SERVICE-2")))');
     expect(dql).toContain('iAny(in(toString(smartscape.affected_entity.ids[]), array("SERVICE-1", "SERVICE-2")))');
+    // Some environments only fill smartscape.affected_entities (records with an id).
+    expect(dql).toContain('iAny(in(toString(smartscape.affected_entities[][id]), array("SERVICE-1", "SERVICE-2")))');
   });
 
   it("adds the match after the entity filter and before fields", () => {
@@ -52,6 +54,17 @@ describe("toProblemRow / countProblemsFor / entityKeys", () => {
     expect(row.affectedIds.sort()).toEqual(["SERVICE-AAA", "SERVICE-BBB"]);
     expect(row.eventKind).toBe("DAVIS_PROBLEM");
     expect(row.displayId).toBe("P-123");
+  });
+
+  it("reads the ids of smartscape.affected_entities when the other fields are empty", () => {
+    const row = toProblemRow({
+      ...record,
+      affected_entity_ids: null,
+      "smartscape.affected_entity.ids": null,
+      "smartscape.affected_entities": [{ id: "SERVICE-CCC", name: "checkout", type: "SERVICE" }],
+    });
+    expect(row.affectedIds).toEqual(["SERVICE-CCC"]);
+    expect(countProblemsFor(["SERVICE-CCC"], [row])).toBe(1);
   });
 
   it("counts problems by any of the entity's keys", () => {

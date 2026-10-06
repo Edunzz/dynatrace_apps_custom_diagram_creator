@@ -18,6 +18,7 @@ export const PROBLEM_FIELDS = [
   "event.end",
   "affected_entity_ids",
   "smartscape.affected_entity.ids",
+  "smartscape.affected_entities",
   "root_cause_entity_id",
   "root_cause_entity_name",
 ];
@@ -28,8 +29,9 @@ export const PROBLEM_FIELDS = [
  * that day, even if it closed later). Grail matches dt.davis.problems by their active interval; the explicit
  * start/end filter states it. `event.status` is the problem's state today.
  * - Filters out duplicates and keeps one row per problem.
- * - Matches against classic ids (affected_entity_ids) and Smartscape ids (smartscape.affected_entity.ids),
- *   so it works whether the entity DQL uses `fetch dt.entity.*` or `smartscapeNodes`.
+ * - Matches the ids in every field environments use for affected entities: classic ids (affected_entity_ids),
+ *   Smartscape ids (smartscape.affected_entity.ids) and Smartscape entity records (smartscape.affected_entities, a
+ *   list of { id, name, type } — in some environments the only one filled). Smartscape ids match through toString.
  */
 export function buildProblemsDql({ ids, tf, problemMatch }: ProblemsQueryOptions): string {
   const uniqueIds = Array.from(new Set(ids.filter((id) => id && id.trim() !== "")));
@@ -43,7 +45,11 @@ export function buildProblemsDql({ ids, tf, problemMatch }: ProblemsQueryOptions
     `| filter event.start <= toTimestamp(${dqlString(tf.to)}) and coalesce(event.end, now()) >= toTimestamp(${dqlString(tf.from)})`,
   );
   lines.push(
-    `| filter iAny(in(affected_entity_ids[], ${idArray})) or iAny(in(toString(smartscape.affected_entity.ids[]), ${idArray}))`,
+    [
+      `| filter iAny(in(affected_entity_ids[], ${idArray}))`,
+      `    or iAny(in(toString(smartscape.affected_entity.ids[]), ${idArray}))`,
+      `    or iAny(in(toString(smartscape.affected_entities[][id]), ${idArray}))`,
+    ].join("\n"),
   );
   const match = problemMatch?.trim();
   if (match) {
@@ -65,6 +71,16 @@ function asStringArray(value: unknown): string[] {
   return [];
 }
 
+/** Ids of a list of entity records such as smartscape.affected_entities ([{ id, name, type }]). */
+function entityRecordIds(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((v: unknown) => (v && typeof v === "object" ? asText((v as Record<string, unknown>).id) : ""))
+    .filter((id) => id !== "");
+}
+
 function str(value: unknown): string {
   return asText(value);
 }
@@ -73,6 +89,7 @@ export function toProblemRow(record: DqlRecord): ProblemRow {
   const affected = new Set([
     ...asStringArray(record["affected_entity_ids"]),
     ...asStringArray(record["smartscape.affected_entity.ids"]),
+    ...entityRecordIds(record["smartscape.affected_entities"]),
   ]);
   return {
     eventId: str(record["event.id"]),

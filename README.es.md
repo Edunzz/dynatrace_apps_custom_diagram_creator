@@ -51,8 +51,10 @@ entorno y un platform token.
    | `DT_APP_ENVIRONMENT_URL` | `https://<id-del-entorno>.apps.dynatrace.com` |
    | `DT_APP_PLATFORM_TOKEN` | el token del paso 1 |
 
-   GitHub los guarda como tus secretos de Codespaces para este repositorio. Desde entonces la página de creación solo
-   los muestra como *Associated with repository* y los reutiliza; el siguiente paso te deja usar otros valores igual.
+   GitHub los guarda como **Codespace user secrets de tu propia cuenta de GitHub** — no en este repositorio — con
+   acceso a este repositorio. Desde entonces la página de creación solo los muestra como *Associated with repository* y
+   los reutiliza; el siguiente paso te deja usar otros valores igual. Otras personas que abran un codespace de este
+   repositorio ingresan sus propios valores.
 3. **Espera a que termine la preparación** (`npm ci` se ejecuta solo). La terminal muestra dónde se va a desplegar la
    app.
 4. **Despliega** desde la terminal del codespace:
@@ -65,11 +67,21 @@ entorno y un platform token.
    escribe la URL y el token de otro entorno para desplegar ahí (no se guarda nada). Luego compila la app, la instala
    y muestra el enlace: `https://<id-del-entorno>.apps.dynatrace.com/ui/apps/my.custom.diagram.creator`.
 
-**Desplegar en otro entorno.** Ejecuta `npm run deploy:token` y escribe la nueva URL y el token. Si quieres que la
-página de creación vuelva a pedir los valores, borra los dos secretos (o quita este repositorio de ellos) en
-[GitHub › Settings › Codespaces](https://github.com/settings/codespaces); si los cambias ahí, aplican a los codespaces
-nuevos y a los que ya corren después de reiniciarlos. Sin secretos también puedes copiar `.env.example` a `.env` (git lo
-ignora), y en CI `npm run deploy:token -- --yes` usa las variables de entorno sin preguntar.
+**Dónde quedan los valores guardados.** En tu cuenta, no en el repositorio: tu avatar › **Settings** ›
+**Codespaces** › **Codespace user secrets** ([github.com/settings/codespaces](https://github.com/settings/codespaces)).
+*Repositorio › Settings › Secrets › Codespaces* queda vacío, y así debe ser: los secretos de ahí los compartiría
+cualquiera que abra un codespace de este repositorio.
+
+**Desplegar en otro entorno.** No tienes que borrar nada; elige una opción:
+
+| Quieres… | Haz esto |
+|---|---|
+| Desplegar una vez en otro entorno | En el codespace, ejecuta `npm run deploy:token` y escribe la URL y el token de ese entorno. Tus valores guardados no cambian. |
+| Cambiar el valor por defecto de tus codespaces | Edita los dos secretos (lápiz) en [Codespace user secrets](https://github.com/settings/codespaces). Los codespaces nuevos usan los valores nuevos; uno que ya corre, después de reiniciarlo. |
+| Que la página de creación vuelva a pedirlos | Borra los dos secretos (papelera), o quita este repositorio de su *Repository access*. |
+
+Sin secretos también puedes copiar `.env.example` a `.env` (git lo ignora), y en CI
+`npm run deploy:token -- --yes` usa las variables de entorno sin preguntar.
 
 ### Opción B — Tu máquina
 

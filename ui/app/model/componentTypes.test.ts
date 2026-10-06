@@ -5,7 +5,7 @@ vi.mock("@dynatrace-sdk/client-query", () => ({ queryExecutionClient: {} }));
 import { COMPONENT_CATEGORIES, COMPONENT_TYPE_DEFS, COMPONENT_TYPE_IDS, matchesComponentType } from "./componentTypes";
 import { ComponentType } from "./schema";
 import { ICONS } from "../services/icons";
-import { entityListDql, smartscapeTypeLabel } from "../services/entities";
+import { endpointListDql, entityListDql, smartscapeTypeLabel } from "../services/entities";
 
 describe("component types", () => {
   it("keeps the types of earlier versions", () => {
@@ -23,9 +23,15 @@ describe("component types", () => {
     }
   });
 
-  it("leaves synthetic monitors out", () => {
-    const all = COMPONENT_TYPE_IDS.flatMap((t) => COMPONENT_TYPE_DEFS[t].smartscape);
-    expect(all.filter((s) => /MONITOR|SYNTHETIC/.test(s))).toEqual([]);
+  it("synthetic monitors have their own category, and endpoints list from the service metrics", () => {
+    const synthetic = COMPONENT_TYPE_IDS.filter((t) => COMPONENT_TYPE_DEFS[t].category === "Synthetic");
+    expect(synthetic.sort()).toEqual(["browserMonitor", "httpMonitor", "networkMonitor"]);
+    expect((COMPONENT_TYPE_DEFS.endpoint as { listing?: string }).listing).toBe("endpoints");
+  });
+
+  it("lists endpoints busiest first and searches them by endpoint or service name", () => {
+    expect(endpointListDql()).toContain("by: {dt.smartscape.service, endpoint.name}, from: now()-7d");
+    expect(endpointListDql(" trade ")).toContain('filter contains(endpoint.name, "trade", caseSensitive: false) or contains(service, "trade"');
   });
 
   it("filters by label, category or Smartscape type", () => {

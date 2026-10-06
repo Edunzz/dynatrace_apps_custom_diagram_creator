@@ -2,7 +2,7 @@
 
 /**
  * Entity component types: one entry per kind of Smartscape entity a component can represent.
- * Synthetic monitors are left out on purpose. Every Smartscape type here was checked against real environments.
+ * Every Smartscape type here was checked against real environments.
  */
 export interface ComponentTypeDef {
   label: string;
@@ -13,9 +13,14 @@ export interface ComponentTypeDef {
   filter?: string;
   /** Default icon (export name from @dynatrace/strato-icons). */
   icon: string;
+  /**
+   * "endpoints": the picker lists service endpoints (from the request metrics) instead of Smartscape nodes; each pick
+   * keeps its service id, so problems are those of the service.
+   */
+  listing?: "endpoints";
 }
 
-export const COMPONENT_CATEGORIES = ["Applications", "Infrastructure", "Kubernetes", "AWS", "Azure", "Google Cloud"] as const;
+export const COMPONENT_CATEGORIES = ["Applications", "Synthetic", "Infrastructure", "Kubernetes", "AWS", "Azure", "Google Cloud"] as const;
 export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number];
 
 export const COMPONENT_TYPE_DEFS = {
@@ -23,8 +28,18 @@ export const COMPONENT_TYPE_DEFS = {
   frontend: { label: "Frontend", category: "Applications", smartscape: ["FRONTEND"], filter: 'frontend.type == "web"', icon: "ApplicationsIcon" },
   mobile: { label: "Mobile", category: "Applications", smartscape: ["FRONTEND"], filter: 'frontend.type != "web"', icon: "MobileIcon" },
   service: { label: "Service", category: "Applications", smartscape: ["SERVICE"], icon: "ServicesIcon" },
+  endpoint: { label: "Endpoint", category: "Applications", smartscape: ["SERVICE"], icon: "RequestIcon", listing: "endpoints" },
   process: { label: "Process", category: "Applications", smartscape: ["PROCESS"], icon: "ProcessIcon" },
   genai: { label: "GenAI", category: "Applications", smartscape: ["GENAI_SERVICE", "GENAI_AGENT", "GENAI_MODEL"], icon: "AIModelIcon" },
+  // Synthetic monitors
+  browserMonitor: { label: "Browser monitor", category: "Synthetic", smartscape: ["BROWSER_MONITOR"], icon: "DesktopIcon" },
+  httpMonitor: { label: "HTTP monitor", category: "Synthetic", smartscape: ["HTTP_MONITOR"], icon: "HttpIcon" },
+  networkMonitor: {
+    label: "Network availability monitor",
+    category: "Synthetic",
+    smartscape: ["NETWORK_AVAILABILITY_MONITOR"],
+    icon: "NetworkIcon",
+  },
   // Infrastructure
   host: { label: "Host", category: "Infrastructure", smartscape: ["HOST"], icon: "HostsIcon" },
   container: { label: "Container", category: "Infrastructure", smartscape: ["CONTAINER"], icon: "ContainerIcon" },

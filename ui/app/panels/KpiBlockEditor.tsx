@@ -5,10 +5,14 @@ import { Flex } from "@dynatrace/strato-components/layouts";
 import { Select, Switch, TextInput, ToggleButtonGroup } from "@dynatrace/strato-components/forms";
 import { Tooltip } from "@dynatrace/strato-components/overlays";
 import { DeleteIcon, PlusIcon } from "@dynatrace/strato-icons";
-import type { KpiBlock, KpiItem } from "../model/schema";
+import { Menu } from "@dynatrace/strato-components/navigation";
+import type { ComponentType, KpiBlock, KpiItem } from "../model/schema";
+import { COMPONENT_LABELS } from "../model/defaults";
+import { findPreset, kpiPresetsFor, type KpiPreset } from "../model/kpiPresets";
 import type { DqlResult, Timeframe } from "../model/types";
 import { numericColumns } from "../services/dql";
 import { kpiItems, labelColumns, newKpiItem } from "../services/kpi";
+import { expandScope, usesScope, type EntityScope } from "../services/kpiScope";
 import { DqlField } from "./DqlField";
 import { Field, InlineMessage } from "./Field";
 import { IntegerInput } from "./IntegerInput";
@@ -16,6 +20,8 @@ import type { CommitMode } from "./NodeConfigPanel";
 import { UnitField } from "./UnitField";
 
 const FIRST = "__first__";
+
+const newKpiId = () => `k-${crypto.randomUUID().slice(0, 8)}`;
 
 interface Columns {
   numeric: string[];
@@ -30,6 +36,7 @@ function KpiItemEditor({
   onChange,
   onRemove,
   onColumns,
+  prepare,
 }: {
   item: KpiItem;
   index: number;
@@ -38,7 +45,9 @@ function KpiItemEditor({
   onChange: (item: KpiItem, commit?: CommitMode) => void;
   onRemove: () => void;
   onColumns: (result: DqlResult | null) => void;
+  prepare: (dql: string) => Promise<string>;
 }) {
+  const preset = findPreset(item.preset);
   const valueOptions = Array.from(new Set([item.valueField, ...(columns?.numeric ?? [])].filter((c): c is string => Boolean(c))));
   const labelOptions = Array.from(new Set([item.labelField, ...(columns?.labels ?? [])].filter((c): c is string => Boolean(c))));
   return (
@@ -53,10 +62,17 @@ function KpiItemEditor({
       }}
     >
       <Flex alignItems="center" justifyContent="space-between">
-        <strong style={{ fontSize: 13 }}>
-          KPI {index + 1}
-          {item.labelMode === "text" && item.labelText ? ` · ${item.labelText}` : ""}
-        </strong>
+        <Flex alignItems="center" gap={6}>
+          <strong style={{ fontSize: 13 }}>
+            KPI {index + 1}
+            {item.labelMode === "text" && item.labelText ? ` · ${item.labelText}` : preset ? ` · ${preset.label}` : ""}
+          </strong>
+          {preset && (
+            <Tooltip text="Ready-made KPI for the entities picked on the Data tab. Editing its query makes it a custom KPI.">
+              <span className="cdc-preset-badge">Ready-made</span>
+            </Tooltip>
+          )}
+        </Flex>
         <Tooltip text="Remove this KPI">
           <Button aria-label="Remove this KPI" size="condensed" color="critical" onClick={onRemove}>
             <Button.Prefix>
@@ -67,9 +83,14 @@ function KpiItemEditor({
       </Flex>
       <DqlField
         label="Query"
-        hint="Any DQL that returns a numeric column. Run it to load its columns into the selectors below."
+        hint={
+          usesScope(item.dql)
+            ? "$entityIds stands for the entities picked on the Data tab: the query shows one line per entity. Run it to preview."
+            : "Any DQL that returns a numeric column. Run it to load its columns into the selectors below."
+        }
         value={item.dql}
-        onChange={(v) => onChange({ ...item, dql: v })}
+        prepare={prepare}
+        onChange={(v) => onChange({ ...item, dql: v, preset: undefined })}
         onRun={() => onChange(item, "now")}
         onResult={onColumns}
         timeframe={timeframe}
@@ -163,11 +184,19 @@ export function KpiBlockEditor({
   value,
   onChange,
   timeframe,
+  componentType,
+  resolveScope,
 }: {
   value: KpiBlock | undefined;
   onChange: (kpi: KpiBlock | undefined, commit?: CommitMode) => void;
   timeframe: Timeframe;
+  /** Entity components: the type's ready-made KPIs are offered in "Add KPI". */
+  componentType?: ComponentType;
+  /** Entity components: the picked entities, to preview queries that use $entityIds. */
+  resolveScope?: () => Promise<EntityScope>;
 }) {
+  const presets: KpiPreset[] = componentType ? kpiPresetsFor(componentType) : [];
+  const prepare = async (dql: string) => (usesScope(dql) ? expandScope(dql, resolveScope ? await resolveScope() : undefined) : dql);
   const [columns, setColumns] = useState<Record<string, Columns>>({});
   const enabled = value?.enabled ?? false;
   const title = value?.title ?? "KPIs";
@@ -179,14 +208,20 @@ export function KpiBlockEditor({
 
   const update = (index: number, item: KpiItem, commit?: CommitMode) => emit(items.map((it, i) => (i === index ? item : it)), commit);
 
-  const add = () => emit([...items, newKpiItem(`k-${crypto.randomUUID().slice(0, 8)}`)], "now");
+  const add = () => emit([...items, newKpiItem(newKpiId())], "now");
+  const addPreset = (preset: KpiPreset) => emit([...items, { ...preset.item, id: newKpiId() }], "now");
+  // Turning the block on for an empty component starts with the type's default ready-made KPIs.
+  const starters = () => {
+    const defaults = presets.filter((p) => p.isDefault).map((p) => ({ ...p.item, id: newKpiId() }));
+    return defaults.length ? defaults : [newKpiItem(newKpiId())];
+  };
 
   return (
     <Flex flexDirection="column" gap={12} paddingTop={12}>
       <Switch
         value={enabled}
         onChange={(checked) =>
-          emit(items.length ? items : [newKpiItem(`k-${crypto.randomUUID().slice(0, 8)}`)], "now", { enabled: checked })
+          emit(items.length ? items : starters(), "now", { enabled: checked })
         }
       >
         Show KPIs under the node
@@ -206,18 +241,58 @@ export function KpiBlockEditor({
               timeframe={timeframe}
               onChange={(next, commit) => update(index, next, commit)}
               onRemove={() => emit(items.filter((_, i) => i !== index), "now")}
+              prepare={prepare}
               onColumns={(r) =>
                 setColumns((prev) => ({ ...prev, [item.id]: r ? { numeric: numericColumns(r), labels: labelColumns(r) } : { numeric: [], labels: [] } }))
               }
             />
           ))}
           <div>
-            <Button onClick={add}>
-              <Button.Prefix>
-                <PlusIcon />
-              </Button.Prefix>
-              Add KPI
-            </Button>
+            {presets.length > 0 && componentType ? (
+              <Menu>
+                <Menu.Trigger>
+                  <Button>
+                    <Button.Prefix>
+                      <PlusIcon />
+                    </Button.Prefix>
+                    Add KPI
+                  </Button>
+                </Menu.Trigger>
+                <Menu.Content>
+                  <Menu.Group>
+                    <Menu.Label>Ready-made for {COMPONENT_LABELS[componentType]} · one line per picked entity</Menu.Label>
+                    {presets.map((p) => (
+                      <Menu.Item
+                        key={p.key}
+                        textValue={p.label}
+                        disabled={items.some((it) => it.preset === p.key)}
+                        onSelect={() => addPreset(p)}
+                      >
+                        <span style={{ display: "flex", flexDirection: "column" }}>
+                          <span>{p.label}</span>
+                          <span style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued }}>{p.description}</span>
+                        </span>
+                      </Menu.Item>
+                    ))}
+                  </Menu.Group>
+                  <Menu.Group>
+                    <Menu.Item textValue="Custom KPI" onSelect={add}>
+                      <span style={{ display: "flex", flexDirection: "column" }}>
+                        <span>Custom KPI</span>
+                        <span style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued }}>Your own DQL query</span>
+                      </span>
+                    </Menu.Item>
+                  </Menu.Group>
+                </Menu.Content>
+              </Menu>
+            ) : (
+              <Button onClick={add}>
+                <Button.Prefix>
+                  <PlusIcon />
+                </Button.Prefix>
+                Add KPI
+              </Button>
+            )}
           </div>
         </>
       )}

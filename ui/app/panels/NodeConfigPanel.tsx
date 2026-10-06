@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { Accordion, CodeSnippet } from "@dynatrace/strato-components/content";
@@ -14,8 +14,11 @@ import {
 } from "../model/schema";
 import type { Timeframe } from "../model/types";
 import { COMPONENT_CATEGORIES, COMPONENT_TYPE_DEFS } from "../model/componentTypes";
-import { COMPONENT_LABELS, COMPONENT_TYPES } from "../model/defaults";
-import { assertColumns, errorMessage } from "../services/dql";
+import { COMPONENT_LABELS, COMPONENT_TYPES, defaultKpiBlock } from "../model/defaults";
+import { assertColumns, errorMessage, runQuery } from "../services/dql";
+import { kpiItems } from "../services/kpi";
+import { scopeFromRecords, scopeFromRefs, type EntityScope } from "../services/kpiScope";
+import { resolveTimeframe } from "../services/time";
 import { CUSTOM_DQL_TEMPLATE } from "../services/queryBuilder";
 import { DEFAULT_ICONS } from "../services/icons";
 import { listSlos, type SloOption } from "../services/slo";
@@ -49,6 +52,8 @@ type Update<T> = (next: T, commit?: CommitMode) => void;
 function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; update: Update<EntityNodeData>; timeframe: Timeframe }) {
   const changeType = (type: ComponentType) => {
     const prevType = draft.componentType;
+    // Ready-made KPIs belong to the previous type: if the block only has those, it starts over with the new type's.
+    const onlyPresets = kpiItems(draft.kpi).every((item) => item.preset);
     update(
       {
         ...draft,
@@ -59,10 +64,20 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
         // If the user didn't touch the default icon / name, they change with the type.
         icon: draft.icon === DEFAULT_ICONS[prevType] ? DEFAULT_ICONS[type] : draft.icon,
         name: draft.name === COMPONENT_LABELS[prevType] ? COMPONENT_LABELS[type] : draft.name,
+        kpi: onlyPresets ? defaultKpiBlock(type) : draft.kpi,
       },
       "debounced",
     );
   };
+  const resolveScope = useCallback(async (): Promise<EntityScope> => {
+    if (draft.entities.length > 0) {
+      return scopeFromRefs(draft.entities);
+    }
+    if (draft.entityDql?.trim()) {
+      return scopeFromRecords((await runQuery(draft.entityDql, resolveTimeframe(timeframe))).records);
+    }
+    return scopeFromRefs([]);
+  }, [draft.entities, draft.entityDql, timeframe]);
   const fp = draft.failPoint;
   const usesQuery = draft.entities.length === 0 && Boolean(draft.entityDql?.trim());
   return (
@@ -165,6 +180,8 @@ function EntityTabs({ draft, update, timeframe }: { draft: EntityNodeData; updat
           value={draft.kpi}
           onChange={(kpi, commit) => update({ ...draft, kpi }, commit)}
           timeframe={timeframe}
+          componentType={draft.componentType}
+          resolveScope={resolveScope}
         />
       </Tab>
     </Tabs>

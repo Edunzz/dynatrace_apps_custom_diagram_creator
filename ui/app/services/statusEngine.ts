@@ -16,6 +16,7 @@ import { buildProblemsDql, countProblemsFor, entityKeys, toProblemRow } from "./
 import { evaluateSlo } from "./slo";
 import { pickedEntityIds } from "./entities";
 import { kpiItems, kpiLines } from "./kpi";
+import { expandScope, scopeFromRecords, scopeFromRefs, type EntityScope } from "./kpiScope";
 
 export type ThresholdResult = "pass" | "warning" | "failing";
 
@@ -122,30 +123,33 @@ export function createCycleContext(tf: ResolvedTimeframe, signal: AbortSignal, c
   };
 }
 
-async function runKpiItem(item: KpiItem, ctx: StatusCycleContext): Promise<KpiItemState> {
+async function runKpiItem(item: KpiItem, ctx: StatusCycleContext, scope?: EntityScope): Promise<KpiItemState> {
   if (!item.dql.trim()) {
     return { id: item.id, status: "error", error: "Write the KPI query.", lines: [] };
   }
+  let query: string | undefined;
   try {
-    const result = await ctx.query(item.dql);
+    query = expandScope(item.dql, scope);
+    const result = await ctx.query(query);
     const lines = kpiLines(item, result);
     return lines.ok
-      ? { id: item.id, status: "ok", lines: lines.lines }
-      : { id: item.id, status: "error", error: lines.error, lines: [] };
+      ? { id: item.id, status: "ok", lines: lines.lines, query }
+      : { id: item.id, status: "error", error: lines.error, lines: [], query };
   } catch (e) {
     if (isAbortError(e)) {
       throw e;
     }
-    return { id: item.id, status: "error", error: errorMessage(e), lines: [] };
+    return { id: item.id, status: "error", error: errorMessage(e), lines: [], query };
   }
 }
 
-async function runKpiBlock(kpi: KpiBlock | undefined, ctx: StatusCycleContext): Promise<KpiState | undefined> {
+/** Runs the KPIs of a node. `scope` (entity components) fills $entityIds and friends in their queries. */
+async function runKpiBlock(kpi: KpiBlock | undefined, ctx: StatusCycleContext, scope?: EntityScope): Promise<KpiState | undefined> {
   const items = kpiItems(kpi);
   if (!kpi?.enabled || items.length === 0) {
     return undefined;
   }
-  return { items: await Promise.all(items.map((item) => runKpiItem(item, ctx))) };
+  return { items: await Promise.all(items.map((item) => runKpiItem(item, ctx, scope))) };
 }
 
 async function fetchProblems(
@@ -159,7 +163,16 @@ async function fetchProblems(
 }
 
 export async function computeEntityNode(data: EntityNodeData, ctx: StatusCycleContext): Promise<NodeStatus> {
-  const kpiPromise = runKpiBlock(data.kpi, ctx);
+  const usesQuery = data.entities.length === 0 && Boolean(data.entityDql?.trim());
+  // The entity query (if any) runs once: its rows give the problem ids and the scope of the KPIs.
+  const entitiesPromise: Promise<DqlResult | null> = usesQuery ? ctx.query(data.entityDql ?? "") : Promise.resolve(null);
+  entitiesPromise.catch(() => undefined);
+  const kpiPromise = entitiesPromise
+    .then(
+      (result) => (result ? scopeFromRecords(result.records) : scopeFromRefs(data.entities)),
+      () => scopeFromRefs([]),
+    )
+    .then((scope) => runKpiBlock(data.kpi, ctx, scope));
   // Observed right away so a cancellation isn't left as an unhandled rejection if the main block fails first.
   kpiPromise.catch(() => undefined);
   let base: NodeStatus;
@@ -179,7 +192,10 @@ export async function computeEntityNode(data: EntityNodeData, ctx: StatusCycleCo
     if (!data.entityDql?.trim()) {
       return { status: "unknown", error: "Pick at least one entity.", entityIds: [], kpi: await kpiPromise };
     }
-    const entities = await ctx.query(data.entityDql);
+    const entities = await entitiesPromise;
+    if (!entities) {
+      throw new Error("The entity query didn't run.");
+    }
     const colErr = assertColumns(entities, ["id"]);
     if (colErr) {
       base = { status: "unknown", error: colErr };

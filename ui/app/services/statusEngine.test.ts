@@ -68,6 +68,52 @@ describe("computeEntityNode", () => {
     expect(ctx.queries).toHaveLength(0);
     expect(status).toMatchObject({ status: "unknown", error: "Pick at least one entity." });
   });
+
+  const presetKpi = {
+    enabled: true,
+    title: "KPIs",
+    items: [
+      {
+        id: "k1",
+        dql: "timeseries v = sum(dt.service.request.count, scalar: true), by: {dt.smartscape.service},\n  filter: { in(toString(dt.smartscape.service), array($entityIds)) }\n| fieldsAdd name = getNodeName(dt.smartscape.service), value = v\n| fields name, value",
+        valueField: "value",
+        labelMode: "column" as const,
+        labelField: "name",
+        decimals: 0,
+        maxRows: 10,
+      },
+    ],
+  };
+  const kpiAnswer = (dql: string): DqlResult =>
+    dql.startsWith("timeseries")
+      ? { columns: ["name", "value"], types: {}, records: [{ name: "BrokerService", value: 12 }, { name: "Login", value: 3 }] }
+      : { columns: [], types: {}, records: [] };
+
+  it("ready-made KPIs follow the picked entities: one line per entity", async () => {
+    const ctx = fakeContext(kpiAnswer);
+    const status = await computeEntityNode(
+      { ...base, componentType: "service", entities: [{ id: "SERVICE-1", name: "BrokerService" }, { id: "SERVICE-2", name: "Login" }], kpi: presetKpi },
+      ctx,
+    );
+    const kpiQuery = ctx.queries.find((q) => q.startsWith("timeseries")) ?? "";
+    expect(kpiQuery).toContain('array("SERVICE-1", "SERVICE-2")');
+    expect(status.kpi?.items[0]).toMatchObject({ status: "ok", query: kpiQuery, lines: [{ label: "BrokerService", value: 12 }, { label: "Login", value: 3 }] });
+  });
+
+  it("with an entity query, KPIs use its rows and the query runs only once", async () => {
+    const ctx = fakeContext((dql) =>
+      dql.startsWith("smartscapeNodes") ? { columns: ["id", "name"], types: {}, records: [{ id: "SERVICE-9", name: "api" }] } : kpiAnswer(dql),
+    );
+    await computeEntityNode({ ...base, componentType: "service", entityDql: 'smartscapeNodes "SERVICE" | fields id, name', kpi: presetKpi }, ctx);
+    expect(ctx.queries.filter((q) => q.startsWith("smartscapeNodes"))).toHaveLength(1);
+    expect(ctx.queries.find((q) => q.startsWith("timeseries"))).toContain('array("SERVICE-9")');
+  });
+
+  it("a ready-made KPI without picked entities explains what to do", async () => {
+    const ctx = fakeContext(kpiAnswer);
+    const status = await computeEntityNode({ ...base, kpi: presetKpi }, ctx);
+    expect(status.kpi?.items[0]).toMatchObject({ status: "error", error: "Pick at least one entity." });
+  });
 });
 
 describe("evalThreshold", () => {

@@ -13,12 +13,14 @@ contenedores resumen sus entidades o SLOs, y las conexiones muestran valores de 
 ## Qué incluye
 
 - Un lienzo para dibujar y conectar componentes, con edición al estilo de los Dashboards.
-- 45 tipos de componente de entidad (aplicaciones, hosts, Kubernetes, bases de datos, AWS, Azure, Google Cloud):
-  eliges las entidades reales en una lista con búsqueda y obtienes su estado en vivo a partir de los problemas de
-  Davis y los SLOs.
+- 49 tipos de componente de entidad (aplicaciones, endpoints, monitores sintéticos, hosts, Kubernetes, bases de datos,
+  AWS, Azure, Google Cloud): eliges las entidades reales en una lista con búsqueda y obtienes su estado en vivo a
+  partir de los problemas de Davis y los SLOs.
+- KPIs prediseñados para cada tipo de componente — request count, response time y failure rate para servicios y
+  endpoints, availability para hosts, procesos y monitores sintéticos, y más — con una línea por cada entidad que
+  elijas. También puedes escribir tus propios KPIs con DQL.
 - Contenedores armados con tus propias queries DQL o con un conjunto de SLOs.
-- Todos los KPIs que necesites bajo cualquier componente, y valores de KPIs en las conexiones, con unidades
-  predefinidas o personalizadas.
+- Valores de KPIs en las conexiones, con unidades predefinidas o personalizadas.
 - Diagramas guardados en Grail y administrados como los dashboards: listar, duplicar, subir, descargar y eliminar.
 - Un skill para que un agente de IA con `dtctl` construya diagramas a partir de entidades reales.
 
@@ -41,36 +43,33 @@ entorno y un platform token.
 
    Pulsa **Generate** y copia el token: solo se muestra una vez. El token funciona dentro de tus propios permisos,
    así que tu usuario debe poder instalar apps en ese entorno.
-2. **Crea el codespace.** Haz clic en el botón de arriba (o en **Code › Codespaces › Create codespace on main**). En la
-   página de creación, completa los dos secretos recomendados:
+2. **Crea el codespace.** Haz clic en el botón de arriba (o en **Code › Codespaces › Create codespace on main**). La
+   primera vez, la página de creación pide dos secretos recomendados:
 
    | Secreto | Valor |
    |---|---|
    | `DT_APP_ENVIRONMENT_URL` | `https://<id-del-entorno>.apps.dynatrace.com` |
    | `DT_APP_PLATFORM_TOKEN` | el token del paso 1 |
 
-   Codespaces los guarda como tus secretos para este repositorio y los pasa al codespace como variables de entorno.
-3. **Espera a que termine la preparación** (`npm ci` se ejecuta solo).
+   GitHub los guarda como tus secretos de Codespaces para este repositorio. Desde entonces la página de creación solo
+   los muestra como *Associated with repository* y los reutiliza; el siguiente paso te deja usar otros valores igual.
+3. **Espera a que termine la preparación** (`npm ci` se ejecuta solo). La terminal muestra dónde se va a desplegar la
+   app.
 4. **Despliega** desde la terminal del codespace:
 
    ```bash
    npm run deploy:token
    ```
 
-   El script revisa las dos variables, compila la app y la instala. Al final muestra el enlace:
-   `https://<id-del-entorno>.apps.dynatrace.com/ui/apps/my.custom.diagram.creator`.
+   Te pide la **URL del entorno** y el **platform token**, mostrando los valores guardados: pulsa Enter para usarlos o
+   escribe la URL y el token de otro entorno para desplegar ahí (no se guarda nada). Luego compila la app, la instala
+   y muestra el enlace: `https://<id-del-entorno>.apps.dynatrace.com/ui/apps/my.custom.diagram.creator`.
 
-¿Te saltaste los secretos o quieres desplegar en otro entorno? Define los valores dentro del codespace: copia
-`.env.example` a `.env` y complétalo (git ignora `.env`), o expórtalos en la terminal:
-
-```bash
-export DT_APP_ENVIRONMENT_URL=https://<id-del-entorno>.apps.dynatrace.com
-export DT_APP_PLATFORM_TOKEN=<tu-platform-token>
-npm run deploy:token
-```
-
-Los secretos que agregues después en [GitHub › Settings › Codespaces](https://github.com/settings/codespaces) llegan a
-un codespace que ya está corriendo solo después de reiniciarlo.
+**Desplegar en otro entorno.** Ejecuta `npm run deploy:token` y escribe la nueva URL y el token. Si quieres que la
+página de creación vuelva a pedir los valores, borra los dos secretos (o quita este repositorio de ellos) en
+[GitHub › Settings › Codespaces](https://github.com/settings/codespaces); si los cambias ahí, aplican a los codespaces
+nuevos y a los que ya corren después de reiniciarlos. Sin secretos también puedes copiar `.env.example` a `.env` (git lo
+ignora), y en CI `npm run deploy:token -- --yes` usa las variables de entorno sin preguntar.
 
 ### Opción B — Tu máquina
 

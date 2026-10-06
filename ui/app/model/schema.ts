@@ -28,6 +28,8 @@ export const KpiItem = z.object({
   decimals: z.number().int().min(0).max(10).default(2),
   /** Maximum lines when the label comes from a column. */
   maxRows: z.number().int().min(1).max(50).default(5),
+  /** Key of the ready-made KPI it was added from (see kpiPresets.ts); dropped once its query is edited. */
+  preset: z.string().optional(),
 });
 
 /** Optional list of KPIs shown below any node. */
@@ -58,6 +60,8 @@ export const EntityRef = z.object({
   id: z.string(),
   name: z.string(),
   classicId: z.string().optional(),
+  /** Endpoint components: the endpoint name (id is then the id of its service). */
+  endpoint: z.string().optional(),
 });
 
 export const EntityNodeData = z.object({

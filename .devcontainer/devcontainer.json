@@ -1,10 +1,13 @@
 {
   // GitHub Codespaces / Dev Containers: everything needed to build and deploy the app, with no local setup.
-  // After the container is created, run `npm run deploy:token` (see README.md).
+  // After the container is created, run `npm run deploy:token` (see README.md): it asks for the environment URL and
+  // the platform token, offering the secrets below as defaults.
   "name": "Custom Diagram Creator",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
   "postCreateCommand": "npm ci",
-  // Codespaces asks for these values when the codespace is created and passes them as environment variables.
+  "postAttachCommand": "bash scripts/codespace-welcome.sh",
+  // Codespaces asks for these values on the creation page only while you don't have them saved yet; afterwards it
+  // reuses your saved values. They are passed to the codespace as environment variables.
   "secrets": {
     "DT_APP_ENVIRONMENT_URL": {
       "description": "URL of the Dynatrace environment to deploy to, e.g. https://abc12345.apps.dynatrace.com",

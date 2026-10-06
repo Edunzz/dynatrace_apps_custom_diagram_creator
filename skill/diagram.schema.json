@@ -151,8 +151,12 @@
                       "frontend",
                       "mobile",
                       "service",
+                      "endpoint",
                       "process",
                       "genai",
+                      "browserMonitor",
+                      "httpMonitor",
+                      "networkMonitor",
                       "host",
                       "container",
                       "database",
@@ -211,6 +215,9 @@
                           "type": "string"
                         },
                         "classicId": {
+                          "type": "string"
+                        },
+                        "endpoint": {
                           "type": "string"
                         }
                       },
@@ -300,6 +307,9 @@
                               "type": "integer",
                               "minimum": 1,
                               "maximum": 50
+                            },
+                            "preset": {
+                              "type": "string"
                             }
                           },
                           "required": [
@@ -451,6 +461,9 @@
                               "type": "integer",
                               "minimum": 1,
                               "maximum": 50
+                            },
+                            "preset": {
+                              "type": "string"
                             }
                           },
                           "required": [

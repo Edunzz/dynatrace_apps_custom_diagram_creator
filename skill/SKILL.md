@@ -47,9 +47,21 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
    `K8S_DEPLOYMENT`/`K8S_STATEFULSET`/`K8S_DAEMONSET`, `database` → `DB_INSTANCE_*`/`DB_DATABASE_*`, `awsLambda` →
    `AWS_LAMBDA_FUNCTION`). Pick the component type whose Smartscape types include the entity you found.
    Put the entities you found in the node's `entities` list — `[{ "id": "SERVICE-…", "name": "…" }]`, plus
-   `"classicId"` for frontends (the `id_classic` column). That is what the app's entity picker writes. Use an
-   `entityDql` instead only when the user wants the selection to stay dynamic (it is used only while `entities` is
-   empty).
+   `"classicId"` when Smartscape has a different classic id (`id_classic`: frontends, synthetic monitors). That is what
+   the app's entity picker writes. Use an `entityDql` instead only when the user wants the selection to stay dynamic
+   (it is used only while `entities` is empty).
+   **Endpoints** (`componentType: "endpoint"`) aren't Smartscape nodes: list them from the request metric and pick
+   `{ "id": "<service id>", "name": "<endpoint> · <service name>", "endpoint": "<endpoint>" }` — the component shows
+   the problems of the service:
+   ```
+   timeseries requests = sum(dt.service.request.count, scalar: true), by: {dt.smartscape.service, endpoint.name}, from: now()-7d
+   | filter isNotNull(endpoint.name)
+   | fieldsAdd service = getNodeName(dt.smartscape.service)
+   | sort requests desc
+   | fields id = toString(dt.smartscape.service), service, endpoint = endpoint.name
+   ```
+   **Synthetic monitors** are `browserMonitor` (`BROWSER_MONITOR`), `httpMonitor` (`HTTP_MONITOR`) and
+   `networkMonitor` (`NETWORK_AVAILABILITY_MONITOR`).
    To draw real dependencies, read the topology instead of guessing it:
    - `smartscapeEdges "calls", from: now()-3d | fieldsAdd src = getNodeName(source_id), dst = getNodeName(target_id)`
      gives FRONTEND→SERVICE, SERVICE→SERVICE and PROCESS→PROCESS calls (databases and queues usually show up only
@@ -66,14 +78,32 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
      use, or a fixed ISO window (`"2026-10-05T03:30:00.000Z"` … `"2026-10-05T05:15:00.000Z"`) when the data only
      exists in the past, e.g. a demo environment that is switched off now.
    - `entityNode` nodes (`componentType`: one of the ids in `componentTypes.ts` / the `diagram.schema.json` enum —
-     frontend, mobile, service, process, genai, host, container, database, networkDevice, k8s*, workload, aws*,
-     azure*, gcp*; plus `entities` or `entityDql`) or `customNode` (`mode` entities|slos; in entities mode the query
-     must return `id` and `name`).
+     frontend, mobile, service, endpoint, process, genai, browserMonitor, httpMonitor, networkMonitor, host, container,
+     database, networkDevice, k8s*, workload, aws*, azure*, gcp*; plus `entities` or `entityDql`) or `customNode`
+     (`mode` entities|slos; in entities mode the query must return `id` and `name`).
    - KPIs under a node: `kpi: { enabled: true, title, items: [...] }`. Each item is
      `{ id, dql, valueField?, labelMode: "text"|"column", labelText?, labelField?, unit?, decimals, maxRows }`:
      `text` shows the first row's value with `labelText` as its name; `column` shows one line per row (up to
      `maxRows`) named by `labelField`. Without `valueField`, the first numeric column is used.
-     Golden signals of the services behind one component (verified pattern):
+     **Prefer the ready-made KPIs** of the component type — the same ones the app's "Add KPI" menu offers, defined in
+     `ui/app/model/kpiPresets.ts` (services and endpoints: request count, response time avg/p95, failure rate, failed
+     requests; hosts and processes: availability, CPU, memory; frontends; synthetic monitors: availability, duration,
+     executions; Kubernetes and containers: CPU, memory, restarts). Copy the item from there (`dql`, `valueField:
+     "value"`, `labelMode: "column"`, `labelField: "name"`, unit, decimals, `preset: "<key>"`). Their queries use
+     **placeholders** that the app fills with the component's entities right before running them, so they follow the
+     selection and show one line per entity:
+     - `$entityIds` → the Smartscape ids, quoted and comma-separated — always inside `array(…)`;
+     - `$endpointNames` → the endpoint names of an endpoint component; `$entityNames` → the entity names.
+     ```
+     timeseries requests = sum(dt.service.request.count, scalar: true), by: {dt.smartscape.service},
+       filter: { in(toString(dt.smartscape.service), array($entityIds)) }
+     | fieldsAdd name = getNodeName(dt.smartscape.service), value = requests
+     | fields name, value
+     | sort value desc
+     ```
+     Smartscape ids only match metric dimensions through `toString(…)` (`dt.smartscape.service == "SERVICE-…"`
+     returns nothing). Placeholders only work in entity components; custom containers use plain DQL.
+     A fixed filter by name also works, e.g. golden signals of the services behind one component:
      ```
      timeseries rt = avg(dt.service.request.response_time, scalar: true),
        filter: { dt.service.name == "BrokerService" or dt.service.name == "BrokerService.dll" }
@@ -99,7 +129,9 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
      `--default-timeframe-start <from> --default-timeframe-end <to>` (ISO, or omit both for the last 2 h).
      - `entityDql` / container query → returns `id` (and `name` for containers).
      - KPI edge query → one row with a numeric value (`long` values arrive as strings).
-     - KPI item query → a numeric column (`valueField`) and, in `column` mode, a name column (`labelField`).
+     - KPI item query → a numeric column (`valueField`) and, in `column` mode, a name column (`labelField`). For
+       queries with placeholders, replace them yourself with the component's ids before running them in `dtctl`
+       (e.g. `array("SERVICE-1", "SERVICE-2")`).
    - An empty result is **not** a syntax error (the node will show gray "no data"); tell the user.
 5. **Register it in the lookup**:
    a. Download the current rows:

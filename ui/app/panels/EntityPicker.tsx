@@ -4,11 +4,11 @@ import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { Select } from "@dynatrace/strato-components/forms";
 import { XmarkIcon } from "@dynatrace/strato-icons";
-import { COMPONENT_TYPE_DEFS } from "../model/componentTypes";
+import { COMPONENT_TYPE_DEFS, type ComponentTypeDef } from "../model/componentTypes";
 import type { ComponentType, EntityRef } from "../model/schema";
 import { COMPONENT_LABELS } from "../model/defaults";
 import { errorMessage } from "../services/dql";
-import { ENTITY_LIST_LIMIT, listEntities, smartscapeTypeLabel, type EntityOption } from "../services/entities";
+import { ENTITY_LIST_LIMIT, entityKey, listEntities, smartscapeTypeLabel, type EntityOption } from "../services/entities";
 import { InlineMessage } from "./Field";
 
 const SEARCH_DELAY_MS = 350;
@@ -30,8 +30,9 @@ export function EntityPicker({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
-  const smartscapeTypes = COMPONENT_TYPE_DEFS[componentType].smartscape;
-  const showType = smartscapeTypes.length > 1 || smartscapeTypes[0].endsWith("*");
+  const def: ComponentTypeDef = COMPONENT_TYPE_DEFS[componentType];
+  const endpoints = def.listing === "endpoints";
+  const showType = !endpoints && (def.smartscape.length > 1 || def.smartscape[0].endsWith("*"));
 
   useEffect(() => {
     setFilter("");
@@ -65,23 +66,28 @@ export function EntityPicker({
   }, [filter, search, truncated]);
 
   // Picked entities that are no longer listed (deleted, older than 7 days) stay visible so they can be removed.
-  const all: EntityOption[] = [...(options ?? []), ...value.filter((v) => !(options ?? []).some((o) => o.id === v.id))];
-  const byId = new Map(all.map((o) => [o.id, o]));
+  const listed = new Set((options ?? []).map(entityKey));
+  const all: EntityOption[] = [...(options ?? []), ...value.filter((v) => !listed.has(entityKey(v)))];
+  const byKey = new Map(all.map((o) => [entityKey(o), o]));
   const label = COMPONENT_LABELS[componentType];
+  const noun = endpoints ? "endpoint" : `${label} entity`;
 
   return (
     <Flex flexDirection="column" gap={8}>
       {error && <InlineMessage kind="error">{error}</InlineMessage>}
       <Select
         multiple
-        value={value.map((e) => e.id)}
-        onChange={(ids) =>
+        value={value.map(entityKey)}
+        onChange={(keys) =>
           onChange(
-            (ids ?? []).map((id) => {
-              const o = byId.get(id);
-              const ref: EntityRef = { id, name: o?.name ?? id };
+            (keys ?? []).map((key) => {
+              const o = byKey.get(key);
+              const ref: EntityRef = { id: o?.id ?? key, name: o?.name ?? key };
               if (o?.classicId) {
                 ref.classicId = o.classicId;
+              }
+              if (o?.endpoint) {
+                ref.endpoint = o.endpoint;
               }
               return ref;
             }),
@@ -92,26 +98,31 @@ export function EntityPicker({
         <Select.Filter value={filter} onChange={setFilter} />
         <Select.Content loading={options === null} showSelectedOptionsFirst>
           {all.map((o) => (
-            <Select.Option key={o.id} value={o.id} textValue={`${o.name} ${o.id}`}>
+            <Select.Option key={entityKey(o)} value={entityKey(o)} textValue={`${o.name} ${o.id}`}>
               {o.name}
               {showType && o.type ? ` · ${smartscapeTypeLabel(o.type)}` : ""}
             </Select.Option>
           ))}
         </Select.Content>
         <Select.EmptyState>
-          {search ? `No ${label} entity matches “${search}”.` : `No ${label} entities were seen in the last 7 days.`}
+          {search
+            ? `No ${noun} matches “${search}”.`
+            : endpoints
+              ? "No endpoint received requests in the last 7 days."
+              : `No ${label} entities were seen in the last 7 days.`}
         </Select.EmptyState>
       </Select>
       {truncated && !search && (
         <span style={{ fontSize: 12, color: Colors.Text.Neutral.Subdued }}>
-          Showing the first {ENTITY_LIST_LIMIT.toLocaleString("en-US")} by name. Type in the list to search all of them.
+          Showing the first {ENTITY_LIST_LIMIT.toLocaleString("en-US")} {endpoints ? "by requests" : "by name"}. Type in the list to
+          search all of them.
         </span>
       )}
       {value.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {value.map((e) => (
             <div
-              key={e.id}
+              key={entityKey(e)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -134,7 +145,7 @@ export function EntityPicker({
               <Button
                 aria-label={`Remove ${e.name}`}
                 size="condensed"
-                onClick={() => onChange(value.filter((v) => v.id !== e.id))}
+                onClick={() => onChange(value.filter((v) => entityKey(v) !== entityKey(e)))}
               >
                 <Button.Prefix>
                   <XmarkIcon />

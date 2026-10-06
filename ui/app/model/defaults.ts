@@ -1,5 +1,6 @@
 import type { ComponentType, CustomNodeData, Diagram, DiagramEdge, EntityNodeData, KpiBlock } from "./schema";
 import { COMPONENT_TYPE_DEFS, COMPONENT_TYPE_IDS } from "./componentTypes";
+import { defaultKpiItems } from "./kpiPresets";
 import { CUSTOM_DQL_TEMPLATE } from "../services/queryBuilder";
 import { DEFAULT_ICONS } from "../services/icons";
 
@@ -34,7 +35,14 @@ export const DEFAULT_EDGE_KPI_DQL = "timeseries requests = sum(dt.service.reques
 export const RESPONSE_TIME_EDGE_DQL =
   "timeseries r = avg(dt.service.request.response_time, scalar: true)\n| fieldsAdd v = r / 1000\n| fields v";
 
+/** KPI block a new component of the type starts with: its ready-made default KPIs (none for some types). */
+export function defaultKpiBlock(componentType: ComponentType): KpiBlock | undefined {
+  const items = defaultKpiItems(componentType);
+  return items.length ? { enabled: true, title: "KPIs", items } : undefined;
+}
+
 export function newEntityNodeData(componentType: ComponentType): EntityNodeData {
+  const kpi = defaultKpiBlock(componentType);
   return {
     kind: "entity",
     componentType,
@@ -42,6 +50,7 @@ export function newEntityNodeData(componentType: ComponentType): EntityNodeData 
     entities: [],
     icon: DEFAULT_ICONS[componentType],
     failPoint: { warningMin: 1, failingMin: 1 },
+    ...(kpi ? { kpi } : {}),
   };
 }
 

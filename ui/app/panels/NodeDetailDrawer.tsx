@@ -275,7 +275,7 @@ function NodeDetail({ node, status, tf }: { node: DiagramNode; status?: NodeStat
           const name = item.labelMode === "text" && item.labelText ? item.labelText : `KPI ${index + 1}`;
           return (
             <Flex key={item.id} flexDirection="column" gap={4}>
-              <DqlBlock title={`${data.kpi?.title ?? "KPIs"} · ${name}`} query={item.dql} tf={tf} />
+              <DqlBlock title={`${data.kpi?.title ?? "KPIs"} · ${name}`} query={result?.query ?? item.dql} tf={tf} />
               {result?.status === "error" && <InlineMessage kind="error">{result.error}</InlineMessage>}
               {result?.status === "ok" && (
                 <table className="cdc-kpi-table">

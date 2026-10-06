@@ -52,6 +52,7 @@ export const ICON_GROUPS: IconGroup[] = [
 /** Icon groups suggested first in the icon picker, per component category (with a few per-type overrides). */
 const CATEGORY_GROUPS: Record<ComponentCategory, string[]> = {
   Applications: ["service", "client", "technology"],
+  Synthetic: ["client", "service", "infra"],
   Infrastructure: ["infra", "database"],
   Kubernetes: ["infra", "technology"],
   AWS: ["infra", "service", "database", "technology"],

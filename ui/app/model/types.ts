@@ -53,6 +53,8 @@ export interface KpiItemState {
   status: "ok" | "error";
   error?: string;
   lines: Array<{ label: string; value: number | null }>;
+  /** The query that ran, with the component's entities in place of $entityIds and friends. */
+  query?: string;
 }
 
 /** Results of the KPI block of a node, one entry per KPI item. */

@@ -7,6 +7,11 @@ export interface EntityOption extends EntityRef {
   type?: string;
 }
 
+/** Key of a pick in the picker: endpoints of one service share its id, so the endpoint name is part of it. */
+export function entityKey(e: EntityRef): string {
+  return e.endpoint ? `${e.id}|${e.endpoint}` : e.id;
+}
+
 /** Entities listed per query. Larger environments are searched on the server as you type. */
 export const ENTITY_LIST_LIMIT = 2000;
 
@@ -29,7 +34,34 @@ export function entityListDql(type: ComponentType, search = ""): string {
   ].join("\n");
 }
 
+/**
+ * Endpoints with requests in the last 7 days, busiest first, with the id and name of their service. Endpoints aren't
+ * Smartscape nodes: they come from the `endpoint.name` dimension of the service request metric.
+ */
+export function endpointListDql(search = ""): string {
+  const text = search.trim();
+  return [
+    "timeseries requests = sum(dt.service.request.count, scalar: true), by: {dt.smartscape.service, endpoint.name}, from: now()-7d",
+    "| filter isNotNull(endpoint.name)",
+    "| fieldsAdd service = getNodeName(dt.smartscape.service)",
+    ...(text
+      ? [`| filter contains(endpoint.name, ${dqlString(text)}, caseSensitive: false) or contains(service, ${dqlString(text)}, caseSensitive: false)`]
+      : []),
+    "| sort requests desc",
+    `| limit ${ENTITY_LIST_LIMIT}`,
+    "| fields id = toString(dt.smartscape.service), service, endpoint = endpoint.name",
+  ].join("\n");
+}
+
 export async function listEntities(type: ComponentType, signal?: AbortSignal, search = ""): Promise<EntityOption[]> {
+  if ((COMPONENT_TYPE_DEFS[type] as ComponentTypeDef).listing === "endpoints") {
+    const endpoints = await runQuery(endpointListDql(search), undefined, { signal, maxResultRecords: ENTITY_LIST_LIMIT });
+    return endpoints.records.map((r) => ({
+      id: asText(r.id),
+      name: `${asText(r.endpoint)} · ${asText(r.service)}`,
+      endpoint: asText(r.endpoint),
+    }));
+  }
   const result = await runQuery(entityListDql(type, search), undefined, { signal, maxResultRecords: ENTITY_LIST_LIMIT });
   return result.records.map((r) => {
     const option: EntityOption = { id: asText(r.id), name: asText(r.name) || asText(r.id) };
@@ -77,5 +109,6 @@ export function smartscapeTypeLabel(type: string): string {
 
 /** Ids used to match problems: Smartscape ids plus classic ids when known. */
 export function pickedEntityIds(entities: EntityRef[]): string[] {
-  return entities.flatMap((e) => (e.classicId ? [e.id, e.classicId] : [e.id]));
+  // Several endpoints can share a service id.
+  return Array.from(new Set(entities.flatMap((e) => (e.classicId ? [e.id, e.classicId] : [e.id]))));
 }

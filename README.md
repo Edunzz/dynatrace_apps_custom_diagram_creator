@@ -13,10 +13,13 @@ SLOs, and connections show KPI values with animated flow.
 ## What you get
 
 - A canvas to draw and connect components, with Dashboards-style editing.
-- 45 entity component types (apps, hosts, Kubernetes, databases, AWS, Azure, Google Cloud): pick the real entities
-  from a searchable list and get live status from Davis problems and SLOs.
+- 49 entity component types (apps, endpoints, synthetic monitors, hosts, Kubernetes, databases, AWS, Azure, Google
+  Cloud): pick the real entities from a searchable list and get live status from Davis problems and SLOs.
+- Ready-made KPIs for each component type — request count, response time and failure rate for services and endpoints,
+  availability for hosts, processes and synthetic monitors, and more — with one line per entity you pick. Your own DQL
+  KPIs work too.
 - Containers built from your own DQL queries or a set of SLOs.
-- As many KPIs as you need under any component, and KPI values on the connections, with ready-made or custom units.
+- KPI values on the connections, with ready-made or custom units.
 - Diagrams stored in Grail, managed like dashboards: list, duplicate, upload, download, delete.
 - A skill so an AI agent with `dtctl` can build diagrams from real entities.
 
@@ -39,37 +42,32 @@ and a platform token.
 
    Select **Generate** and copy the token — it is shown only once. The token works within your own permissions, so
    your user must be allowed to install apps in that environment.
-2. **Create the codespace.** Click the button above (or **Code › Codespaces › Create codespace on main**). On the
-   creation page, fill in the two recommended secrets:
+2. **Create the codespace.** Click the button above (or **Code › Codespaces › Create codespace on main**). The first
+   time, the creation page asks for two recommended secrets:
 
    | Secret | Value |
    |---|---|
    | `DT_APP_ENVIRONMENT_URL` | `https://<environment-id>.apps.dynatrace.com` |
    | `DT_APP_PLATFORM_TOKEN` | the token from step 1 |
 
-   Codespaces saves them as your secrets for this repository and passes them to the codespace as environment
-   variables.
-3. **Wait for the setup** to finish (`npm ci` runs automatically).
+   GitHub saves them as your Codespaces secrets for this repository. From then on the creation page only shows them as
+   *Associated with repository* and reuses them — the next step lets you use other values anyway.
+3. **Wait for the setup** to finish (`npm ci` runs automatically). The terminal shows where the app will be deployed.
 4. **Deploy** from the codespace terminal:
 
    ```bash
    npm run deploy:token
    ```
 
-   The script checks both variables, builds the app and installs it. At the end it prints the link:
-   `https://<environment-id>.apps.dynatrace.com/ui/apps/my.custom.diagram.creator`.
+   It asks for the **environment URL** and the **platform token**, showing your saved values: press Enter to keep
+   them, or type another environment's URL and token to deploy there (nothing is saved). Then it builds the app,
+   installs it and prints the link: `https://<environment-id>.apps.dynatrace.com/ui/apps/my.custom.diagram.creator`.
 
-Skipped the secrets, or want to deploy to another environment? Set the values in the codespace instead — either copy
-`.env.example` to `.env` and fill it in (`.env` is ignored by git), or export them in the terminal:
-
-```bash
-export DT_APP_ENVIRONMENT_URL=https://<environment-id>.apps.dynatrace.com
-export DT_APP_PLATFORM_TOKEN=<your-platform-token>
-npm run deploy:token
-```
-
-Secrets added later in [GitHub › Settings › Codespaces](https://github.com/settings/codespaces) reach a running
-codespace only after you restart it.
+**Deploying to another environment.** Run `npm run deploy:token` and type the new URL and token. To have the
+creation page ask for the values again, delete the two secrets (or remove this repository from them) in
+[GitHub › Settings › Codespaces](https://github.com/settings/codespaces); changing them there applies to new codespaces
+and to running ones after a restart. Without secrets you can also copy `.env.example` to `.env` (ignored by git), and
+in CI `npm run deploy:token -- --yes` uses the environment variables without asking.
 
 ### Option B — Your machine
 

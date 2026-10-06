@@ -1,0 +1,881 @@
+{
+  "schemaVersion": "1.0",
+  "id": "6d1f3c2a-9b7e-4f4c-8a51-3e2b7c9d0e11",
+  "name": "EasyTrade – Trading platform (showcase)",
+  "description": "End-to-end view of EasyTrade: digital experience, gateway, trading APIs, core services, data tier and host, with golden signals on every hop. Saved with the 4 Oct evening window when EasyTrade had traffic.",
+  "owner": "jose.romero@dynatrace.com",
+  "createdAt": "2026-10-05T22:30:00.000Z",
+  "updatedAt": "2026-10-05T22:30:00.000Z",
+  "settings": {
+    "background": "dots",
+    "defaultTimeframe": {
+      "from": "2026-10-05T03:30:00.000Z",
+      "to": "2026-10-05T05:15:00.000Z"
+    },
+    "refreshInterval": "off"
+  },
+  "nodes": [
+    {
+      "id": "web",
+      "type": "entityNode",
+      "position": {
+        "x": 0,
+        "y": 160
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "frontend",
+        "name": "EasyTrade Web",
+        "icon": "ApplicationsIcon",
+        "entities": [
+          {
+            "id": "FRONTEND-DAD7D3939F42DB91",
+            "name": "EasyTrade",
+            "classicId": "APPLICATION-4F81926200AED6DA"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Digital experience",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "fetch user.events\n| filter frontend.name == \"EasyTrade\"\n| summarize sessions = countDistinct(dt.rum.session.id)",
+              "valueField": "sessions",
+              "labelMode": "text",
+              "labelText": "User sessions",
+              "unit": "users",
+              "decimals": 0,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "fetch user.events\n| filter frontend.name == \"EasyTrade\"\n| filter characteristics.classifier == \"user_action\"\n| summarize actions = count()",
+              "valueField": "actions",
+              "labelMode": "text",
+              "labelText": "User actions",
+              "unit": "count",
+              "decimals": 0,
+              "maxRows": 5
+            },
+            {
+              "id": "k3",
+              "dql": "fetch user.events\n| filter frontend.name == \"EasyTrade\"\n| filter characteristics.classifier == \"error\"\n| summarize errors = count()",
+              "valueField": "errors",
+              "labelMode": "text",
+              "labelText": "Frontend errors",
+              "unit": "errors",
+              "decimals": 0,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "partners",
+      "type": "entityNode",
+      "position": {
+        "x": 0,
+        "y": 560
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "process",
+        "name": "Partner aggregators",
+        "icon": "WorldmapIcon",
+        "entities": [
+          {
+            "id": "PROCESS-F00C1580F1F3DA5F",
+            "name": "aggregator-service"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 1
+        }
+      }
+    },
+    {
+      "id": "gateway",
+      "type": "entityNode",
+      "position": {
+        "x": 400,
+        "y": 160
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Edge gateway (nginx)",
+        "icon": "DistributeIcon",
+        "entities": [
+          {
+            "id": "SERVICE-C94606D86DB28C51",
+            "name": ":80"
+          },
+          {
+            "id": "SERVICE-C49C171181062CE3",
+            "name": "nginx"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Traffic",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries requests = sum(dt.service.request.count, scalar: true),\n  filter: { dt.service.name == \":80\" or dt.service.name == \"nginx\" }\n| fields requests",
+              "valueField": "requests",
+              "labelMode": "text",
+              "labelText": "Requests",
+              "unit": "count",
+              "decimals": 0,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "timeseries { failures = sum(dt.service.request.failure_count, scalar: true), requests = sum(dt.service.request.count, scalar: true) },\n  filter: { dt.service.name == \":80\" or dt.service.name == \"nginx\" }\n| fieldsAdd rate = 100.0 * failures / requests\n| fields rate",
+              "valueField": "rate",
+              "labelMode": "text",
+              "labelText": "Failure rate",
+              "unit": "%",
+              "decimals": 2,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "login",
+      "type": "entityNode",
+      "position": {
+        "x": 800,
+        "y": -60
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Login",
+        "icon": "LoginIcon",
+        "entities": [
+          {
+            "id": "SERVICE-41C5A83D6FF218AF",
+            "name": "easyTradeLoginService"
+          },
+          {
+            "id": "SERVICE-B7FCD13145DCCDB6",
+            "name": "easyTradeLoginService.dll"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Golden signals",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"easyTradeLoginService\" or dt.service.name == \"easyTradeLoginService.dll\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+              "valueField": "ms",
+              "labelMode": "text",
+              "labelText": "Avg response time",
+              "unit": "ms",
+              "decimals": 1,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "timeseries { failures = sum(dt.service.request.failure_count, scalar: true), requests = sum(dt.service.request.count, scalar: true) },\n  filter: { dt.service.name == \"easyTradeLoginService\" or dt.service.name == \"easyTradeLoginService.dll\" }\n| fieldsAdd rate = 100.0 * failures / requests\n| fields rate",
+              "valueField": "rate",
+              "labelMode": "text",
+              "labelText": "Failure rate",
+              "unit": "%",
+              "decimals": 2,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "broker",
+      "type": "entityNode",
+      "position": {
+        "x": 800,
+        "y": 160
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Broker (trading API)",
+        "icon": "ServicesIcon",
+        "entities": [
+          {
+            "id": "SERVICE-5ADC7B343050C173",
+            "name": "BrokerService"
+          },
+          {
+            "id": "SERVICE-B19E5E919DFFC416",
+            "name": "BrokerService.dll"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Golden signals",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries requests = sum(dt.service.request.count, scalar: true),\n  filter: { dt.service.name == \"BrokerService\" or dt.service.name == \"BrokerService.dll\" }\n| fields requests",
+              "valueField": "requests",
+              "labelMode": "text",
+              "labelText": "Requests",
+              "unit": "count",
+              "decimals": 0,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"BrokerService\" or dt.service.name == \"BrokerService.dll\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+              "valueField": "ms",
+              "labelMode": "text",
+              "labelText": "Avg response time",
+              "unit": "ms",
+              "decimals": 1,
+              "maxRows": 5
+            },
+            {
+              "id": "k3",
+              "dql": "timeseries { failures = sum(dt.service.request.failure_count, scalar: true), requests = sum(dt.service.request.count, scalar: true) },\n  filter: { dt.service.name == \"BrokerService\" or dt.service.name == \"BrokerService.dll\" }\n| fieldsAdd rate = 100.0 * failures / requests\n| fields rate",
+              "valueField": "rate",
+              "labelMode": "text",
+              "labelText": "Failure rate",
+              "unit": "%",
+              "decimals": 2,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "offers",
+      "type": "entityNode",
+      "position": {
+        "x": 800,
+        "y": 420
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Offers",
+        "icon": "ShopIcon",
+        "entities": [
+          {
+            "id": "SERVICE-00A8355371DEA7D0",
+            "name": "easytrade_offer_service"
+          },
+          {
+            "id": "SERVICE-185DEC700AB4BE57",
+            "name": "easytrade_offer_service"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Golden signals",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries requests = sum(dt.service.request.count, scalar: true),\n  filter: { dt.service.name == \"easytrade_offer_service\" }\n| fields requests",
+              "valueField": "requests",
+              "labelMode": "text",
+              "labelText": "Requests",
+              "unit": "count",
+              "decimals": 0,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"easytrade_offer_service\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+              "valueField": "ms",
+              "labelMode": "text",
+              "labelText": "Avg response time",
+              "unit": "ms",
+              "decimals": 1,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "accounts",
+      "type": "entityNode",
+      "position": {
+        "x": 800,
+        "y": 640
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Accounts",
+        "icon": "AccountIcon",
+        "entities": [
+          {
+            "id": "SERVICE-7AB2B49F70FFC1BD",
+            "name": "AccountControllerV2"
+          },
+          {
+            "id": "SERVICE-D1ACC0EB7D91243A",
+            "name": "SpringBoot com.dynatrace.easytrade.accountservice.AccountServiceApplic"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        }
+      }
+    },
+    {
+      "id": "cards",
+      "type": "entityNode",
+      "position": {
+        "x": 800,
+        "y": 800
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Credit card orders",
+        "icon": "MoneyIcon",
+        "entities": [
+          {
+            "id": "SERVICE-25C83CDD996E8BF3",
+            "name": "SpringBoot com.dynatrace.easytrade.creditcardorderservice.Application"
+          },
+          {
+            "id": "SERVICE-4DB57E411B8B5959",
+            "name": "Requests executed in background threads of SpringBoot com.dynatrace.easytrade.creditcardorderservice.Application"
+          },
+          {
+            "id": "SERVICE-3C847C5AB47BD355",
+            "name": "OrderController"
+          },
+          {
+            "id": "SERVICE-0773736C4D6B3956",
+            "name": "ManufacturerController"
+          },
+          {
+            "id": "SERVICE-B874662F8D014C82",
+            "name": "Requests executed in background threads of SpringBoot com.dynatrace.easytrade.thirdpartyservice.Application"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        }
+      }
+    },
+    {
+      "id": "flags",
+      "type": "entityNode",
+      "position": {
+        "x": 1200,
+        "y": -60
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Feature flags",
+        "icon": "OptionsIcon",
+        "entities": [
+          {
+            "id": "SERVICE-886E30022243E944",
+            "name": "FlagController"
+          },
+          {
+            "id": "SERVICE-33014A1BFC513511",
+            "name": "SpringBoot com.dynatrace.easytrade.featureflagservice.Featureflagservi"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        }
+      }
+    },
+    {
+      "id": "engine",
+      "type": "entityNode",
+      "position": {
+        "x": 1200,
+        "y": 100
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Trading engine",
+        "icon": "FlowIcon",
+        "entities": [
+          {
+            "id": "SERVICE-0A0199E7A99881E3",
+            "name": "SpringBoot com.dynatrace.easytrade.engine.EngineApplication"
+          },
+          {
+            "id": "SERVICE-9DF09D1794548E21",
+            "name": "Requests executed in background threads of SpringBoot com.dynatrace.easytrade.engine.EngineApplication"
+          },
+          {
+            "id": "SERVICE-E6E2030DE2811AA5",
+            "name": "Tomcat/localhost (/api)"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Golden signals",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"Requests executed in background threads of SpringBoot com.dynatrace.easytrade.engine.EngineApplication\" or dt.service.name == \"SpringBoot com.dynatrace.easytrade.engine.EngineApplication\" or dt.service.name == \"Tomcat/localhost (/api)\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+              "valueField": "ms",
+              "labelMode": "text",
+              "labelText": "Avg response time",
+              "unit": "ms",
+              "decimals": 1,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pricing",
+      "type": "entityNode",
+      "position": {
+        "x": 1200,
+        "y": 270
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Pricing",
+        "icon": "PercentIcon",
+        "entities": [
+          {
+            "id": "SERVICE-BF269345BE7E0DDF",
+            "name": "pricing-service"
+          },
+          {
+            "id": "SERVICE-44A83D789254EA9F",
+            "name": ":8080"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        }
+      }
+    },
+    {
+      "id": "analysis",
+      "type": "entityNode",
+      "position": {
+        "x": 1200,
+        "y": 410
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Market analysis",
+        "icon": "AnalyticsIcon",
+        "entities": [
+          {
+            "id": "SERVICE-12DB4D8E6E3CEA03",
+            "name": "PriceAnalysisComputation"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        }
+      }
+    },
+    {
+      "id": "manager",
+      "type": "entityNode",
+      "position": {
+        "x": 1200,
+        "y": 560
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "service",
+        "name": "Core ledger (Manager)",
+        "icon": "DataTableIcon",
+        "entities": [
+          {
+            "id": "SERVICE-DFE636DFB8B0F43B",
+            "name": "easyTradeManager"
+          },
+          {
+            "id": "SERVICE-7BF4A5ADEF75730C",
+            "name": "easyTradeManager.dll"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 2
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Golden signals",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries requests = sum(dt.service.request.count, scalar: true),\n  filter: { dt.service.name == \"easyTradeManager\" or dt.service.name == \"easyTradeManager.dll\" }\n| fields requests",
+              "valueField": "requests",
+              "labelMode": "text",
+              "labelText": "Requests",
+              "unit": "count",
+              "decimals": 0,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"easyTradeManager\" or dt.service.name == \"easyTradeManager.dll\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+              "valueField": "ms",
+              "labelMode": "text",
+              "labelText": "Avg response time",
+              "unit": "ms",
+              "decimals": 1,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "data",
+      "type": "customNode",
+      "position": {
+        "x": 1620,
+        "y": 220
+      },
+      "size": {
+        "w": 300,
+        "h": 250
+      },
+      "data": {
+        "kind": "custom",
+        "name": "Data tier",
+        "icon": "DatabaseIcon",
+        "mode": "entities",
+        "entities": {
+          "dql": "smartscapeNodes \"PROCESS\", from: now()-7d\n| filter name == \"MSSQL\" or name == \"RabbitMQ\"\n| fields id, name\n| sort name asc",
+          "subNameField": "name",
+          "criterion": "anyProblem"
+        },
+        "maxVisibleRows": 4,
+        "kpi": {
+          "enabled": true,
+          "title": "Logs",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "fetch logs\n| filter loglevel == \"ERROR\" or loglevel == \"CRITICAL\"\n| summarize errors = count()",
+              "valueField": "errors",
+              "labelMode": "text",
+              "labelText": "Error logs (all tiers)",
+              "unit": "count",
+              "decimals": 0,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "host",
+      "type": "entityNode",
+      "position": {
+        "x": 1620,
+        "y": 580
+      },
+      "data": {
+        "kind": "entity",
+        "componentType": "host",
+        "name": "easytrade host (Azure VM)",
+        "icon": "HostsIcon",
+        "entities": [
+          {
+            "id": "HOST-3FB5A4E6508FD4BD",
+            "name": "easytrade"
+          }
+        ],
+        "failPoint": {
+          "warningMin": 1,
+          "failingMin": 1
+        },
+        "kpi": {
+          "enabled": true,
+          "title": "Capacity",
+          "items": [
+            {
+              "id": "k1",
+              "dql": "timeseries cpu = avg(dt.host.cpu.usage, scalar: true)\n| fields cpu",
+              "valueField": "cpu",
+              "labelMode": "text",
+              "labelText": "CPU",
+              "unit": "%",
+              "decimals": 1,
+              "maxRows": 5
+            },
+            {
+              "id": "k2",
+              "dql": "timeseries memory = avg(dt.host.memory.usage, scalar: true)\n| fields memory",
+              "valueField": "memory",
+              "labelMode": "text",
+              "labelText": "Memory",
+              "unit": "%",
+              "decimals": 1,
+              "maxRows": 5
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "web",
+      "target": "gateway",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "kpi",
+      "direction": "forward",
+      "label": "Requests",
+      "kpi": {
+        "dql": "timeseries requests = sum(dt.service.request.count, scalar: true),\n  filter: { dt.service.name == \":80\" or dt.service.name == \"nginx\" }\n| fields requests",
+        "valueField": "requests",
+        "unit": "count",
+        "decimals": 0,
+        "animated": true,
+        "threshold": {
+          "direction": "below",
+          "warning": null,
+          "failing": null
+        }
+      }
+    },
+    {
+      "id": "e2",
+      "source": "gateway",
+      "target": "login",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "kpi",
+      "direction": "forward",
+      "label": "Login latency",
+      "kpi": {
+        "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"easyTradeLoginService\" or dt.service.name == \"easyTradeLoginService.dll\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+        "valueField": "ms",
+        "unit": "ms",
+        "decimals": 1,
+        "animated": true,
+        "threshold": {
+          "direction": "above",
+          "warning": 300,
+          "failing": 800
+        }
+      }
+    },
+    {
+      "id": "e3",
+      "source": "gateway",
+      "target": "broker",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "kpi",
+      "direction": "forward",
+      "label": "Trade latency",
+      "kpi": {
+        "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"BrokerService\" or dt.service.name == \"BrokerService.dll\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+        "valueField": "ms",
+        "unit": "ms",
+        "decimals": 1,
+        "animated": true,
+        "threshold": {
+          "direction": "above",
+          "warning": 300,
+          "failing": 800
+        }
+      }
+    },
+    {
+      "id": "e4",
+      "source": "gateway",
+      "target": "cards",
+      "sourceHandle": "b",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "forward"
+    },
+    {
+      "id": "e5",
+      "source": "partners",
+      "target": "offers",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "kpi",
+      "direction": "forward",
+      "label": "Offer requests",
+      "kpi": {
+        "dql": "timeseries requests = sum(dt.service.request.count, scalar: true),\n  filter: { dt.service.name == \"easytrade_offer_service\" }\n| fields requests",
+        "valueField": "requests",
+        "unit": "count",
+        "decimals": 0,
+        "animated": true,
+        "threshold": {
+          "direction": "below",
+          "warning": null,
+          "failing": null
+        }
+      }
+    },
+    {
+      "id": "e6",
+      "source": "broker",
+      "target": "engine",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "forward",
+      "label": "Orders"
+    },
+    {
+      "id": "e7",
+      "source": "broker",
+      "target": "pricing",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "kpi",
+      "direction": "forward",
+      "label": "Pricing latency",
+      "kpi": {
+        "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \":8080\" or dt.service.name == \"pricing-service\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+        "valueField": "ms",
+        "unit": "ms",
+        "decimals": 1,
+        "animated": true,
+        "threshold": {
+          "direction": "above",
+          "warning": 200,
+          "failing": 500
+        }
+      }
+    },
+    {
+      "id": "e8",
+      "source": "broker",
+      "target": "flags",
+      "sourceHandle": "t",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "forward"
+    },
+    {
+      "id": "e9",
+      "source": "offers",
+      "target": "manager",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "kpi",
+      "direction": "forward",
+      "label": "Ledger latency",
+      "kpi": {
+        "dql": "timeseries rt = avg(dt.service.request.response_time, scalar: true),\n  filter: { dt.service.name == \"easyTradeManager\" or dt.service.name == \"easyTradeManager.dll\" }\n| fieldsAdd ms = rt / 1000\n| fields ms",
+        "valueField": "ms",
+        "unit": "ms",
+        "decimals": 1,
+        "animated": true,
+        "threshold": {
+          "direction": "above",
+          "warning": 200,
+          "failing": 500
+        }
+      }
+    },
+    {
+      "id": "e10",
+      "source": "accounts",
+      "target": "manager",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "forward"
+    },
+    {
+      "id": "e11",
+      "source": "broker",
+      "target": "data",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "forward",
+      "label": "SQL"
+    },
+    {
+      "id": "e12",
+      "source": "manager",
+      "target": "data",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "forward",
+      "label": "SQL"
+    },
+    {
+      "id": "e13",
+      "source": "pricing",
+      "target": "data",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "forward",
+      "label": "SQL"
+    },
+    {
+      "id": "e14",
+      "source": "analysis",
+      "target": "data",
+      "sourceHandle": "r",
+      "targetHandle": "l",
+      "type": "normal",
+      "direction": "backward",
+      "label": "Candles (RabbitMQ)"
+    }
+  ]
+}

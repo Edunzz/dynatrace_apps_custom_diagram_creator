@@ -121,6 +121,12 @@ npm run lint    # ESLint
 
 El sitio de documentación es HTML plano en [`docs/`](docs/), publicado con GitHub Pages.
 
+## Aviso
+
+Este es un proyecto comunitario, no un producto oficial de Dynatrace, y Dynatrace no le da soporte. El único soporte es
+el que ofrece el autor a través de los [issues](https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/issues)
+de este repositorio. Úsalo bajo tu propio riesgo.
+
 ## Autor
 
 Hecho por **Jose Eduardo Romero Jimenez**.

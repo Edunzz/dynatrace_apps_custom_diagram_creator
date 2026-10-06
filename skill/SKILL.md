@@ -9,10 +9,14 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
 - `dtctl` installed and authenticated against the environment (`dtctl auth whoami`, `dtctl auth login`; switch
   context with `dtctl ctx`).
 - Token/OAuth scopes: `storage:files:read`, `storage:files:write`, `storage:smartscape:read`, `storage:entities:read`,
-  `storage:events:read`, `storage:buckets:read`. Deleting or replacing the file with dtctl also needs
-  `storage:files:delete` (see step 5d).
+  `storage:events:read`, `storage:buckets:read`, plus read access to the data your KPIs query (e.g.
+  `storage:metrics:read`, `storage:logs:read`, `storage:user.events:read`). Deleting or replacing the file with dtctl
+  also needs `storage:files:delete` (see step 5d).
+- App source, docs and the component type catalog: <https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator>
+  (`ui/app/model/componentTypes.ts`).
 - Schema: `diagram.schema.json` (this folder, generated from `ui/app/model/schema.ts` with `npm run export:schema`).
-  Examples: `examples/sample-diagram.json`, `examples/demo-sprint-tenant.json`.
+  Examples: `examples/sample-diagram.json`, `examples/demo-sprint-tenant.json`, and
+  `examples/easytrade-showcase.json` (a full showcase diagram built with the recipe below).
 - Before writing DQL, load the `dt-dql-essentials` skill (and `dt-obs-problems` for problems). Never invent field
   names.
 
@@ -42,8 +46,21 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
    `"classicId"` for frontends (the `id_classic` column). That is what the app's entity picker writes. Use an
    `entityDql` instead only when the user wants the selection to stay dynamic (it is used only while `entities` is
    empty).
+   To draw real dependencies, read the topology instead of guessing it:
+   - `smartscapeEdges "calls", from: now()-3d | fieldsAdd src = getNodeName(source_id), dst = getNodeName(target_id)`
+     gives FRONTEND→SERVICE, SERVICE→SERVICE and PROCESS→PROCESS calls (databases and queues usually show up only
+     as processes, e.g. `MSSQL`, `RabbitMQ`).
+   - `smartscapeEdges "runs_on"` maps services to their processes and hosts (useful for services named only by a
+     port, like `:80` or `:8080`).
+   - Only draw edges you saw in the topology; leave a component unconnected rather than inventing a call.
+   Check **when** there is data before choosing the timeframe — demo environments are often stopped:
+   `timeseries requests = sum(dt.service.request.count), interval: 5m, from: now()-3d`.
 3. **Build the JSON** following the schema:
    - `schemaVersion: "1.0"`, `id`: UUID v4, `createdAt/updatedAt`: ISO 8601 UTC.
+   - `settings.defaultTimeframe` is the timeframe the diagram opens with, and `settings.refreshInterval` its
+     auto-refresh (`off`, `30s`, `1m`, `5m`, `15m`, `30m`). Use a relative window (`now()-2h` … `now()`) for live
+     use, or a fixed ISO window (`"2026-10-05T03:30:00.000Z"` … `"2026-10-05T05:15:00.000Z"`) when the data only
+     exists in the past, e.g. a demo environment that is switched off now.
    - `entityNode` nodes (`componentType`: one of the ids in `componentTypes.ts` / the `diagram.schema.json` enum —
      frontend, mobile, service, process, genai, host, container, database, networkDevice, k8s*, workload, aws*,
      azure*, gcp*; plus `entities` or `entityDql`) or `customNode` (`mode` entities|slos; in entities mode the query
@@ -52,6 +69,15 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
      `{ id, dql, valueField?, labelMode: "text"|"column", labelText?, labelField?, unit?, decimals, maxRows }`:
      `text` shows the first row's value with `labelText` as its name; `column` shows one line per row (up to
      `maxRows`) named by `labelField`. Without `valueField`, the first numeric column is used.
+     Golden signals of the services behind one component (verified pattern):
+     ```
+     timeseries rt = avg(dt.service.request.response_time, scalar: true),
+       filter: { dt.service.name == "BrokerService" or dt.service.name == "BrokerService.dll" }
+     | fieldsAdd ms = rt / 1000
+     | fields ms
+     ```
+     Requests: `sum(dt.service.request.count, scalar: true)`; failure rate: sum `dt.service.request.failure_count` and
+     `dt.service.request.count` in one `timeseries { … }` and compute `100.0 * failures / requests`.
    - `icon`: an export name from `@dynatrace/strato-icons`. Verified: `ServicesIcon`, `DatabaseIcon`,
      `ApplicationsIcon`, `HostsIcon`, `ProcessIcon`, `ContainerIcon`, `MobileIcon`, `ComponentIcon`,
      `ServiceLevelObjectivesIcon`, `WorldmapIcon`. **Not existing**: `ApplicationIcon`, `HostIcon`, `KubernetesIcon`,
@@ -65,7 +91,8 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
      Smartscape ids both work.
 4. **Validate**:
    - Against `diagram.schema.json` (e.g. with Python `jsonschema` or `npx ajv-cli validate -s diagram.schema.json -d diagram.json`).
-   - Every query with `dtctl query`:
+   - Every query with `dtctl query`, using the diagram's own timeframe — that is how the app runs them:
+     `--default-timeframe-start <from> --default-timeframe-end <to>` (ISO, or omit both for the last 2 h).
      - `entityDql` / container query → returns `id` (and `name` for containers).
      - KPI edge query → one row with a numeric value (`long` values arrive as strings).
      - KPI item query → a numeric column (`valueField`) and, in `column` mode, a name column (`labelField`).
@@ -94,10 +121,30 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
           -F 'request={"filePath":"/lookups/custom-diagram-creator/diagrams","lookupField":"id","overwrite":true,"displayName":"Custom Diagram Creator diagrams","parsePattern":"JSON{STRING:id, STRING:name, STRING:description, STRING:owner, STRING:createdAt, STRING:updatedAt, BOOLEAN:deleted, STRING:payload}:row"};type=application/json' \
           -F 'content=@rows.jsonl'
         ```
-      - Without delete permissions: upload the diagram JSON from the app (list → **Upload**).
+      - Without delete permissions (the usual case with `dtctl`): save the diagram as a `.json` file and upload it
+        from the app (list → **Upload**). The app keeps the other diagrams and gives the upload a new id if that id
+        already exists.
    e. Confirm: `dtctl query 'load "/lookups/custom-diagram-creator/diagrams" | fields id, name, updatedAt'`.
 6. **Deliver** the JSON to the user (also as a file) and the registered id. The diagram opens at
    `<environment>/ui/apps/my.custom.diagram.creator/ui/diagram/<id>`.
+
+## Showcase recipe
+
+For a demo or "sell the value" diagram, aim for a story that reads left to right:
+
+1. **Experience** — the frontend with RUM KPIs (sessions, user actions, frontend errors from `fetch user.events`),
+   plus external callers such as partner processes.
+2. **Edge** — the gateway/proxy with traffic and failure rate.
+3. **APIs** — one component per business capability (login, trading, offers…), each grouping its services, with a
+   golden-signals KPI block (requests, average response time, failure rate).
+4. **Core services** — engine, pricing, ledger, feature flags.
+5. **Data and infrastructure** — a custom container for databases and queues (one row per process), and the host
+   with CPU and memory (`dt.host.cpu.usage`, `dt.host.memory.usage`).
+
+Put KPI connections (animated, with thresholds) on the critical hops — e.g. request count from the frontend to the
+gateway, and latency from the gateway to each API — and plain connections elsewhere. Keep 400 px between columns and
+leave room under nodes that have KPI blocks (≈ 20 px per KPI line). Validate every query in the chosen timeframe so
+nothing shows up gray.
 
 ## Other operations
 - List: `load "/lookups/custom-diagram-creator/diagrams" | filter isFalseOrNull(deleted) | fields id, name, owner, updatedAt | sort updatedAt desc`.

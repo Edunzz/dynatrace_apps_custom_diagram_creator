@@ -35,7 +35,8 @@
 <ol>
 <li>discovers the real entities with Smartscape queries — it never invents ids — and writes them into each component's <code>entities</code> list (or an <code>entityDql</code> when the selection must stay dynamic);</li>
 <li>builds a JSON document that matches <code>skill/diagram.schema.json</code>, with layers laid out from left to right;</li>
-<li>runs every query to check it returns what the app expects;</li>
+<li>reads the real dependencies from Smartscape (<code>calls</code> and <code>runs_on</code> edges) and checks when the environment has data, to pick the diagram's timeframe;</li>
+<li>runs every query in that timeframe to check it returns what the app expects;</li>
 <li>upserts the diagram into <code>/lookups/custom-diagram-creator/diagrams</code> without touching other rows;</li>
 <li>gives you the JSON and the id, so the diagram opens at <code>…/ui/apps/my.custom.diagram.creator/ui/diagram/&lt;id&gt;</code>.</li>
 </ol>
@@ -58,6 +59,7 @@
 <ul>
 <li><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/blob/main/skill/examples/sample-diagram.json"><code>sample-diagram.json</code></a> — the diagram the app creates on first use.</li>
 <li><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/blob/main/skill/examples/demo-sprint-tenant.json"><code>demo-sprint-tenant.json</code></a> — built only on data a nearly empty environment has (a frontend, synthetic locations and event counts), useful to see green, orange and red connections without any services.</li>
+<li><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/blob/main/skill/examples/easytrade-showcase.json"><code>easytrade-showcase.json</code></a> — a showcase of the EasyTrade demo application built with the skill's <em>showcase recipe</em>: digital experience, gateway, trading APIs, core services, data tier and host, with golden signals on every hop and real dependencies read from Smartscape. It is saved with the fixed window in which EasyTrade had traffic.</li>
 </ul>
 <h2 id="rules">Rules the skill follows</h2>
 <ul>
@@ -73,7 +75,7 @@
 </div>
 <footer class="site-footer">
   <div class="inner">
-    <span>Custom Diagram Creator · Built by Jose Eduardo Romero Jimenez</span>
+    <span>Custom Diagram Creator · Built by Jose Eduardo Romero Jimenez · Community project, not an official Dynatrace product</span>
     <span><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator">GitHub</a> · <a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/issues">Issues</a></span>
   </div>
 </footer>

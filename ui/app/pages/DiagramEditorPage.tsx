@@ -94,7 +94,18 @@ function EditorInner({ diagramId }: { diagramId: string }) {
   const [refreshInterval, setRefreshInterval] = useState<RefreshInterval>("off");
   const [background, setBackground] = useState<Background>("dots");
   const [mode, setMode] = useState<EditorMode>("view");
-  const [dirty, setDirty] = useState(false);
+  const [contentDirty, setDirty] = useState(false);
+  // Timeframe and auto-refresh as last loaded or saved: they are saved with the diagram, so changing them is an
+  // unsaved change too (and returning to the saved values isn't).
+  const [savedView, setSavedView] = useState<{ timeframe: Timeframe; refreshInterval: RefreshInterval }>({
+    timeframe: DEFAULT_TIMEFRAME,
+    refreshInterval: "off",
+  });
+  const viewDirty =
+    timeframe.from !== savedView.timeframe.from ||
+    timeframe.to !== savedView.timeframe.to ||
+    refreshInterval !== savedView.refreshInterval;
+  const dirty = contentDirty || viewDirty;
   const [saving, setSaving] = useState(false);
   const [panel, setPanel] = useState<PanelTarget | null>(null);
   // Bumped on undo/redo so an open editor panel remounts with the restored data.
@@ -123,6 +134,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
       setEdges(toFlowEdges(de));
       setTimeframe(settings.defaultTimeframe);
       setRefreshInterval(settings.refreshInterval);
+      setSavedView({ timeframe: settings.defaultTimeframe, refreshInterval: settings.refreshInterval });
       setBackground(settings.background);
       setInitialViewport(settings.viewport);
       loadedIdRef.current = d.id;
@@ -571,6 +583,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
         setLoadedUpdatedAt(saved.updatedAt);
         setPersisted(true);
         setDirty(false);
+        setSavedView({ timeframe: d.settings.defaultTimeframe, refreshInterval: d.settings.refreshInterval });
         setConflict(null);
         showToast({ type: "success", title: "Diagram saved", lifespan: 3000 });
         if (diagramId !== saved.id) {
@@ -607,6 +620,7 @@ function EditorInner({ diagramId }: { diagramId: string }) {
         setLoadedUpdatedAt(saved.updatedAt);
         setPersisted(true);
         setDirty(false);
+        setSavedView({ timeframe: copy.settings.defaultTimeframe, refreshInterval: copy.settings.refreshInterval });
         loadedIdRef.current = saved.id;
         showToast({ type: "success", title: `Saved as "${name}"`, lifespan: 3000 });
         navigate(`/diagram/${saved.id}`, { replace: true });

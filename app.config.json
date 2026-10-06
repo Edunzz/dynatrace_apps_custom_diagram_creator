@@ -3,7 +3,7 @@
   "environmentUrl": "https://hit3747h.sprint.apps.dynatracelabs.com/",
   "app": {
     "name": "Custom Diagram Creator",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "description": "Design custom architecture diagrams with live status from Grail",
     "id": "my.custom.diagram.creator",
     "icon": "./ui/assets/icon.svg",

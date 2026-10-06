@@ -152,12 +152,15 @@ async function runKpiBlock(kpi: KpiBlock | undefined, ctx: StatusCycleContext, s
   return { items: await Promise.all(items.map((item) => runKpiItem(item, ctx, scope))) };
 }
 
+/** Problems kept in a node's status for its "N problems" menu (the details panel queries all of them). */
+const MAX_PROBLEMS_KEPT = 50;
+
 async function fetchProblems(
   ids: string[],
   problemMatch: string | undefined,
   ctx: StatusCycleContext,
 ): Promise<{ dql: string; problems: ProblemRow[] }> {
-  const dql = buildProblemsDql({ ids, tf: ctx.tf, problemMatch, activeOnly: true });
+  const dql = buildProblemsDql({ ids, tf: ctx.tf, problemMatch });
   const result = await ctx.query(dql);
   return { dql, problems: result.records.map(toProblemRow) };
 }
@@ -183,7 +186,8 @@ export async function computeEntityNode(data: EntityNodeData, ctx: StatusCycleCo
       const { dql, problems } = await fetchProblems(ids, data.failPoint.problemMatch, ctx);
       return {
         status: statusFromProblemCount(problems.length, data.failPoint),
-        activeProblems: problems.length,
+        problemCount: problems.length,
+        problems: problems.slice(0, MAX_PROBLEMS_KEPT),
         entityIds: ids,
         problemsDql: dql,
         kpi: await kpiPromise,
@@ -207,7 +211,8 @@ export async function computeEntityNode(data: EntityNodeData, ctx: StatusCycleCo
       const count = problems.length;
       base = {
         status: statusFromProblemCount(count, data.failPoint),
-        activeProblems: count,
+        problemCount: count,
+        problems: problems.slice(0, MAX_PROBLEMS_KEPT),
         entityIds: ids,
         problemsDql: dql,
       };
@@ -267,7 +272,8 @@ async function computeEntityChildren(data: CustomNodeData, ctx: StatusCycleConte
   });
   return {
     status: aggregateContainer(children.map((c) => c.status)),
-    activeProblems: problems.length,
+    problemCount: problems.length,
+    problems: problems.slice(0, MAX_PROBLEMS_KEPT),
     entityIds: ids,
     problemsDql: dql,
     children,

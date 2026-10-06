@@ -11,14 +11,15 @@ import { STATUS_BG, STATUS_COLOR, STATUS_LABEL, StatusGlyph } from "../statusSty
 import { NodeHandles } from "./Handles";
 import { KpiBlock } from "./KpiBlock";
 import { NodeChrome } from "./NodeChrome";
+import { ProblemsBadge } from "./ProblemsBadge";
 
 function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) {
-  const { status, mode, editingId } = useDiagramContext();
+  const { status, mode, editingId, openDetail } = useDiagramContext();
   const editing = editingId === id;
   const nodeStatus = status.nodes[id];
   const s: Status = nodeStatus?.status ?? "loading";
   const Icon = resolveIcon(data.icon);
-  const problems = nodeStatus?.activeProblems;
+  const problems = nodeStatus?.problemCount;
   const entities = nodeStatus?.entityIds?.length;
   const tooltip = nodeStatus?.error ? `${STATUS_LABEL[s]}: ${nodeStatus.error}` : STATUS_LABEL[s];
 
@@ -55,24 +56,16 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityFlowNode>) 
             {entities !== undefined ? ` · ${entities} id${entities === 1 ? "" : "s"}` : ""}
           </div>
         </div>
-        <Tooltip text={tooltip}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-            {problems !== undefined && (
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: problems > 0 ? STATUS_COLOR[s] : Colors.Text.Neutral.Subdued,
-                  fontVariantNumeric: "tabular-nums",
-                }}
-                aria-label={`${problems} active problems`}
-              >
-                {problems}
-              </span>
-            )}
-            <StatusGlyph status={s} />
-          </span>
-        </Tooltip>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          {problems !== undefined && (
+            <ProblemsBadge count={problems} problems={nodeStatus?.problems} status={s} onShowAll={() => openDetail("node", id)} />
+          )}
+          <Tooltip text={tooltip}>
+            <span style={{ display: "inline-flex" }}>
+              <StatusGlyph status={s} />
+            </span>
+          </Tooltip>
+        </span>
       </div>
       {data.kpi?.enabled && (
         <div className="nowheel" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>

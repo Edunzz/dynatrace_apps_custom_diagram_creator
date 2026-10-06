@@ -48,7 +48,8 @@ describe("computeEntityNode", () => {
     expect(ctx.queries).toHaveLength(1);
     expect(ctx.queries[0]).toContain("fetch dt.davis.problems");
     expect(ctx.queries[0]).toContain('"FRONTEND-1", "APPLICATION-1"');
-    expect(status).toMatchObject({ status: "warning", activeProblems: 1, entityIds: ["FRONTEND-1", "APPLICATION-1"] });
+    expect(status).toMatchObject({ status: "warning", problemCount: 1, entityIds: ["FRONTEND-1", "APPLICATION-1"] });
+    expect(status.problems?.[0]).toMatchObject({ eventId: "p1", status: "ACTIVE" });
   });
 
   it("falls back to the entity query when nothing is picked", async () => {
@@ -59,7 +60,7 @@ describe("computeEntityNode", () => {
     );
     const status = await computeEntityNode({ ...base, entityDql: 'smartscapeNodes "SERVICE" | fields id, name' }, ctx);
     expect(ctx.queries).toHaveLength(2);
-    expect(status).toMatchObject({ status: "pass", activeProblems: 0, entityIds: ["SERVICE-9"] });
+    expect(status).toMatchObject({ status: "pass", problemCount: 0, entityIds: ["SERVICE-9"] });
   });
 
   it("asks to pick entities when there is neither a selection nor a query", async () => {

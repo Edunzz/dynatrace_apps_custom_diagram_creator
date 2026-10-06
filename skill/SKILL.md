@@ -122,7 +122,9 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
      `kpi: { dql (single value), unit, decimals, animated, threshold: { direction: above|below, warning, failing } }`.
    - Valid handles: `t`, `r`, `b`, `l` (optional).
    - Problems are matched against both `affected_entity_ids` and `smartscape.affected_entity.ids`, so classic and
-     Smartscape ids both work.
+     Smartscape ids both work. A component counts the problems **open at any time during the diagram's timeframe**
+     (a snapshot: a past window shows what was open then, even if it closed later), so pick the timeframe the
+     diagram should tell the story of.
 4. **Validate**:
    - Against `diagram.schema.json` (e.g. with Python `jsonschema` or `npx ajv-cli validate -s diagram.schema.json -d diagram.json`).
    - Every query with `dtctl query`, using the diagram's own timeframe — that is how the app runs them:

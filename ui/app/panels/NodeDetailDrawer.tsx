@@ -3,17 +3,17 @@ import Colors from "@dynatrace/strato-design-tokens/colors";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { CodeSnippet, ProgressCircle } from "@dynatrace/strato-components/content";
 import { ExternalLink } from "@dynatrace/strato-components/typography";
-import { getIntentLink } from "@dynatrace-sdk/navigation";
-import { getEnvironmentUrl } from "@dynatrace-sdk/app-environment";
 import type { DiagramEdge, DiagramNode } from "../model/schema";
 import type { EdgeStatus, NodeStatus, ProblemRow, ResolvedTimeframe, Status } from "../model/types";
 import { errorMessage, formatNumber, runQuery } from "../services/dql";
 import { buildProblemsDql, toProblemRow } from "../services/queryBuilder";
 import { evalThreshold } from "../services/statusEngine";
 import { kpiItems, kpiTitle } from "../services/kpi";
+import { notebookLink, problemLink } from "../services/links";
 import { withUnit } from "../services/units";
 import { formatDateTime, userTimezone } from "../services/time";
 import { STATUS_LABEL, StatusDot, StatusGlyph } from "../canvas/statusStyle";
+import { problemsLabel } from "../canvas/nodes/ProblemsBadge";
 import { InlineMessage, SectionTitle } from "./Field";
 import { SidePanel } from "./SidePanel";
 
@@ -27,38 +27,6 @@ export interface NodeDetailDrawerProps {
   onClose: () => void;
 }
 
-function safeIntentLink(payload: Record<string, unknown>, appId: string, intentId: string, fallback: string): string {
-  try {
-    return getIntentLink(payload, appId, intentId);
-  } catch {
-    return fallback;
-  }
-}
-
-function environmentUrl(): string {
-  try {
-    return getEnvironmentUrl().replace(/\/$/, "");
-  } catch {
-    return "";
-  }
-}
-
-export function problemLink(p: ProblemRow): string {
-  return safeIntentLink(
-    { "event.id": p.eventId, "event.kind": p.eventKind },
-    "dynatrace.davis.problems",
-    "view-problem",
-    `${environmentUrl()}/ui/apps/dynatrace.davis.problems/problem/${encodeURIComponent(p.eventId)}`,
-  );
-}
-
-function notebookLink(query: string, tf?: ResolvedTimeframe): string {
-  const payload: Record<string, unknown> = { "dt.query": query };
-  if (tf) {
-    payload["dt.timeframe"] = { from: tf.from, to: tf.to };
-  }
-  return safeIntentLink(payload, "dynatrace.notebooks", "view-query", `${environmentUrl()}/ui/apps/dynatrace.notebooks`);
-}
 
 function DqlBlock({ title, query, tf }: { title: string; query: string; tf?: ResolvedTimeframe }) {
   return (
@@ -76,7 +44,7 @@ function DqlBlock({ title, query, tf }: { title: string; query: string; tf?: Res
 
 function ProblemsTable({ problems }: { problems: ProblemRow[] }) {
   if (problems.length === 0) {
-    return <InlineMessage kind="success">No problems for these entities in the timeframe.</InlineMessage>;
+    return <InlineMessage kind="success">No problems were open for these entities during the timeframe.</InlineMessage>;
   }
   return (
     <div className="cdc-preview-table-wrap" style={{ maxHeight: 360 }}>
@@ -98,7 +66,7 @@ function ProblemsTable({ problems }: { problems: ProblemRow[] }) {
                 <ExternalLink href={problemLink(p)}>{p.displayId || p.eventId}</ExternalLink>
               </td>
               <td title={p.name}>{p.name}</td>
-              <td>{p.status}</td>
+              <td>{p.status === "ACTIVE" ? "Active" : "Closed"}</td>
               <td>{p.category}</td>
               <td>{formatDateTime(p.start)}</td>
               <td title={p.affectedIds.join(", ")}>{p.affectedIds.join(", ")}</td>
@@ -136,7 +104,7 @@ function NodeDetail({ node, status, tf }: { node: DiagramNode; status?: NodeStat
   const problemMatch =
     data.kind === "entity" ? data.failPoint.problemMatch : data.entities?.criterion === "match" ? data.entities.problemMatch : undefined;
   const ids = status?.entityIds ?? [];
-  const detailDql = tf && ids.length > 0 ? buildProblemsDql({ ids, tf, problemMatch, activeOnly: false }) : undefined;
+  const detailDql = tf && ids.length > 0 ? buildProblemsDql({ ids, tf, problemMatch }) : undefined;
 
   useEffect(() => {
     setProblems(null);
@@ -160,7 +128,7 @@ function NodeDetail({ node, status, tf }: { node: DiagramNode; status?: NodeStat
       <StatusLine
         status={status?.status ?? "loading"}
         text={
-          status?.activeProblems !== undefined ? `${status.activeProblems} active problem(s) matching the filter` : undefined
+          status?.problemCount !== undefined ? `${problemsLabel(status.problemCount)} open during the timeframe` : undefined
         }
       />
       {status?.error && <InlineMessage kind="error">{status.error}</InlineMessage>}

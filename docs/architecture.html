@@ -93,7 +93,8 @@
 <p>One query per component (or per container), with the timeframe and ids inlined so the details panel can show exactly what ran:</p><div class="code"><span class="label">dql</span><pre><code>fetch dt.davis.problems, from: &quot;&lt;from&gt;&quot;, to: &quot;&lt;to&gt;&quot;
 | filter not(dt.davis.is_duplicate)
 | dedup event.id, sort: {timestamp desc}
-| filter event.status == &quot;ACTIVE&quot;          // status only; the details query omits it
+| filter event.start &lt;= toTimestamp(&quot;&lt;to&gt;&quot;)
+      and coalesce(event.end, now()) &gt;= toTimestamp(&quot;&lt;from&gt;&quot;)
 | filter iAny(in(affected_entity_ids[], array(&lt;ids&gt;)))
       or iAny(in(toString(smartscape.affected_entity.ids[]), array(&lt;ids&gt;)))
 | filter &lt;match&gt;                           // optional
@@ -102,7 +103,8 @@
          root_cause_entity_id, root_cause_entity_name
 | sort event.start desc
 | limit 1000</code></pre></div><ul>
-<li><code>dedup</code> keeps the latest record of each problem in the timeframe, so a problem that closed before the end isn't counted as active.</li>
+<li>It counts the problems <strong>open at any time during the timeframe</strong>: started before its end and not closed before its start (an open problem has no <code>event.end</code>). Grail already matches <code>dt.davis.problems</code> by that active interval — a problem keeps one record with its latest state, whose <code>timestamp</code> is its last update — and the explicit filter states it. <code>event.status</code> is the state today, shown as <em>still active</em> or <em>closed</em>.</li>
+<li><code>dedup</code> keeps one row per problem.</li>
 <li>Matching both id arrays makes classic ids (<code>SERVICE-…</code>) and Smartscape ids work; <code>id_classic</code> is matched too when the entity query returns it.</li>
 <li>Containers run a single problem query for all their ids and group the problems per child in memory.</li>
 </ul>

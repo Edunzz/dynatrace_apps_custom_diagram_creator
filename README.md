@@ -5,7 +5,7 @@
 **Architecture diagrams for Dynatrace that show what's broken, live.**
 
 Draw your system by hand — frontends, services, hosts, databases, SLOs — and the diagram lights up with live status
-from Dynatrace: components turn green, orange or red from active Davis problems, containers sum up their entities or
+from Dynatrace: components turn green, orange or red from the Davis problems open in the timeframe, containers sum up their entities or
 SLOs, and connections show KPI values with animated flow.
 
 📖 **Documentation: <https://edunzz.github.io/dynatrace_apps_custom_diagram_creator/>**

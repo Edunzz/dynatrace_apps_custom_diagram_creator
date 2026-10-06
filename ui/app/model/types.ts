@@ -39,7 +39,7 @@ export interface SubStatus {
   key: string;
   name: string;
   status: Status;
-  /** Active problems (entities mode) */
+  /** Problems open during the timeframe (entities mode) */
   problems?: number;
   /** SLO mode */
   value?: number;
@@ -65,10 +65,12 @@ export interface KpiState {
 export interface NodeStatus {
   status: Status;
   error?: string;
-  /** Active problems matching the filter */
-  activeProblems?: number;
+  /** Problems matching the filter that were open at any time during the timeframe */
+  problemCount?: number;
+  /** Those problems (up to 50), for the "N problems" menu */
+  problems?: ProblemRow[];
   entityIds?: string[];
-  /** Problems DQL (active) with timeframe and ids already inserted */
+  /** Problems DQL with timeframe and ids already inserted */
   problemsDql?: string;
   children?: SubStatus[];
   kpi?: KpiState;

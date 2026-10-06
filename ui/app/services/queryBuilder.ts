@@ -5,8 +5,6 @@ export interface ProblemsQueryOptions {
   ids: string[];
   tf: ResolvedTimeframe;
   problemMatch?: string;
-  /** true: active problems only (status light). false: active and closed within the timeframe (detail). */
-  activeOnly: boolean;
 }
 
 export const PROBLEM_FIELDS = [
@@ -25,12 +23,15 @@ export const PROBLEM_FIELDS = [
 ];
 
 /**
- * Problems DQL for a set of entities.
- * - Filters out duplicates and keeps the latest state of each problem within the timeframe.
+ * Problems DQL for a set of entities: the problems that were open at any time during the timeframe, so moving the
+ * timeframe back shows the picture of that moment (the last 5 minutes: what is open now; a past day: what was open
+ * that day, even if it closed later). Grail matches dt.davis.problems by their active interval; the explicit
+ * start/end filter states it. `event.status` is the problem's state today.
+ * - Filters out duplicates and keeps one row per problem.
  * - Matches against classic ids (affected_entity_ids) and Smartscape ids (smartscape.affected_entity.ids),
  *   so it works whether the entity DQL uses `fetch dt.entity.*` or `smartscapeNodes`.
  */
-export function buildProblemsDql({ ids, tf, problemMatch, activeOnly }: ProblemsQueryOptions): string {
+export function buildProblemsDql({ ids, tf, problemMatch }: ProblemsQueryOptions): string {
   const uniqueIds = Array.from(new Set(ids.filter((id) => id && id.trim() !== "")));
   const idArray = `array(${uniqueIds.map(dqlString).join(", ")})`;
   const lines = [
@@ -38,9 +39,9 @@ export function buildProblemsDql({ ids, tf, problemMatch, activeOnly }: Problems
     `| filter not(dt.davis.is_duplicate)`,
     `| dedup event.id, sort: {timestamp desc}`,
   ];
-  if (activeOnly) {
-    lines.push(`| filter event.status == "ACTIVE"`);
-  }
+  lines.push(
+    `| filter event.start <= toTimestamp(${dqlString(tf.to)}) and coalesce(event.end, now()) >= toTimestamp(${dqlString(tf.from)})`,
+  );
   lines.push(
     `| filter iAny(in(affected_entity_ids[], ${idArray})) or iAny(in(toString(smartscape.affected_entity.ids[]), ${idArray}))`,
   );

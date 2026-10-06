@@ -5,7 +5,7 @@
 **Diagramas de arquitectura para Dynatrace que muestran en vivo qué está fallando.**
 
 Dibuja tu sistema a mano — frontends, servicios, hosts, bases de datos, SLOs — y el diagrama se ilumina con el estado
-en vivo de Dynatrace: los componentes se ponen verdes, naranjas o rojos según los problemas activos de Davis, los
+en vivo de Dynatrace: los componentes se ponen verdes, naranjas o rojos según los problemas de Davis abiertos en el timeframe, los
 contenedores resumen sus entidades o SLOs, y las conexiones muestran valores de KPIs con flujo animado.
 
 📖 **Documentación (en inglés): <https://edunzz.github.io/dynatrace_apps_custom_diagram_creator/>**

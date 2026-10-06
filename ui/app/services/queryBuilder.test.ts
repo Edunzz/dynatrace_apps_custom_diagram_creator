@@ -7,23 +7,21 @@ import { buildProblemsDql, countProblemsFor, entityKeys, toProblemRow } from "./
 const tf = { from: "2026-10-04T06:00:00.000Z", to: "2026-10-04T08:00:00.000Z" };
 
 describe("buildProblemsDql", () => {
-  it("inserts the absolute timeframe and the ids, and filters ACTIVE for the status light", () => {
-    const dql = buildProblemsDql({ ids: ["SERVICE-1", "SERVICE-2"], tf, activeOnly: true });
+  it("counts the problems open at any time during the timeframe, active or closed since", () => {
+    const dql = buildProblemsDql({ ids: ["SERVICE-1", "SERVICE-2"], tf });
     expect(dql).toContain('fetch dt.davis.problems, from: "2026-10-04T06:00:00.000Z", to: "2026-10-04T08:00:00.000Z"');
     expect(dql).toContain("| filter not(dt.davis.is_duplicate)");
     expect(dql).toContain("| dedup event.id, sort: {timestamp desc}");
-    expect(dql).toContain('| filter event.status == "ACTIVE"');
+    expect(dql).toContain(
+      '| filter event.start <= toTimestamp("2026-10-04T08:00:00.000Z") and coalesce(event.end, now()) >= toTimestamp("2026-10-04T06:00:00.000Z")',
+    );
+    expect(dql).not.toContain('event.status == "ACTIVE"');
     expect(dql).toContain('iAny(in(affected_entity_ids[], array("SERVICE-1", "SERVICE-2")))');
     expect(dql).toContain('iAny(in(toString(smartscape.affected_entity.ids[]), array("SERVICE-1", "SERVICE-2")))');
   });
 
-  it("the detail query doesn't filter by ACTIVE", () => {
-    const dql = buildProblemsDql({ ids: ["X-1"], tf, activeOnly: false });
-    expect(dql).not.toContain('event.status == "ACTIVE"');
-  });
-
   it("adds the match after the entity filter and before fields", () => {
-    const dql = buildProblemsDql({ ids: ["X-1"], tf, activeOnly: true, problemMatch: 'event.category == "ERROR"' });
+    const dql = buildProblemsDql({ ids: ["X-1"], tf, problemMatch: 'event.category == "ERROR"' });
     const lines = dql.split("\n");
     const matchIdx = lines.indexOf('| filter event.category == "ERROR"');
     expect(matchIdx).toBeGreaterThan(lines.findIndex((l) => l.includes("affected_entity_ids[]")));
@@ -31,7 +29,7 @@ describe("buildProblemsDql", () => {
   });
 
   it("ignores an empty match, deduplicates ids and escapes quotes", () => {
-    const dql = buildProblemsDql({ ids: ["A", "A", 'B"x', ""], tf, activeOnly: true, problemMatch: "   " });
+    const dql = buildProblemsDql({ ids: ["A", "A", 'B"x', ""], tf, problemMatch: "   " });
     expect(dql).toContain('array("A", "B\\"x")');
     expect(dql.split("\n").filter((l) => l.startsWith("| filter")).length).toBe(3);
   });

@@ -11,6 +11,7 @@ import { STATUS_BG, STATUS_COLOR, STATUS_LABEL, StatusDot, StatusGlyph } from ".
 import { NodeHandles } from "./Handles";
 import { KpiBlock } from "./KpiBlock";
 import { NodeChrome } from "./NodeChrome";
+import { ProblemsBadge } from "./ProblemsBadge";
 
 const ROW_HEIGHT = 24;
 
@@ -46,7 +47,7 @@ function SubRow({ child, mode }: { child: SubStatus; mode: "entities" | "slos" }
 }
 
 function CustomNodeComponent({ id, data, selected }: NodeProps<CustomFlowNode>) {
-  const { status, mode, editingId } = useDiagramContext();
+  const { status, mode, editingId, openDetail } = useDiagramContext();
   const editing = editingId === id;
   const nodeStatus = status.nodes[id];
   const s: Status = nodeStatus?.status ?? "loading";
@@ -86,6 +87,14 @@ function CustomNodeComponent({ id, data, selected }: NodeProps<CustomFlowNode>) 
         >
           {data.name}
         </div>
+        {data.mode === "entities" && nodeStatus?.problemCount !== undefined && (
+          <ProblemsBadge
+            count={nodeStatus.problemCount}
+            problems={nodeStatus.problems}
+            status={s}
+            onShowAll={() => openDetail("node", id)}
+          />
+        )}
         <Tooltip text={tooltip}>
           <span style={{ display: "inline-flex" }}>
             <StatusGlyph status={s} />

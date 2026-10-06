@@ -94,7 +94,8 @@ El primer deploy abre el navegador para iniciar sesión con SSO. `npm run deploy
 
 ### Después del deploy
 
-La primera vez que se abre, la app crea su almacenamiento con un diagrama de ejemplo.
+La primera vez que se abre, la app crea su almacenamiento con tres diagramas de ejemplo: *Online Banking*,
+*Platform signals* y *EasyTrade trading platform*.
 
 Para desplegar una versión nueva en el mismo entorno, primero sube `version` en `app.config.json` y en
 `package.json`: el entorno rechaza una versión que ya tiene instalada.

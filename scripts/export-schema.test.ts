@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -7,7 +7,7 @@ vi.mock("@dynatrace-sdk/client-query", () => ({ queryExecutionClient: {} }));
 import { Diagram } from "../ui/app/model/schema";
 import { SAMPLE_DIAGRAM_ID, buildSampleDiagram } from "../ui/app/model/defaults";
 
-it("exports the JSON schema and the sample diagram for the skill", () => {
+it("exports the JSON schema and the sample diagrams for the skill", () => {
   const jsonSchema = {
     $id: "https://my.custom.diagram.creator/diagram.schema.json",
     title: "Custom Diagram Creator – Diagram",
@@ -24,4 +24,7 @@ it("exports the JSON schema and the sample diagram for the skill", () => {
   mkdirSync("skill/examples", { recursive: true });
   writeFileSync("skill/diagram.schema.json", JSON.stringify(jsonSchema, null, 2) + "\n", "utf-8");
   writeFileSync("skill/examples/sample-diagram.json", JSON.stringify(sample, null, 2) + "\n", "utf-8");
+  // The samples bundled with the app are the skill's examples too.
+  copyFileSync("ui/app/samples/platform-signals.json", "skill/examples/platform-signals.json");
+  copyFileSync("ui/app/samples/easytrade.json", "skill/examples/easytrade-showcase.json");
 });

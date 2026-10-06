@@ -15,8 +15,9 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
 - App source, docs and the component type catalog: <https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator>
   (`ui/app/model/componentTypes.ts`).
 - Schema: `diagram.schema.json` (this folder, generated from `ui/app/model/schema.ts` with `npm run export:schema`).
-  Examples: `examples/sample-diagram.json`, `examples/demo-sprint-tenant.json`, and
-  `examples/easytrade-showcase.json` (a full showcase diagram built with the recipe below).
+  Examples — the same sample diagrams the app adds to every environment: `examples/sample-diagram.json`,
+  `examples/platform-signals.json` and `examples/easytrade-showcase.json` (a full showcase built with the recipe
+  below; its components select EasyTrade's entities by name, so it works in any environment running EasyTrade).
 - Before writing DQL, load the `dt-dql-essentials` skill (and `dt-obs-problems` for problems). Never invent field
   names.
 
@@ -30,7 +31,10 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
   JSON{STRING:id, STRING:name, STRING:description, STRING:owner, STRING:createdAt, STRING:updatedAt, BOOLEAN:deleted, STRING:payload}:row
   ```
 - The table is **replaced as a whole** on every write. Never drop other diagrams' rows.
-- If the table would end up empty, the app keeps a single row with `deleted: true` and `payload: ""`.
+- The row with id `00000000-0000-4000-8000-000000000000` is the app's metadata (`deleted: true`, never listed): its
+  `description` holds the ids of the sample diagrams already added, so deleted samples don't come back. **Always
+  keep it** when rewriting the table.
+- Other rows with `deleted: true` only exist so the file is never empty; they can be dropped.
 
 ## Flow
 1. **Understand the requested architecture**: layers, components, dependencies, KPIs.
@@ -105,7 +109,7 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
    b. Build the row: `{id, name, description, owner, createdAt, updatedAt, deleted: false, payload: base64(minified JSON)}`.
       Generate the JSONL with Python or a file-writing tool (PowerShell 5.1 adds a BOM). On Windows, pass Windows
       paths to Python (`/c/Users/...` becomes `C:\c\Users\...`).
-   c. Upsert by `id` (drop rows with `deleted: true`) and write `rows.jsonl`.
+   c. Upsert by `id` (drop rows with `deleted: true`, except the metadata row) and write `rows.jsonl`.
    d. Upload. `dtctl create lookup` **fails when the file already exists** and has no `--overwrite` flag:
       - New table:
         ```
@@ -148,7 +152,8 @@ nothing shows up gray.
 
 ## Other operations
 - List: `load "/lookups/custom-diagram-creator/diagrams" | filter isFalseOrNull(deleted) | fields id, name, owner, updatedAt | sort updatedAt desc`.
-- Delete: remove the row and upload the whole table again (if it becomes empty, keep one `deleted: true` row).
+- Delete: remove the row and upload the whole table again, keeping the metadata row (if nothing else is left, keep
+  one `deleted: true` row so the file isn't empty).
 - Export: read `payload`, decode base64 (UTF-8) and save it as `<name>.json`.
 
 ## Rules

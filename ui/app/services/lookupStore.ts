@@ -15,6 +15,14 @@ export const PARSE_PATTERN =
   "JSON{STRING:id, STRING:name, STRING:description, STRING:owner, STRING:createdAt, STRING:updatedAt, BOOLEAN:deleted, STRING:payload}:row";
 /** Documented per-file limit for Grail lookups. */
 export const MAX_FILE_BYTES = 100 * 1024 * 1024;
+/**
+ * Hidden row (deleted=true, never listed) that keeps the ids of the sample diagrams this table already received,
+ * so a sample that was deleted doesn't come back. Every rewrite keeps it.
+ */
+export const META_ID = "00000000-0000-4000-8000-000000000000";
+/** A lookup upload shows up in DQL after a short delay: writes wait for it, polling at this pace, up to the timeout. */
+const VISIBILITY_POLL_MS = 1000;
+const VISIBILITY_TIMEOUT_MS = 20_000;
 /** Per-diagram size above which the user is warned. */
 export const WARN_DIAGRAM_BYTES = 5 * 1024 * 1024;
 
@@ -135,6 +143,51 @@ export function sameInstant(a: string, b: string): boolean {
   return !Number.isNaN(ta) && ta === tb;
 }
 
+/** "id|updatedAt|deleted" per row, sorted: the same fingerprint means DQL returns exactly what was written. */
+export function rowsFingerprint(rows: Array<Pick<DiagramRow, "id" | "updatedAt" | "deleted">>): string {
+  const instant = (s: string) => {
+    const t = Date.parse(s.replace(/(\.\d{3})\d+/, "$1"));
+    return Number.isNaN(t) ? s : String(t);
+  };
+  return rows
+    .map((r) => `${r.id}|${instant(r.updatedAt)}|${r.deleted ? 1 : 0}`)
+    .sort()
+    .join("\n");
+}
+
+/** Rows that survive a rewrite: live diagrams and the metadata row (other deleted=true rows are dropped). */
+export function keptRows(rows: DiagramRow[]): DiagramRow[] {
+  return rows.filter((r) => r.id === META_ID || !r.deleted);
+}
+
+export function metaRow(sampleIds: string[]): DiagramRow {
+  const now = new Date().toISOString();
+  return {
+    id: META_ID,
+    name: "Custom Diagram Creator metadata",
+    description: JSON.stringify({ samples: sampleIds }),
+    owner: "system",
+    createdAt: now,
+    updatedAt: now,
+    deleted: true,
+    payload: "",
+  };
+}
+
+/** Sample ids recorded in the metadata row, or null for tables created before it existed. */
+export function seededSampleIds(rows: DiagramRow[]): string[] | null {
+  const meta = rows.find((r) => r.id === META_ID);
+  if (!meta) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(meta.description) as { samples?: unknown };
+    return Array.isArray(parsed.samples) ? parsed.samples.filter((v): v is string => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export function rowsToJsonl(rows: DiagramRow[]): string {
   return rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
 }
@@ -226,6 +279,32 @@ export async function writeAllRows(rows: DiagramRow[]): Promise<void> {
       },
     },
   });
+  await waitUntilVisible(rows);
+}
+
+/**
+ * Waits until `load` returns the rows just written, so the list and the next save read fresh data.
+ * Gives up quietly after the timeout (e.g. when someone else wrote in between).
+ */
+async function waitUntilVisible(rows: DiagramRow[]): Promise<boolean> {
+  const expected = rowsFingerprint(rows);
+  const deadline = Date.now() + VISIBILITY_TIMEOUT_MS;
+  for (;;) {
+    try {
+      const result = await runQuery(`load ${dqlString(LOOKUP_PATH)}\n| fields id, updatedAt, deleted`, undefined, {
+        maxResultRecords: 10_000,
+      });
+      if (rowsFingerprint(result.records.map(parseRow)) === expected) {
+        return true;
+      }
+    } catch {
+      // Right after the table is created it may not be readable yet.
+    }
+    if (Date.now() >= deadline) {
+      return false;
+    }
+    await new Promise((resolve) => setTimeout(resolve, VISIBILITY_POLL_MS));
+  }
 }
 
 export interface SaveOptions {
@@ -246,16 +325,27 @@ export async function saveDiagram(diagram: Diagram, options: SaveOptions = {}): 
     }
   }
   const saved: Diagram = { ...diagram, updatedAt: new Date().toISOString() };
-  // deleted=true rows only exist to avoid an empty file: once saving, they are no longer needed.
-  const live = rows.filter((r) => !r.deleted && r.id !== saved.id);
-  await writeAllRows([...live, toRow(saved)]);
+  await writeAllRows([...keptRows(rows).filter((r) => r.id !== saved.id), toRow(saved)]);
+  return saved;
+}
+
+/** Adds or replaces several diagrams with a single write (uploads). Returns them with their final updatedAt. */
+export async function saveDiagrams(diagrams: Diagram[]): Promise<Diagram[]> {
+  if (diagrams.length === 0) {
+    return [];
+  }
+  const rows = (await loadAllRows()) ?? [];
+  const now = new Date().toISOString();
+  const saved = diagrams.map((d) => ({ ...d, updatedAt: now }));
+  const ids = new Set(saved.map((d) => d.id));
+  await writeAllRows([...keptRows(rows).filter((r) => !ids.has(r.id)), ...saved.map(toRow)]);
   return saved;
 }
 
 /** Deletes diagrams. If the table would end up empty, rows are marked deleted=true to avoid uploading an empty file. */
 export async function deleteDiagrams(ids: string[]): Promise<void> {
   const rows = (await loadAllRows()) ?? [];
-  const remaining = rows.filter((r) => !ids.includes(r.id) && !r.deleted);
+  const remaining = keptRows(rows).filter((r) => !ids.includes(r.id));
   if (remaining.length > 0) {
     await writeAllRows(remaining);
     return;
@@ -271,20 +361,29 @@ export async function deleteLookupFile(filePath: string): Promise<void> {
   await lookupDataClient.delete({ body: { filePath } });
 }
 
+export interface SampleEntry {
+  id: string;
+  build: () => Promise<Diagram>;
+}
+
 /**
- * Bootstrap: if the lookup doesn't exist, creates it with the sample diagram.
- * Returns "created" if it created it, "exists" if it already existed.
+ * Bootstrap and sample diagrams: creates the table with every sample if it doesn't exist; afterwards adds only the
+ * samples this table never had (new samples of a later version), so deleted samples don't come back.
  */
-export async function ensureStore(buildSample: () => Promise<Diagram>): Promise<"created" | "exists"> {
-  try {
-    await runQuery(`load ${dqlString(LOOKUP_PATH)}\n| limit 1`, undefined, { maxResultRecords: 1 });
-    return "exists";
-  } catch (e) {
-    if (!isMissingFileError(e)) {
-      throw e;
-    }
+export async function ensureSamples(catalog: SampleEntry[]): Promise<{ created: boolean; added: string[] }> {
+  const rows = await loadAllRows();
+  const live = new Set((rows ?? []).filter((r) => !r.deleted).map((r) => r.id));
+  const recorded = rows ? seededSampleIds(rows) : null;
+  // Tables from before the metadata row: the samples they still have count as received.
+  const seeded = recorded ?? catalog.map((s) => s.id).filter((id) => live.has(id));
+  const missing = catalog.filter((s) => !seeded.includes(s.id) && !live.has(s.id));
+  const nextSeeded = Array.from(new Set([...seeded, ...catalog.map((s) => s.id)]));
+  if (rows && recorded && missing.length === 0 && nextSeeded.length === seeded.length) {
+    return { created: false, added: [] };
   }
-  const sample = await buildSample();
-  await writeAllRows([toRow(sample)]);
-  return "created";
+  const now = new Date().toISOString();
+  const added = (await Promise.all(missing.map((s) => s.build()))).map((d) => ({ ...d, createdAt: now, updatedAt: now }));
+  const others = rows ? keptRows(rows).filter((r) => r.id !== META_ID) : [];
+  await writeAllRows([...others, ...added.map(toRow), metaRow(nextSeeded)]);
+  return { created: rows === null, added: added.map((d) => d.name) };
 }

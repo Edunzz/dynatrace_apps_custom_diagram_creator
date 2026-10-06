@@ -10,6 +10,7 @@
     "lib": ["DOM", "DOM.Iterable", "esnext"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "rootDir": ".",
     "skipDefaultLibCheck": true,
     "skipLibCheck": true /* Skip type checking of declaration files. */,

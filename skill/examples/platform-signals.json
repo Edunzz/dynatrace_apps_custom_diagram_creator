@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0",
-  "id": "91946d79-2688-4eb4-9b31-fa290d7892f9",
-  "name": "Demo – Sprint tenant (real data)",
-  "description": "Verification diagram with data that exists in hit3747h: frontend, synthetic locations, Davis events and system events",
+  "id": "00000000-0000-4000-8000-000000000002",
+  "name": "Sample – Platform signals",
+  "description": "Works in any environment, even one without services: web frontends, synthetic locations and event counts, with KPI connections in green, orange and red.",
   "owner": "system",
-  "createdAt": "2026-10-04T12:49:25.601Z",
-  "updatedAt": "2026-10-04T12:49:25.601Z",
+  "createdAt": "2026-10-05T00:00:00.000Z",
+  "updatedAt": "2026-10-05T00:00:00.000Z",
   "settings": {
     "background": "dots",
     "defaultTimeframe": {
@@ -25,14 +25,8 @@
       "data": {
         "kind": "entity",
         "componentType": "frontend",
-        "name": "My web application",
-        "entities": [
-          {
-            "id": "FRONTEND-12DCB920668AFDF0",
-            "name": "My web application",
-            "classicId": "APPLICATION-EA7C4B59F27D43EB"
-          }
-        ],
+        "name": "Web frontends",
+        "entities": [],
         "icon": "ApplicationsIcon",
         "failPoint": {
           "warningMin": 1,
@@ -63,7 +57,8 @@
               "maxRows": 5
             }
           ]
-        }
+        },
+        "entityDql": "smartscapeNodes \"FRONTEND\"\n| filter frontend.type == \"web\"\n| fields id, id_classic, name"
       }
     },
     {
@@ -104,7 +99,7 @@
       "data": {
         "kind": "custom",
         "icon": "ApplicationsIcon",
-        "name": "Frontend (single-entity container)",
+        "name": "All frontends",
         "mode": "entities",
         "entities": {
           "dql": "smartscapeNodes \"FRONTEND\"\n| fields id, id_classic, name",

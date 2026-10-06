@@ -19,7 +19,6 @@ import {
   UploadIcon,
 } from "@dynatrace/strato-icons";
 import { parseDiagram, type Diagram } from "../model/schema";
-import { buildSampleDiagram } from "../model/defaults";
 import { asText, dqlString, errorMessage, runQuery } from "../services/dql";
 import { downloadJson, slugify } from "../services/download";
 import {
@@ -27,13 +26,15 @@ import {
   currentUser,
   deleteDiagrams,
   deleteLookupFile,
-  ensureStore,
+  ensureSamples,
   getDiagram,
   listDiagrams,
   newId,
   saveDiagram,
+  saveDiagrams,
   type DiagramSummary,
 } from "../services/lookupStore";
+import { sampleCatalog } from "../samples";
 import { listSlos } from "../services/slo";
 import { formatDateTime } from "../services/time";
 import { InlineMessage } from "../panels/Field";
@@ -176,21 +177,20 @@ export function DiagramListPage() {
     }
   }, []);
 
-  // Bootstrap: if the lookup doesn't exist, create it with the sample diagram.
+  // Bootstrap: creates the lookup with the sample diagrams, and adds samples this table has never received.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const result = await ensureStore(async () => {
-          const slos = await listSlos().catch(() => []);
-          return buildSampleDiagram("system", slos.slice(0, 3));
-        });
-        if (result === "created") {
+        const { created, added } = await ensureSamples(sampleCatalog(listSlos));
+        if (created) {
           showToast({
             type: "success",
             title: "Diagram storage created",
-            message: "The sample diagram \"Sample – Online Banking\" was added.",
+            message: `Sample diagrams added: ${added.join(", ")}.`,
           });
+        } else if (added.length) {
+          showToast({ type: "info", title: "New sample diagrams", message: added.join(", "), lifespan: 6000 });
         }
       } catch (e) {
         if (!cancelled) {
@@ -257,7 +257,7 @@ export function DiagramListPage() {
         return;
       }
       const existing = new Set((rows ?? []).map((r) => r.id));
-      let ok = 0;
+      const valid: Diagram[] = [];
       for (const file of Array.from(files)) {
         let json: unknown;
         try {
@@ -277,14 +277,20 @@ export function DiagramListPage() {
           diagram = { ...diagram, id: newId(), createdAt: now, updatedAt: now };
         }
         diagram = { ...diagram, owner: diagram.owner || currentUser() };
-        await saveDiagram(diagram);
         existing.add(diagram.id);
-        ok++;
+        valid.push(diagram);
       }
-      if (ok) {
-        showToast({ type: "success", title: `${ok} diagram(s) uploaded`, lifespan: 3000 });
+      if (valid.length === 0) {
+        return;
       }
-      await reload();
+      // One write for every file; it returns once the lookup serves the new rows, so the reload shows them.
+      setRows(null);
+      try {
+        await saveDiagrams(valid);
+      } finally {
+        await reload();
+      }
+      showToast({ type: "success", title: `${valid.length} diagram(s) uploaded`, lifespan: 3000 });
     });
 
   /**

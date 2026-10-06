@@ -57,21 +57,28 @@ vi.mock("./dql", async (importOriginal) => {
   };
 });
 
+import { lookupDataClient } from "@dynatrace-sdk/client-resource-store";
 import { buildSampleDiagram, newDiagram } from "../model/defaults";
 import {
   ConflictError,
+  META_ID,
   sameInstant,
   decodePayload,
   deleteDiagrams,
   encodePayload,
-  ensureStore,
+  ensureSamples,
   getDiagram,
   listDiagrams,
   parseRow,
+  rowsFingerprint,
   rowsToJsonl,
   saveDiagram,
+  saveDiagrams,
   toRow,
+  type SampleEntry,
 } from "./lookupStore";
+
+const sample = (id: string, name: string): SampleEntry => ({ id, build: () => Promise.resolve(newDiagram(id, name, "system")) });
 
 describe("payload encoding", () => {
   it("round-trips UTF-8 JSON through base64 (with accents, quotes and line breaks)", () => {
@@ -93,6 +100,21 @@ describe("payload encoding", () => {
   });
 });
 
+describe("rowsFingerprint", () => {
+  it("ignores row order and the precision Grail returns", () => {
+    const a = [
+      { id: "b", updatedAt: "2026-10-04T10:00:00.123Z", deleted: false },
+      { id: "a", updatedAt: "2026-10-04T09:00:00.000Z", deleted: true },
+    ];
+    const b = [
+      { id: "a", updatedAt: "2026-10-04T09:00:00.000000000Z", deleted: true },
+      { id: "b", updatedAt: "2026-10-04T10:00:00.123456789Z", deleted: false },
+    ];
+    expect(rowsFingerprint(a)).toBe(rowsFingerprint(b));
+    expect(rowsFingerprint(a)).not.toBe(rowsFingerprint([a[0]]));
+  });
+});
+
 describe("sameInstant", () => {
   it("treats the JS ISO string and the Grail one with nanoseconds as equal", () => {
     expect(sameInstant("2026-10-04T08:41:00.123Z", "2026-10-04T08:41:00.123000000Z")).toBe(true);
@@ -106,11 +128,51 @@ describe("CRUD on the lookup", () => {
     table.rows = null;
   });
 
-  it("bootstrap: creates the table with the sample diagram only if it doesn't exist", async () => {
-    expect(await ensureStore(() => Promise.resolve(buildSampleDiagram("system", [])))).toBe("created");
-    expect(await ensureStore(() => Promise.resolve(buildSampleDiagram("system", [])))).toBe("exists");
-    const list = await listDiagrams();
-    expect(list.map((d) => d.name)).toEqual(["Sample – Online Banking"]);
+  it("bootstrap: creates the table with every sample, then leaves it alone", async () => {
+    const catalog = [
+      { id: "00000000-0000-4000-8000-000000000001", build: () => Promise.resolve(buildSampleDiagram("system", [])) },
+      sample("s-2", "Sample – Two"),
+    ];
+    expect(await ensureSamples(catalog)).toEqual({ created: true, added: ["Sample – Online Banking", "Sample – Two"] });
+    const uploads = vi.mocked(lookupDataClient.upload).mock.calls.length;
+    expect(await ensureSamples(catalog)).toEqual({ created: false, added: [] });
+    expect(vi.mocked(lookupDataClient.upload).mock.calls.length).toBe(uploads);
+    expect((await listDiagrams()).map((d) => d.name).sort()).toEqual(["Sample – Online Banking", "Sample – Two"]);
+    // The metadata row is stored but never listed.
+    expect(table.rows?.some((r) => r.id === META_ID && r.deleted === true)).toBe(true);
+  });
+
+  it("a deleted sample doesn't come back, but a sample added in a later version does (once)", async () => {
+    await ensureSamples([sample("s-1", "Sample – One")]);
+    await deleteDiagrams(["s-1"]);
+    await saveDiagram(newDiagram("mine", "Mine", "a@x.com"));
+    expect(await ensureSamples([sample("s-1", "Sample – One")])).toEqual({ created: false, added: [] });
+    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toEqual({
+      created: false,
+      added: ["Sample – Two"],
+    });
+    await deleteDiagrams(["s-2"]);
+    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toEqual({ created: false, added: [] });
+    expect((await listDiagrams()).map((d) => d.id)).toEqual(["mine"]);
+  });
+
+  it("tables from before the metadata row keep their samples and receive the missing ones", async () => {
+    await saveDiagram(newDiagram("s-1", "Sample – One", "system"));
+    await saveDiagram(newDiagram("mine", "Mine", "a@x.com"));
+    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toEqual({
+      created: false,
+      added: ["Sample – Two"],
+    });
+    expect((await listDiagrams()).map((d) => d.id).sort()).toEqual(["mine", "s-1", "s-2"]);
+  });
+
+  it("uploads several diagrams with a single write", async () => {
+    await saveDiagram(newDiagram("keep", "Keep", "a@x.com"));
+    const before = vi.mocked(lookupDataClient.upload).mock.calls.length;
+    const saved = await saveDiagrams([newDiagram("u-1", "One", "a@x.com"), newDiagram("u-2", "Two", "a@x.com")]);
+    expect(vi.mocked(lookupDataClient.upload).mock.calls.length).toBe(before + 1);
+    expect(saved.map((d) => d.id)).toEqual(["u-1", "u-2"]);
+    expect((await listDiagrams()).map((d) => d.id).sort()).toEqual(["keep", "u-1", "u-2"]);
   });
 
   it("create, read, update with concurrency control, and delete", async () => {

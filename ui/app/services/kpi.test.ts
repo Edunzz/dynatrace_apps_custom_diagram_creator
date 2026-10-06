@@ -4,7 +4,7 @@ vi.mock("@dynatrace-sdk/client-query", () => ({ queryExecutionClient: {} }));
 
 import type { KpiItem } from "../model/schema";
 import type { DqlResult } from "../model/types";
-import { kpiItems, kpiLines, labelColumns } from "./kpi";
+import { kpiItems, kpiLines, kpiTitle, labelColumns } from "./kpi";
 import { isPresetUnit, withUnit } from "./units";
 
 const result: DqlResult = {
@@ -57,6 +57,15 @@ describe("kpiLines", () => {
     const text: DqlResult = { columns: ["name"], types: { name: "string" }, records: [{ name: "x" }] };
     expect(kpiLines(base, text)).toEqual({ ok: false, error: "The query returns no numeric column for the value." });
     expect(kpiLines({ ...base, valueField: "nope" }, result).ok).toBe(false);
+  });
+});
+
+describe("kpiTitle", () => {
+  it("uses the title, then the ready-made KPI it came from, then the fixed name", () => {
+    expect(kpiTitle({ ...base, labelMode: "column", title: "Latency" })).toBe("Latency");
+    expect(kpiTitle({ ...base, labelMode: "column", preset: "service.requests" })).toBe("Request count");
+    expect(kpiTitle({ ...base, labelText: "Errors" })).toBe("Errors");
+    expect(kpiTitle({ ...base, labelMode: "column" })).toBeUndefined();
   });
 });
 

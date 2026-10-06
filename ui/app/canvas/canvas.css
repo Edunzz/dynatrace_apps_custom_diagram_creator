@@ -330,3 +330,28 @@
   color: var(--dt-colors-text-primary-default);
   background: var(--dt-colors-background-container-primary-default);
 }
+
+/* KPI placeholders such as $entityIds in the DQL editors. */
+.cdc-dql-placeholder,
+.cdc-dql-placeholder * {
+  color: var(--dt-colors-text-primary-default) !important;
+  font-weight: 600;
+}
+
+/* A KPI with one line per entity: its title, then the entity lines slightly indented. */
+.cdc-kpi-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cdc-kpi-heading {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.cdc-kpi-line.cdc-kpi-sub {
+  padding-left: 8px;
+}

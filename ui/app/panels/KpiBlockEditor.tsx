@@ -11,7 +11,7 @@ import { COMPONENT_LABELS } from "../model/defaults";
 import { findPreset, kpiPresetsFor, type KpiPreset } from "../model/kpiPresets";
 import type { DqlResult, Timeframe } from "../model/types";
 import { numericColumns } from "../services/dql";
-import { kpiItems, labelColumns, newKpiItem } from "../services/kpi";
+import { kpiItems, kpiTitle, labelColumns, newKpiItem } from "../services/kpi";
 import { expandScope, usesScope, type EntityScope } from "../services/kpiScope";
 import { DqlField } from "./DqlField";
 import { Field, InlineMessage } from "./Field";
@@ -65,7 +65,7 @@ function KpiItemEditor({
         <Flex alignItems="center" gap={6}>
           <strong style={{ fontSize: 13 }}>
             KPI {index + 1}
-            {item.labelMode === "text" && item.labelText ? ` · ${item.labelText}` : preset ? ` · ${preset.label}` : ""}
+            {kpiTitle(item) ? ` · ${kpiTitle(item)}` : ""}
           </strong>
           {preset && (
             <Tooltip text="Ready-made KPI for the entities picked on the Data tab. Editing its query makes it a custom KPI.">
@@ -116,7 +116,7 @@ function KpiItemEditor({
         hint={
           item.labelMode === "text"
             ? "A fixed name; the KPI shows the value of the first row."
-            : "Read the name from a column; the KPI shows one line per result row."
+            : "One line per result row, named from this column, under the KPI title."
         }
       >
         <Flex flexDirection="column" gap={6}>
@@ -135,20 +135,28 @@ function KpiItemEditor({
               aria-label="KPI name"
             />
           ) : (
-            <Select
-              value={item.labelField ?? FIRST}
-              onChange={(v) => onChange({ ...item, labelField: !v || v === FIRST ? undefined : v }, "debounced")}
-              aria-label="Name column"
-            >
-              <Select.Content>
-                <Select.Option value={FIRST}>First text column</Select.Option>
-                {labelOptions.map((c) => (
-                  <Select.Option key={c} value={c}>
-                    {c}
-                  </Select.Option>
-                ))}
-              </Select.Content>
-            </Select>
+            <>
+              <TextInput
+                value={item.title ?? ""}
+                onChange={(v) => onChange({ ...item, title: v || undefined })}
+                placeholder={preset?.label ?? "KPI title, e.g. Response time"}
+                aria-label="KPI title"
+              />
+              <Select
+                value={item.labelField ?? FIRST}
+                onChange={(v) => onChange({ ...item, labelField: !v || v === FIRST ? undefined : v }, "debounced")}
+                aria-label="Name column"
+              >
+                <Select.Content>
+                  <Select.Option value={FIRST}>First text column</Select.Option>
+                  {labelOptions.map((c) => (
+                    <Select.Option key={c} value={c}>
+                      {c}
+                    </Select.Option>
+                  ))}
+                </Select.Content>
+              </Select>
+            </>
           )}
         </Flex>
       </Field>

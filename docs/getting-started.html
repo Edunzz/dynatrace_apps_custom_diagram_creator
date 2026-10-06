@@ -64,7 +64,7 @@ npm install</code></pre></div>
   &quot;environmentUrl&quot;: &quot;https://&lt;your-environment-id&gt;.apps.dynatrace.com/&quot;,
   &quot;app&quot;: {
     &quot;id&quot;: &quot;my.custom.diagram.creator&quot;,
-    &quot;version&quot;: &quot;0.8.0&quot;
+    &quot;version&quot;: &quot;0.9.0&quot;
   }
 }</code></pre></div>
 <h2 id="run-locally">3. Run it locally (optional)</h2>
@@ -72,13 +72,8 @@ npm install</code></pre></div>
 <h2 id="deploy">4. Deploy</h2>
 <p>Build and install the app in the environment from <code>app.config.json</code>. The first deploy opens the browser to sign in with SSO; to use a platform token instead, run <code>npm run deploy:token</code> as described in <a href="#codespaces">Deploy from GitHub Codespaces</a>.</p><div class="code"><span class="label">bash</span><pre><code>npm run deploy</code></pre></div><div class="callout warn"><p>Every redeploy needs a new version number: bump <code>version</code> in <code>app.config.json</code> (and in <code>package.json</code>) before running <code>npm run deploy</code> again.</p></div>
 <h2 id="first-diagram">5. Open your first diagram</h2>
-<p>Open <code>https://&lt;your-environment-id&gt;.apps.dynatrace.com/ui/apps/my.custom.diagram.creator</code>. The first time the app opens it creates the lookup table <code>/lookups/custom-diagram-creator/diagrams</code> with three sample diagrams and shows a "Diagram storage created" notification:</p>
-<ul>
-<li><strong>Sample – Online Banking</strong> — a small banking architecture, with your environment's SLOs if it has any.</li>
-<li><strong>Sample – Platform signals</strong> — works in any environment, even without services: web frontends, synthetic locations and event counts.</li>
-<li><strong>Sample – EasyTrade trading platform</strong> — the EasyTrade demo application end to end; it lights up in environments that run EasyTrade.</li>
-</ul>
-<p>Environments that already have diagrams receive the samples they are missing once. A sample you delete doesn't come back.</p>
+<p>Open <code>https://&lt;your-environment-id&gt;.apps.dynatrace.com/ui/apps/my.custom.diagram.creator</code>. The first time the app opens it creates the lookup table <code>/lookups/custom-diagram-creator/diagrams</code> with the sample diagram <strong>Sample – EasyTrade trading platform</strong> — the EasyTrade demo application end to end, which lights up in environments that run EasyTrade — and shows a "Diagram storage created" notification.</p>
+<p>Environments that already have diagrams receive a new sample once; a sample you delete doesn't come back. The samples of earlier versions (<em>Online Banking</em> and <em>Platform signals</em>) are removed from the list, unless someone saved them since they were added.</p>
 <p>Open the sample, switch to <strong>Edit</strong> and click any component to see the floating toolbar, or double-click it to open its editor. The <a href="user-guide.html">user guide</a> walks through every feature.</p>
 <h2 id="permissions">App scopes</h2>
 <p>The app asks for these scopes when it is installed, so its queries can read every kind of telemetry in Grail. Scopes are the upper limit: each user still needs the matching IAM permissions to see the data.</p><div class="table-wrap"><table><thead><tr><th>Scope</th><th>Why</th></tr></thead><tbody><tr><td><code>storage:smartscape:read</code>, <code>storage:entities:read</code></td><td>Entity picker and entity queries (Smartscape and classic)</td></tr><tr><td><code>storage:events:read</code></td><td>Events, Davis events and Davis problems (<code>dt.davis.problems</code>)</td></tr><tr><td><code>storage:metrics:read</code>, <code>storage:logs:read</code>, <code>storage:spans:read</code>, <code>storage:bizevents:read</code></td><td>Metrics, logs, traces and business events in KPI queries</td></tr><tr><td><code>storage:security.events:read</code>, <code>storage:user.events:read</code>, <code>storage:user.sessions:read</code>, <code>storage:user.replays:read</code>, <code>storage:application.snapshots:read</code></td><td>Security events, RUM and snapshots in KPI queries</td></tr><tr><td><code>storage:system:read</code>, <code>storage:fieldsets:read</code>, <code>storage:buckets:read</code></td><td><code>dt.system.*</code> data, protected fields and bucket access required by Grail</td></tr><tr><td><code>storage:files:read</code></td><td>Any lookup table (<code>load</code> / <code>lookup</code> in KPI queries), including the diagrams lookup</td></tr><tr><td><code>storage:files:write</code>, <code>storage:files:delete</code></td><td>Write and delete the diagrams lookup</td></tr><tr><td><code>slo:slos:read</code>, <code>slo:objective-templates:read</code></td><td>List and evaluate SLOs</td></tr></tbody></table></div>

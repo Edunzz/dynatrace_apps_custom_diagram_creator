@@ -28,6 +28,8 @@ export const KpiItem = z.object({
   decimals: z.number().int().min(0).max(10).default(2),
   /** Maximum lines when the label comes from a column. */
   maxRows: z.number().int().min(1).max(50).default(5),
+  /** Name of the KPI, e.g. "Response time": shown above its lines when they are named from a column. */
+  title: z.string().optional(),
   /** Key of the ready-made KPI it was added from (see kpiPresets.ts); dropped once its query is edited. */
   preset: z.string().optional(),
 });

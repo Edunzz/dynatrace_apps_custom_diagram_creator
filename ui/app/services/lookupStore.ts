@@ -368,22 +368,27 @@ export interface SampleEntry {
 
 /**
  * Bootstrap and sample diagrams: creates the table with every sample if it doesn't exist; afterwards adds only the
- * samples this table never had (new samples of a later version), so deleted samples don't come back.
+ * samples this table never had (new samples of a later version), so deleted samples don't come back. Samples a
+ * later version dropped (`retiredIds`) are removed, but only while nobody has saved them since they were added.
  */
-export async function ensureSamples(catalog: SampleEntry[]): Promise<{ created: boolean; added: string[] }> {
+export async function ensureSamples(
+  catalog: SampleEntry[],
+  retiredIds: string[] = [],
+): Promise<{ created: boolean; added: string[]; removed: string[] }> {
   const rows = await loadAllRows();
+  const retired = (rows ?? []).filter((r) => retiredIds.includes(r.id) && !r.deleted && sameInstant(r.createdAt, r.updatedAt));
   const live = new Set((rows ?? []).filter((r) => !r.deleted).map((r) => r.id));
   const recorded = rows ? seededSampleIds(rows) : null;
   // Tables from before the metadata row: the samples they still have count as received.
   const seeded = recorded ?? catalog.map((s) => s.id).filter((id) => live.has(id));
   const missing = catalog.filter((s) => !seeded.includes(s.id) && !live.has(s.id));
   const nextSeeded = Array.from(new Set([...seeded, ...catalog.map((s) => s.id)]));
-  if (rows && recorded && missing.length === 0 && nextSeeded.length === seeded.length) {
-    return { created: false, added: [] };
+  if (rows && recorded && missing.length === 0 && nextSeeded.length === seeded.length && retired.length === 0) {
+    return { created: false, added: [], removed: [] };
   }
   const now = new Date().toISOString();
   const added = (await Promise.all(missing.map((s) => s.build()))).map((d) => ({ ...d, createdAt: now, updatedAt: now }));
-  const others = rows ? keptRows(rows).filter((r) => r.id !== META_ID) : [];
+  const others = rows ? keptRows(rows).filter((r) => r.id !== META_ID && !retired.some((x) => x.id === r.id)) : [];
   await writeAllRows([...others, ...added.map(toRow), metaRow(nextSeeded)]);
-  return { created: rows === null, added: added.map((d) => d.name) };
+  return { created: rows === null, added: added.map((d) => d.name), removed: retired.map((r) => r.name) };
 }

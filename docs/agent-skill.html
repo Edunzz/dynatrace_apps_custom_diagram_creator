@@ -56,10 +56,8 @@
   --display-name &quot;Custom Diagram Creator diagrams&quot; \
   --parse-pattern &#x27;JSON{STRING:id, STRING:name, STRING:description, STRING:owner, STRING:createdAt, STRING:updatedAt, BOOLEAN:deleted, STRING:payload}:row&#x27;</code></pre></div><div class="callout warn"><p><code>dtctl create lookup</code> fails when the file already exists. Delete it first (needs <code>storage:files:delete</code>), call the Resource Store API with <code>overwrite: true</code>, or upload the JSON from the app with <strong>Upload</strong>.</p></div>
 <h2 id="examples">Examples</h2>
-<p>They are the same three samples the app adds to every environment.</p>
+<p>The sample the app adds to every environment is the skill's example too:</p>
 <ul>
-<li><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/blob/main/skill/examples/sample-diagram.json"><code>sample-diagram.json</code></a> — <em>Sample – Online Banking</em>.</li>
-<li><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/blob/main/skill/examples/platform-signals.json"><code>platform-signals.json</code></a> — <em>Sample – Platform signals</em>: built only on data any environment has (web frontends, synthetic locations and event counts), useful to see green, orange and red connections without any services.</li>
 <li><a href="https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator/blob/main/skill/examples/easytrade-showcase.json"><code>easytrade-showcase.json</code></a> — <em>Sample – EasyTrade trading platform</em>, built with the skill's <em>showcase recipe</em>: digital experience, gateway, trading APIs, core services, data tier and host, with golden signals on every hop and real dependencies read from Smartscape. Its components select EasyTrade's entities by name, so it works in any environment running EasyTrade; it is saved with a fixed window in which the demo had traffic.</li>
 </ul>
 <h2 id="rules">Rules the skill follows</h2>

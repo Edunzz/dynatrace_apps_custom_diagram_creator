@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DQLEditor } from "@dynatrace/strato-components/editors";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
 import { PlayIcon } from "@dynatrace/strato-icons";
 import type { DqlResult, Timeframe } from "../model/types";
 import { errorMessage, runQuery } from "../services/dql";
+import { highlightPlaceholders, teachValidationAboutPlaceholders } from "../services/dqlEditorPlaceholders";
 import { resolveTimeframe } from "../services/time";
 import { ResultTable } from "../canvas/nodes/ResultTable";
 import { Field, InlineMessage } from "./Field";
@@ -26,11 +27,22 @@ export interface DqlFieldProps {
   hint?: string;
 }
 
+// KPI placeholders ($entityIds…) are valid in every DQL editor of the app.
+teachValidationAboutPlaceholders();
+
 /** DQLEditor + Run button + result preview and inline validation. */
 export function DqlField({ label, value, onChange, timeframe, validate, warn, onResult, onRun, hint, prepare }: DqlFieldProps) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DqlResult | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // The editor mounts asynchronously: paint the placeholders once it is there.
+  useEffect(() => {
+    highlightPlaceholders(editorRef.current);
+    const timer = window.setTimeout(() => highlightPlaceholders(editorRef.current), 300);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const run = async () => {
     setRunning(true);
@@ -57,7 +69,7 @@ export function DqlField({ label, value, onChange, timeframe, validate, warn, on
     <Field label={label} hint={hint}>
       <Flex flexDirection="column" gap={6}>
         {/* Long queries scroll inside the editor instead of stretching the panel. */}
-        <div style={{ minHeight: 90, maxHeight: 280, overflow: "auto" }}>
+        <div ref={editorRef} style={{ minHeight: 90, maxHeight: 280, overflow: "auto" }}>
           <DQLEditor value={value} onChange={onChange} lineWrap />
         </div>
         <Flex alignItems="center" gap={8}>

@@ -22,7 +22,15 @@ export const SCOPE_PLACEHOLDERS = {
   endpointNames: "endpoints",
 } as const satisfies Record<string, keyof EntityScope>;
 
-const PLACEHOLDER_PATTERN = "\\$(entityIds|entityNames|endpointNames)\\b";
+export const PLACEHOLDER_PATTERN = "\\$(entityIds|entityNames|endpointNames)\\b";
+
+/**
+ * Each placeholder as a string literal of the same length (`$entityIds` → `"entityId"`): valid DQL whose error
+ * positions match the original text. Used to validate queries in the editor.
+ */
+export function maskPlaceholders(dql: string): string {
+  return dql.replace(new RegExp(PLACEHOLDER_PATTERN, "g"), (match: string) => `"${match.slice(1, -1)}"`);
+}
 
 export function usesScope(dql: string): boolean {
   return new RegExp(PLACEHOLDER_PATTERN).test(dql);

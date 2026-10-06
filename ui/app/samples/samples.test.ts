@@ -2,20 +2,19 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@dynatrace-sdk/client-query", () => ({ queryExecutionClient: {} }));
 
-import { SAMPLE_DIAGRAM_ID } from "../model/defaults";
 import { ICONS } from "../services/icons";
 import { META_ID } from "../services/lookupStore";
-import { BUNDLED_SAMPLES, sampleCatalog } from "./index";
+import { BUNDLED_SAMPLES, RETIRED_SAMPLE_IDS, sampleCatalog } from "./index";
 
 describe("bundled samples", () => {
-  const catalog = sampleCatalog(() => Promise.resolve([{ id: "slo-1", name: "Checkout availability" }]));
+  const catalog = sampleCatalog();
 
-  it("lists every sample once, Online Banking first, with fixed ids", () => {
+  it("only EasyTrade is bundled; the earlier samples are retired", () => {
+    expect(BUNDLED_SAMPLES.map((d) => d.name)).toEqual(["Sample – EasyTrade trading platform"]);
     const ids = catalog.map((s) => s.id);
-    expect(ids[0]).toBe(SAMPLE_DIAGRAM_ID);
-    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toEqual(["00000000-0000-4000-8000-000000000003"]);
     expect(ids).not.toContain(META_ID);
-    expect(ids.every((id) => /^00000000-0000-4000-8000-0000000000\d\d$/.test(id))).toBe(true);
+    expect(ids.some((id) => RETIRED_SAMPLE_IDS.includes(id))).toBe(false);
   });
 
   it("every sample is named 'Sample – …', owned by system and uses existing icons", async () => {

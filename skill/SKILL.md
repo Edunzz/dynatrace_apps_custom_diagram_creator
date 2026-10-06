@@ -15,9 +15,9 @@ description: Create, validate and register "Custom Diagram Creator" diagrams (Dy
 - App source, docs and the component type catalog: <https://github.com/Edunzz/dynatrace_apps_custom_diagram_creator>
   (`ui/app/model/componentTypes.ts`).
 - Schema: `diagram.schema.json` (this folder, generated from `ui/app/model/schema.ts` with `npm run export:schema`).
-  Examples — the same sample diagrams the app adds to every environment: `examples/sample-diagram.json`,
-  `examples/platform-signals.json` and `examples/easytrade-showcase.json` (a full showcase built with the recipe
-  below; its components select EasyTrade's entities by name, so it works in any environment running EasyTrade).
+  Example — the same sample diagram the app adds to every environment: `examples/easytrade-showcase.json` (a full
+  showcase built with the recipe below; its components select EasyTrade's entities by name, so it works in any
+  environment running EasyTrade).
 - Before writing DQL, load the `dt-dql-essentials` skill (and `dt-obs-problems` for problems). Never invent field
   names.
 

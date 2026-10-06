@@ -34,8 +34,7 @@ import {
   saveDiagrams,
   type DiagramSummary,
 } from "../services/lookupStore";
-import { sampleCatalog } from "../samples";
-import { listSlos } from "../services/slo";
+import { RETIRED_SAMPLE_IDS, sampleCatalog } from "../samples";
 import { formatDateTime } from "../services/time";
 import { InlineMessage } from "../panels/Field";
 import { AboutModal } from "../components/AboutModal";
@@ -182,15 +181,18 @@ export function DiagramListPage() {
     let cancelled = false;
     void (async () => {
       try {
-        const { created, added } = await ensureSamples(sampleCatalog(listSlos));
+        const { created, added, removed } = await ensureSamples(sampleCatalog(), RETIRED_SAMPLE_IDS);
         if (created) {
           showToast({
             type: "success",
             title: "Diagram storage created",
-            message: `Sample diagrams added: ${added.join(", ")}.`,
+            message: `Sample diagram added: ${added.join(", ")}.`,
           });
         } else if (added.length) {
           showToast({ type: "info", title: "New sample diagrams", message: added.join(", "), lifespan: 6000 });
+        }
+        if (removed.length) {
+          showToast({ type: "info", title: "Retired sample diagrams removed", message: removed.join(", "), lifespan: 6000 });
         }
       } catch (e) {
         if (!cancelled) {

@@ -1,3 +1,4 @@
+import { findPreset } from "../model/kpiPresets";
 import type { KpiBlock, KpiItem } from "../model/schema";
 import type { DqlResult } from "../model/types";
 import { asText, numericColumns, toNumber } from "./dql";
@@ -5,6 +6,14 @@ import { asText, numericColumns, toNumber } from "./dql";
 export interface KpiLine {
   label: string;
   value: number | null;
+}
+
+/**
+ * Name of a KPI: its title, the ready-made KPI it came from (diagrams saved before titles existed), or its fixed
+ * name in "custom text" mode.
+ */
+export function kpiTitle(item: KpiItem): string | undefined {
+  return item.title || findPreset(item.preset)?.label || (item.labelMode === "text" ? item.labelText : undefined) || undefined;
 }
 
 /** KPIs of a block. A legacy block (≤ 0.2, one query shown as a table) is read as one "column" KPI. */

@@ -6,7 +6,7 @@ import { KpiItem } from "../model/schema";
 import { COMPONENT_TYPE_IDS } from "../model/componentTypes";
 import { KPI_PRESETS, defaultKpiItems, findPreset, kpiPresetsFor } from "../model/kpiPresets";
 import { newEntityNodeData } from "../model/defaults";
-import { expandScope, scopeFromRecords, scopeFromRefs, usesScope } from "./kpiScope";
+import { expandScope, maskPlaceholders, scopeFromRecords, scopeFromRefs, usesScope } from "./kpiScope";
 
 describe("KPI scope placeholders", () => {
   const scope = scopeFromRefs([
@@ -26,6 +26,13 @@ describe("KPI scope placeholders", () => {
   it("leaves queries without placeholders alone, even without a scope", () => {
     expect(expandScope("fetch logs | summarize c = count()", undefined)).toBe("fetch logs | summarize c = count()");
     expect(usesScope("fetch logs | filter content == \"$entityIdsX\"")).toBe(false);
+  });
+
+  it("masks placeholders as same-length string literals for the editor's validation", () => {
+    const dql = "filter: { in(toString(x), array($entityIds)) and in(endpoint.name, array($endpointNames)) }";
+    const masked = maskPlaceholders(dql);
+    expect(masked).toBe('filter: { in(toString(x), array("entityId")) and in(endpoint.name, array("endpointName")) }');
+    expect(masked).toHaveLength(dql.length);
   });
 
   it("explains what is missing", () => {
@@ -58,6 +65,7 @@ describe("ready-made KPIs", () => {
       expect(COMPONENT_TYPE_IDS, p.key).toContain(type);
       expect(KpiItem.safeParse({ ...p.item, id: "x" }).success, p.key).toBe(true);
       expect(p.item.preset).toBe(p.key);
+      expect(p.item.title).toBe(p.label);
       expect(findPreset(p.key)).toBe(p);
     }
   });

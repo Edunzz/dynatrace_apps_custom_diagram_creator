@@ -91,8 +91,7 @@ macOS or Git Bash) if you prefer a platform token.
 
 ### After the deploy
 
-The first time the app opens it creates its storage with three sample diagrams: *Online Banking*, *Platform
-signals* and *EasyTrade trading platform*.
+The first time the app opens it creates its storage with the sample diagram *EasyTrade trading platform*.
 
 To deploy a new version to the same environment, bump `version` in `app.config.json` and `package.json` first — the
 environment rejects a version it already has.

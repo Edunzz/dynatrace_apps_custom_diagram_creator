@@ -54,6 +54,7 @@ function perEntity(dims: string | string[], p: MetricPreset, extraFilter = "", n
     isDefault: p.isDefault,
     item: {
       dql,
+      title: p.label,
       valueField: "value",
       labelMode: "column",
       labelField: "name",

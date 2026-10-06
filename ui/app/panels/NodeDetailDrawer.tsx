@@ -10,7 +10,7 @@ import type { EdgeStatus, NodeStatus, ProblemRow, ResolvedTimeframe, Status } fr
 import { errorMessage, formatNumber, runQuery } from "../services/dql";
 import { buildProblemsDql, toProblemRow } from "../services/queryBuilder";
 import { evalThreshold } from "../services/statusEngine";
-import { kpiItems } from "../services/kpi";
+import { kpiItems, kpiTitle } from "../services/kpi";
 import { withUnit } from "../services/units";
 import { formatDateTime, userTimezone } from "../services/time";
 import { STATUS_LABEL, StatusDot, StatusGlyph } from "../canvas/statusStyle";
@@ -272,7 +272,7 @@ function NodeDetail({ node, status, tf }: { node: DiagramNode; status?: NodeStat
       {data.kpi?.enabled &&
         kpiItems(data.kpi).map((item, index) => {
           const result = status?.kpi?.items.find((r) => r.id === item.id);
-          const name = item.labelMode === "text" && item.labelText ? item.labelText : `KPI ${index + 1}`;
+          const name = kpiTitle(item) ?? `KPI ${index + 1}`;
           return (
             <Flex key={item.id} flexDirection="column" gap={4}>
               <DqlBlock title={`${data.kpi?.title ?? "KPIs"} · ${name}`} query={result?.query ?? item.dql} tf={tf} />

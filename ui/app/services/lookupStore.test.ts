@@ -133,9 +133,9 @@ describe("CRUD on the lookup", () => {
       { id: "00000000-0000-4000-8000-000000000001", build: () => Promise.resolve(buildSampleDiagram("system", [])) },
       sample("s-2", "Sample – Two"),
     ];
-    expect(await ensureSamples(catalog)).toEqual({ created: true, added: ["Sample – Online Banking", "Sample – Two"] });
+    expect(await ensureSamples(catalog)).toMatchObject({ created: true, added: ["Sample – Online Banking", "Sample – Two"] });
     const uploads = vi.mocked(lookupDataClient.upload).mock.calls.length;
-    expect(await ensureSamples(catalog)).toEqual({ created: false, added: [] });
+    expect(await ensureSamples(catalog)).toMatchObject({ created: false, added: [] });
     expect(vi.mocked(lookupDataClient.upload).mock.calls.length).toBe(uploads);
     expect((await listDiagrams()).map((d) => d.name).sort()).toEqual(["Sample – Online Banking", "Sample – Two"]);
     // The metadata row is stored but never listed.
@@ -146,24 +146,39 @@ describe("CRUD on the lookup", () => {
     await ensureSamples([sample("s-1", "Sample – One")]);
     await deleteDiagrams(["s-1"]);
     await saveDiagram(newDiagram("mine", "Mine", "a@x.com"));
-    expect(await ensureSamples([sample("s-1", "Sample – One")])).toEqual({ created: false, added: [] });
-    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toEqual({
+    expect(await ensureSamples([sample("s-1", "Sample – One")])).toMatchObject({ created: false, added: [] });
+    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toMatchObject({
       created: false,
       added: ["Sample – Two"],
     });
     await deleteDiagrams(["s-2"]);
-    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toEqual({ created: false, added: [] });
+    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toMatchObject({ created: false, added: [] });
     expect((await listDiagrams()).map((d) => d.id)).toEqual(["mine"]);
   });
 
   it("tables from before the metadata row keep their samples and receive the missing ones", async () => {
     await saveDiagram(newDiagram("s-1", "Sample – One", "system"));
     await saveDiagram(newDiagram("mine", "Mine", "a@x.com"));
-    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toEqual({
+    expect(await ensureSamples([sample("s-1", "Sample – One"), sample("s-2", "Sample – Two")])).toMatchObject({
       created: false,
       added: ["Sample – Two"],
     });
     expect((await listDiagrams()).map((d) => d.id).sort()).toEqual(["mine", "s-1", "s-2"]);
+  });
+
+  it("retires dropped samples nobody saved, and keeps the ones someone changed", async () => {
+    await ensureSamples([sample("s-old", "Sample – Old"), sample("s-edited", "Sample – Edited"), sample("s-new", "Sample – New")]);
+    const { diagram } = await getDiagram("s-edited");
+    await new Promise((r) => setTimeout(r, 5));
+    await saveDiagram(diagram);
+    expect(await ensureSamples([sample("s-new", "Sample – New")], ["s-old", "s-edited"])).toEqual({
+      created: false,
+      added: [],
+      removed: ["Sample – Old"],
+    });
+    expect((await listDiagrams()).map((d) => d.id).sort()).toEqual(["s-edited", "s-new"]);
+    // Nothing left to do the next time, and the retired sample doesn't come back.
+    expect(await ensureSamples([sample("s-new", "Sample – New")], ["s-old", "s-edited"])).toEqual({ created: false, added: [], removed: [] });
   });
 
   it("uploads several diagrams with a single write", async () => {
